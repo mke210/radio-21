@@ -75,7 +75,6 @@
             color: var(--azul-marino);
             box-shadow: 0 0 0 3px var(--azul-claro);
             border: 3px solid var(--blanco);
-            /* Simulamos el escudo con texto */
             flex-shrink: 0;
         }
 
@@ -700,9 +699,13 @@
                 <p class="subtitulo">La voz de la Escuela "21 de Noviembre"</p>
 
                 <div class="player-wrapper">
+                    <!-- ==========================================================
+                         🎯 REPRODUCTOR DE RADIO CONECTADO A LISTEN2MYRADIO
+                         DATOS: Hostname: uk5freenew.listen2myradio.com | Port: 21596
+                         ========================================================== -->
                     <audio id="reproductorRadio" controls>
-                        <!-- ⚠️ CAMBIA esta URL por el enlace de tu transmisión en vivo -->
-                        <source src="https://stream.zeno.fm/ejemplo-radio-21" type="audio/mpeg" />
+                        <source src="http://uk5freenew.listen2myradio.com:21596/;stream.nsv" type="audio/mpeg" />
+                        <source src="http://uk5freenew.listen2myradio.com:21596/stream" type="audio/mpeg" />
                         Tu navegador no soporta el reproductor de audio.
                     </audio>
                     <button class="btn-escuchar" id="btnReproducir">
@@ -810,11 +813,9 @@
             enlace.addEventListener('click', function(e) {
                 e.preventDefault();
 
-                // Quitar clase activa de todos los enlaces
                 enlacesNav.forEach(link => link.classList.remove('activo'));
                 this.classList.add('activo');
 
-                // Mostrar la sección correspondiente
                 const seccionId = this.dataset.seccion;
                 secciones.forEach(sec => sec.classList.remove('activa'));
                 document.getElementById(seccionId).classList.add('activa');
@@ -839,7 +840,6 @@
             }
         });
 
-        // Cambiar texto cuando el audio termine o se detenga
         reproductor.addEventListener('pause', function() {
             btnReproducir.innerHTML = '<i class="fas fa-play"></i> Escuchar';
             btnReproducir.style.background = 'var(--azul-claro)';
@@ -868,14 +868,11 @@
                 return;
             }
 
-            // Simular envío
             mensajeExito.textContent = `✅ ¡Gracias ${nombre}! Tu saludo para "${destinatario}" ha sido enviado. ¡Lo leeremos en el aire!`;
             mensajeExito.classList.add('mostrar');
 
-            // Limpiar formulario
             this.reset();
 
-            // Ocultar mensaje después de 6 segundos
             setTimeout(() => {
                 mensajeExito.classList.remove('mostrar');
                 mensajeExito.textContent = '¡Saludo enviado! Lo leeremos en la próxima transmisión.';
@@ -928,7 +925,6 @@
                 contenedorPromos.appendChild(card);
             });
 
-            // Botón para agregar nueva promoción (simbólico)
             const btnAgregar = document.createElement('div');
             btnAgregar.className = 'btn-agregar-promo';
             btnAgregar.innerHTML = `
@@ -963,7 +959,6 @@
                 titulo: 'Programa 1: Inauguración de Radio 21',
                 fecha: '05 de agosto de 2026',
                 duracion: '28:30',
-                // ⚠️ CAMBIA esta URL por un archivo de audio real
                 audio: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
             },
             {
@@ -1013,18 +1008,18 @@
         function actualizarOyentes() {
             const oyentes = document.querySelector('.info-radio span:last-child');
             if (oyentes) {
-                const num = Math.floor(Math.random() * 8) + 2; // entre 2 y 9
+                const num = Math.floor(Math.random() * 8) + 2;
                 oyentes.innerHTML = `<i class="fas fa-headphones"></i> ${num} oyentes ahora`;
             }
         }
         setInterval(actualizarOyentes, 15000);
 
         // ============================================================
-        // MENSAJE INICIAL BIENVENIDA
+        // 7. VERIFICACIÓN DE CONEXIÓN (opcional)
         // ============================================================
         console.log('📻 Radio 21 - Escuela "21 de Noviembre"');
+        console.log('🎙️ Conectado a Listen2MyRadio: uk5freenew.listen2myradio.com:21596');
         console.log('👨‍🏫 Prof. José Emmanuel Chan Ibáñez - Informática');
-        console.log('🎓 Proyecto educativo - ¡La voz de la comunidad escolar!');
     </script>
 
 </body>
