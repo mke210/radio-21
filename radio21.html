@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Radio 21 - Escuela 21 de Noviembre</title>
+    
+    <!-- Font Awesome para íconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    
+    <style>
+        /* ============================================================
+           ESTILOS GENERALES Y VARIABLES
+           ============================================================ */
+        :root {
+            --azul-marino: #0a1a3a;
+            --azul-claro: #4a90d9;
+            --blanco: #ffffff;
+            --gris-claro: #f5f7fa;
+            --gris-texto: #6b7a8f;
+            --sombra: 0 8px 32px rgba(10, 26, 58, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--gris-claro);
+            color: var(--azul-marino);
+            min-height: 100vh;
+        }
+
+        /* ============================================================
+           HEADER / BANNER
+           ============================================================ */
+        .header {
+            background: linear-gradient(135deg, var(--azul-marino) 0%, #142b5a 100%);
+            padding: 1.5rem 1rem;
+            box-shadow: 0 4px 20px rgba(10, 26, 58, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .escudo {
+            width: 60px;
+            height: 60px;
+            background: var(--blanco);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--azul-marino);
+            box-shadow: 0 0 0 3px var(--azul-claro);
+            border: 3px solid var(--blanco);
+            /* Simulamos el escudo con texto */
+            flex-shrink: 0;
+        }
+
+        .escudo-texto {
+            text-align: center;
+            line-height: 1.1;
+        }
+        .escudo-texto small {
+            display: block;
+            font-size: 0.45rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .header-titulo h1 {
+            color: var(--blanco);
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        .header-titulo h1 span {
+            color: var(--azul-claro);
+        }
+        .header-titulo p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.85rem;
+            font-weight: 300;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .badge-online {
+            background: #2ecc71;
+            color: #fff;
+            padding: 0.3rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            animation: pulse-online 1.5s infinite;
+        }
+        .badge-online i {
+            font-size: 0.6rem;
+        }
+
+        @keyframes pulse-online {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* ============================================================
+           NAVEGACIÓN
+           ============================================================ */
+        .nav-bar {
+            background: var(--blanco);
+            border-bottom: 3px solid var(--azul-claro);
+            padding: 0 1rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 95px;
+            z-index: 99;
+        }
+
+        .nav-bar ul {
+            max-width: 1200px;
+            margin: 0 auto;
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .nav-bar ul li a {
+            display: block;
+            padding: 0.8rem 1.2rem;
+            color: var(--azul-marino);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .nav-bar ul li a:hover,
+        .nav-bar ul li a.activo {
+            color: var(--azul-claro);
+            border-bottom-color: var(--azul-claro);
+            background: rgba(74, 144, 217, 0.05);
+        }
+
+        .nav-bar ul li a i {
+            margin-right: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        /* ============================================================
+           CONTENIDO PRINCIPAL
+           ============================================================ */
+        .contenedor {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        /* ============================================================
+           SECCIÓN: RADIO EN VIVO (INICIO)
+           ============================================================ */
+        .seccion {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+        .seccion.activa {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .radio-card {
+            background: var(--blanco);
+            border-radius: 24px;
+            padding: 2.5rem 2rem;
+            box-shadow: var(--sombra);
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .radio-card .escudo-grande {
+            width: 100px;
+            height: 100px;
+            background: var(--azul-marino);
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--blanco);
+            border: 4px solid var(--azul-claro);
+            box-shadow: 0 0 0 6px rgba(74, 144, 217, 0.2);
+        }
+
+        .radio-card h2 {
+            font-size: 1.8rem;
+            margin-bottom: 0.3rem;
+            color: var(--azul-marino);
+        }
+        .radio-card h2 span {
+            color: var(--azul-claro);
+        }
+        .radio-card .subtitulo {
+            color: var(--gris-texto);
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Reproductor de audio */
+        .player-wrapper {
+            background: var(--gris-claro);
+            border-radius: 60px;
+            padding: 0.8rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 1.5rem 0;
+            border: 2px solid #e8ecf1;
+        }
+
+        .player-wrapper audio {
+            flex: 1;
+            min-width: 200px;
+            height: 50px;
+            outline: none;
+        }
+
+        .player-wrapper audio::-webkit-media-controls-panel {
+            background: transparent;
+        }
+
+        .btn-escuchar {
+            background: var(--azul-claro);
+            color: var(--blanco);
+            border: none;
+            padding: 0.6rem 1.8rem;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+        .btn-escuchar:hover {
+            background: var(--azul-marino);
+            transform: scale(1.02);
+        }
+
+        .info-radio {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+            font-size: 0.85rem;
+            color: var(--gris-texto);
+        }
+        .info-radio i {
+            color: var(--azul-claro);
+            margin-right: 0.4rem;
+        }
+
+        /* ============================================================
+           SECCIÓN: SALUDOS
+           ============================================================ */
+        .saludos-card {
+            background: var(--blanco);
+            border-radius: 24px;
+            padding: 2.5rem 2rem;
+            box-shadow: var(--sombra);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .saludos-card h2 {
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 0.3rem;
+        }
+        .saludos-card h2 i {
+            color: var(--azul-claro);
+        }
+        .saludos-card .descripcion {
+            text-align: center;
+            color: var(--gris-texto);
+            margin-bottom: 1.8rem;
+        }
+
+        .form-saludo {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .form-saludo label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--azul-marino);
+        }
+
+        .form-saludo input,
+        .form-saludo textarea {
+            padding: 0.8rem 1rem;
+            border: 2px solid #dce1e9;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border 0.3s ease;
+            background: var(--gris-claro);
+        }
+
+        .form-saludo input:focus,
+        .form-saludo textarea:focus {
+            outline: none;
+            border-color: var(--azul-claro);
+            box-shadow: 0 0 0 4px rgba(74, 144, 217, 0.15);
+        }
+
+        .form-saludo textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .btn-enviar {
+            background: var(--azul-marino);
+            color: var(--blanco);
+            border: none;
+            padding: 0.9rem;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+        }
+        .btn-enviar:hover {
+            background: var(--azul-claro);
+            transform: translateY(-2px);
+        }
+
+        .mensaje-enviado {
+            display: none;
+            background: #d4edda;
+            color: #155724;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-top: 1rem;
+            text-align: center;
+            font-weight: 600;
+        }
+        .mensaje-enviado.mostrar {
+            display: block;
+        }
+
+        /* ============================================================
+           SECCIÓN: PROMOCIONES
+           ============================================================ */
+        .promociones-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .promo-card {
+            background: var(--blanco);
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: var(--sombra);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 5px solid var(--azul-claro);
+        }
+        .promo-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 40px rgba(10, 26, 58, 0.15);
+        }
+
+        .promo-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.4rem;
+            color: var(--azul-marino);
+        }
+        .promo-card .fecha {
+            font-size: 0.75rem;
+            color: var(--gris-texto);
+            margin-bottom: 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .promo-card .fecha i {
+            color: var(--azul-claro);
+        }
+        .promo-card p {
+            color: var(--gris-texto);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        .promo-card .tag {
+            display: inline-block;
+            background: var(--azul-claro);
+            color: var(--blanco);
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
+            margin-top: 0.6rem;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-agregar-promo {
+            background: var(--blanco);
+            border: 2px dashed var(--azul-claro);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--azul-claro);
+            font-weight: 600;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-agregar-promo:hover {
+            background: rgba(74, 144, 217, 0.05);
+            border-color: var(--azul-marino);
+        }
+        .btn-agregar-promo i {
+            font-size: 2rem;
+        }
+
+        /* ============================================================
+           SECCIÓN: PODCASTS
+           ============================================================ */
+        .podcast-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .podcast-item {
+            background: var(--blanco);
+            border-radius: 16px;
+            padding: 1.2rem 1.5rem;
+            box-shadow: var(--sombra);
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            transition: transform 0.2s ease;
+        }
+        .podcast-item:hover {
+            transform: translateX(4px);
+        }
+
+        .podcast-item .numero {
+            background: var(--azul-claro);
+            color: var(--blanco);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .podcast-item .info {
+            flex: 1;
+            min-width: 150px;
+        }
+        .podcast-item .info h4 {
+            font-size: 1rem;
+            margin-bottom: 0.2rem;
+        }
+        .podcast-item .info .meta {
+            font-size: 0.8rem;
+            color: var(--gris-texto);
+        }
+        .podcast-item .info .meta i {
+            margin-right: 0.3rem;
+        }
+
+        .podcast-item audio {
+            flex: 1;
+            min-width: 180px;
+            height: 40px;
+            outline: none;
+        }
+
+        /* ============================================================
+           FOOTER
+           ============================================================ */
+        .footer {
+            background: var(--azul-marino);
+            color: rgba(255, 255, 255, 0.7);
+            text-align: center;
+            padding: 2rem 1rem;
+            margin-top: 3rem;
+            border-top: 4px solid var(--azul-claro);
+        }
+        .footer strong {
+            color: var(--blanco);
+        }
+        .footer .creditos {
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+        .footer .creditos span {
+            color: var(--azul-claro);
+        }
+
+        /* ============================================================
+           RESPONSIVE
+           ============================================================ */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+            .header-left {
+                flex-direction: column;
+            }
+            .header-titulo h1 {
+                font-size: 1.4rem;
+            }
+            .nav-bar {
+                top: 145px;
+                overflow-x: auto;
+            }
+            .nav-bar ul {
+                flex-wrap: nowrap;
+                gap: 0;
+            }
+            .nav-bar ul li a {
+                font-size: 0.8rem;
+                padding: 0.6rem 0.9rem;
+                white-space: nowrap;
+            }
+            .radio-card,
+            .saludos-card {
+                padding: 1.5rem 1rem;
+            }
+            .player-wrapper {
+                flex-direction: column;
+                border-radius: 20px;
+                padding: 1rem;
+            }
+            .player-wrapper audio {
+                width: 100%;
+            }
+            .promociones-grid {
+                grid-template-columns: 1fr;
+            }
+            .podcast-item {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .podcast-item audio {
+                width: 100%;
+            }
+            .badge-online {
+                font-size: 0.6rem;
+                padding: 0.2rem 0.6rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-titulo h1 {
+                font-size: 1.2rem;
+            }
+            .escudo {
+                width: 50px;
+                height: 50px;
+                font-size: 1.4rem;
+            }
+            .radio-card .escudo-grande {
+                width: 70px;
+                height: 70px;
+                font-size: 2rem;
+            }
+            .btn-escuchar {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================
+    HEADER
+    ============================================================ -->
+    <header class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <div class="escudo">
+                    <div class="escudo-texto">
+                        E<span style="display:block; font-size:0.3rem;">S</span>
+                        <small>21 NOV</small>
+                    </div>
+                </div>
+                <div class="header-titulo">
+                    <h1>Radio <span>21</span></h1>
+                    <p>Escuela Secundaria "21 de Noviembre"</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <span class="badge-online">
+                    <i class="fas fa-circle"></i> EN VIVO
+                </span>
+                <span style="color:rgba(255,255,255,0.6); font-size:0.75rem;">
+                    <i class="fas fa-user-graduate"></i> Prof. José Emmanuel Chan Ibáñez
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ============================================================
+    NAVEGACIÓN
+    ============================================================ -->
+    <nav class="nav-bar">
+        <ul>
+            <li><a href="#" class="activo" data-seccion="inicio"><i class="fas fa-broadcast"></i> En Vivo</a></li>
+            <li><a href="#" data-seccion="saludos"><i class="fas fa-heart"></i> Saludos</a></li>
+            <li><a href="#" data-seccion="promociones"><i class="fas fa-bullhorn"></i> Promociones</a></li>
+            <li><a href="#" data-seccion="podcasts"><i class="fas fa-podcast"></i> Podcasts</a></li>
+        </ul>
+    </nav>
+
+    <!-- ============================================================
+    CONTENIDO PRINCIPAL
+    ============================================================ -->
+    <main class="contenedor">
+
+        <!-- ============================================================
+        SECCIÓN INICIO / RADIO EN VIVO
+        ============================================================ -->
+        <section id="inicio" class="seccion activa">
+            <div class="radio-card">
+                <div class="escudo-grande">
+                    <div style="text-align:center; line-height:1;">
+                        R<span style="display:block; font-size:1rem;">21</span>
+                    </div>
+                </div>
+                <h2>Escuchando <span>Radio 21</span></h2>
+                <p class="subtitulo">La voz de la Escuela "21 de Noviembre"</p>
+
+                <div class="player-wrapper">
+                    <audio id="reproductorRadio" controls>
+                        <!-- ⚠️ CAMBIA esta URL por el enlace de tu transmisión en vivo -->
+                        <source src="https://stream.zeno.fm/ejemplo-radio-21" type="audio/mpeg" />
+                        Tu navegador no soporta el reproductor de audio.
+                    </audio>
+                    <button class="btn-escuchar" id="btnReproducir">
+                        <i class="fas fa-play"></i> Escuchar
+                    </button>
+                </div>
+
+                <div class="info-radio">
+                    <span><i class="fas fa-calendar-alt"></i> Emisión: Lunes a Viernes</span>
+                    <span><i class="fas fa-clock"></i> 9:00 AM - 2:00 PM</span>
+                    <span><i class="fas fa-headphones"></i> 4 oyentes ahora</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================
+        SECCIÓN SALUDOS
+        ============================================================ -->
+        <section id="saludos" class="seccion">
+            <div class="saludos-card">
+                <h2><i class="fas fa-heart" style="color:#e74c3c;"></i> Envía un Saludo</h2>
+                <p class="descripcion">Tu mensaje se leerá en el aire durante la próxima transmisión de Radio 21.</p>
+
+                <form id="formSaludo" class="form-saludo">
+                    <label for="nombre">Tu nombre <span style="color:#e74c3c;">*</span></label>
+                    <input type="text" id="nombre" placeholder="Ej: Ana Pérez" required />
+
+                    <label for="mensajeSaludo">Mensaje <span style="color:#e74c3c;">*</span></label>
+                    <textarea id="mensajeSaludo" placeholder="Escribe tu saludo, dedicatoria o felicitación..." required></textarea>
+
+                    <label for="destinatario">¿Para quién va?</label>
+                    <input type="text" id="destinatario" placeholder="Ej: Para toda la comunidad escolar" />
+
+                    <button type="submit" class="btn-enviar">
+                        <i class="fas fa-paper-plane"></i> Enviar Saludo
+                    </button>
+                </form>
+
+                <div id="mensajeExito" class="mensaje-enviado">
+                    <i class="fas fa-check-circle" style="font-size:1.2rem;"></i>
+                    ¡Saludo enviado! Lo leeremos en la próxima transmisión.
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================
+        SECCIÓN PROMOCIONES
+        ============================================================ -->
+        <section id="promociones" class="seccion">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; margin-bottom:1.5rem;">
+                <h2 style="font-size:1.8rem;"><i class="fas fa-bullhorn" style="color:var(--azul-claro);"></i> Promociones</h2>
+                <span style="color:var(--gris-texto); font-size:0.9rem;">Eventos, productos y proyectos de los alumnos</span>
+            </div>
+
+            <div class="promociones-grid" id="contenedorPromos">
+                <!-- Las promociones se generan con JavaScript -->
+            </div>
+        </section>
+
+        <!-- ============================================================
+        SECCIÓN PODCASTS
+        ============================================================ -->
+        <section id="podcasts" class="seccion">
+            <h2 style="text-align:center; font-size:1.8rem; margin-bottom:0.3rem;">
+                <i class="fas fa-podcast" style="color:var(--azul-claro);"></i> Podcasts
+            </h2>
+            <p style="text-align:center; color:var(--gris-texto); margin-bottom:1.8rem;">
+                Revive todos los programas de Radio 21
+            </p>
+
+            <div class="podcast-list" id="listaPodcasts">
+                <!-- Los podcasts se generan con JavaScript -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ============================================================
+    FOOTER
+    ============================================================ -->
+    <footer class="footer">
+        <p>
+            <strong>Radio 21</strong> · Escuela Secundaria "21 de Noviembre"
+            <br />
+            <span style="font-size:0.85rem; display:block; margin-top:0.3rem;">
+                <i class="fas fa-chalkboard-teacher"></i> Prof. José Emmanuel Chan Ibáñez · Informática
+            </span>
+        </p>
+        <p class="creditos">
+            <span>✦</span> Proyecto educativo · Hecho con <i class="fas fa-heart" style="color:#e74c3c;"></i> por la comunidad escolar <span>✦</span>
+        </p>
+    </footer>
+
+    <!-- ============================================================
+    JAVASCRIPT
+    ============================================================ -->
+    <script>
+        // ============================================================
+        // 1. NAVEGACIÓN ENTRE SECCIONES
+        // ============================================================
+        const enlacesNav = document.querySelectorAll('.nav-bar a');
+        const secciones = document.querySelectorAll('.seccion');
+
+        enlacesNav.forEach(enlace => {
+            enlace.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                // Quitar clase activa de todos los enlaces
+                enlacesNav.forEach(link => link.classList.remove('activo'));
+                this.classList.add('activo');
+
+                // Mostrar la sección correspondiente
+                const seccionId = this.dataset.seccion;
+                secciones.forEach(sec => sec.classList.remove('activa'));
+                document.getElementById(seccionId).classList.add('activa');
+            });
+        });
+
+        // ============================================================
+        // 2. REPRODUCTOR DE RADIO
+        // ============================================================
+        const reproductor = document.getElementById('reproductorRadio');
+        const btnReproducir = document.getElementById('btnReproducir');
+
+        btnReproducir.addEventListener('click', function() {
+            if (reproductor.paused) {
+                reproductor.play();
+                this.innerHTML = '<i class="fas fa-pause"></i> Pausar';
+                this.style.background = '#e74c3c';
+            } else {
+                reproductor.pause();
+                this.innerHTML = '<i class="fas fa-play"></i> Escuchar';
+                this.style.background = 'var(--azul-claro)';
+            }
+        });
+
+        // Cambiar texto cuando el audio termine o se detenga
+        reproductor.addEventListener('pause', function() {
+            btnReproducir.innerHTML = '<i class="fas fa-play"></i> Escuchar';
+            btnReproducir.style.background = 'var(--azul-claro)';
+        });
+
+        reproductor.addEventListener('play', function() {
+            btnReproducir.innerHTML = '<i class="fas fa-pause"></i> Pausar';
+            btnReproducir.style.background = '#e74c3c';
+        });
+
+        // ============================================================
+        // 3. FORMULARIO DE SALUDOS
+        // ============================================================
+        const formSaludo = document.getElementById('formSaludo');
+        const mensajeExito = document.getElementById('mensajeExito');
+
+        formSaludo.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const nombre = document.getElementById('nombre').value.trim();
+            const mensaje = document.getElementById('mensajeSaludo').value.trim();
+            const destinatario = document.getElementById('destinatario').value.trim() || 'la comunidad escolar';
+
+            if (!nombre || !mensaje) {
+                alert('Por favor, completa tu nombre y el mensaje.');
+                return;
+            }
+
+            // Simular envío
+            mensajeExito.textContent = `✅ ¡Gracias ${nombre}! Tu saludo para "${destinatario}" ha sido enviado. ¡Lo leeremos en el aire!`;
+            mensajeExito.classList.add('mostrar');
+
+            // Limpiar formulario
+            this.reset();
+
+            // Ocultar mensaje después de 6 segundos
+            setTimeout(() => {
+                mensajeExito.classList.remove('mostrar');
+                mensajeExito.textContent = '¡Saludo enviado! Lo leeremos en la próxima transmisión.';
+            }, 6000);
+        });
+
+        // ============================================================
+        // 4. PROMOCIONES (datos de ejemplo)
+        // ============================================================
+        const promociones = [
+            {
+                titulo: 'Feria de Ciencias 2026',
+                fecha: '15 de agosto de 2026',
+                descripcion: 'Exhibición de proyectos de física, química y biología. ¡Todos los alumnos están invitados a participar!',
+                tag: 'Ciencia'
+            },
+            {
+                titulo: 'Venta de pasteles - Grupo 3°B',
+                fecha: '10 de septiembre de 2026',
+                descripcion: 'Deliciosos pasteles artesanales para recaudar fondos para el viaje de estudios. $50 la porción.',
+                tag: 'Recaudación'
+            },
+            {
+                titulo: 'Torneo de Ajedrez Interescolar',
+                fecha: '25 de septiembre de 2026',
+                descripcion: 'Inscripciones abiertas para el torneo de ajedrez. Premios para los primeros lugares. ¡Anímate!',
+                tag: 'Deporte'
+            },
+            {
+                titulo: 'Radio 21 busca locutores',
+                fecha: 'Siempre abierta',
+                descripcion: '¿Te gusta hablar y expresarte? Únete al equipo de Radio 21. Acércate al profesor Emmanuel en el aula de informática.',
+                tag: 'Convocatoria'
+            }
+        ];
+
+        const contenedorPromos = document.getElementById('contenedorPromos');
+
+        function renderPromociones() {
+            contenedorPromos.innerHTML = '';
+            promociones.forEach(promo => {
+                const card = document.createElement('div');
+                card.className = 'promo-card';
+                card.innerHTML = `
+                    <h3>${promo.titulo}</h3>
+                    <div class="fecha"><i class="fas fa-calendar-alt"></i> ${promo.fecha}</div>
+                    <p>${promo.descripcion}</p>
+                    <span class="tag">${promo.tag}</span>
+                `;
+                contenedorPromos.appendChild(card);
+            });
+
+            // Botón para agregar nueva promoción (simbólico)
+            const btnAgregar = document.createElement('div');
+            btnAgregar.className = 'btn-agregar-promo';
+            btnAgregar.innerHTML = `
+                <i class="fas fa-plus-circle"></i>
+                <span>Agregar nueva promoción</span>
+                <small style="font-weight:400; font-size:0.7rem; color:var(--gris-texto);">
+                    (Los alumnos pueden proponer su evento)
+                </small>
+            `;
+            btnAgregar.addEventListener('click', function() {
+                const titulo = prompt('Título de la promoción:');
+                if (!titulo) return;
+                const descripcion = prompt('Descripción:');
+                if (!descripcion) return;
+                const fecha = prompt('Fecha (ej: 20 de octubre de 2026):') || 'Próximamente';
+                const tag = prompt('Etiqueta (ej: Evento, Venta, etc.):') || 'General';
+
+                promociones.push({ titulo, fecha, descripcion, tag });
+                renderPromociones();
+                alert('✅ ¡Promoción agregada exitosamente!');
+            });
+            contenedorPromos.appendChild(btnAgregar);
+        }
+
+        renderPromociones();
+
+        // ============================================================
+        // 5. PODCASTS (datos de ejemplo)
+        // ============================================================
+        const podcasts = [
+            {
+                titulo: 'Programa 1: Inauguración de Radio 21',
+                fecha: '05 de agosto de 2026',
+                duracion: '28:30',
+                // ⚠️ CAMBIA esta URL por un archivo de audio real
+                audio: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
+            },
+            {
+                titulo: 'Programa 2: Entrevista al Director',
+                fecha: '12 de agosto de 2026',
+                duracion: '35:12',
+                audio: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3'
+            },
+            {
+                titulo: 'Programa 3: Feria de Ciencias Especial',
+                fecha: '19 de agosto de 2026',
+                duracion: '42:05',
+                audio: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3'
+            }
+        ];
+
+        const listaPodcasts = document.getElementById('listaPodcasts');
+
+        function renderPodcasts() {
+            listaPodcasts.innerHTML = '';
+            podcasts.forEach((pod, index) => {
+                const item = document.createElement('div');
+                item.className = 'podcast-item';
+                item.innerHTML = `
+                    <div class="numero">${index + 1}</div>
+                    <div class="info">
+                        <h4>${pod.titulo}</h4>
+                        <div class="meta">
+                            <i class="fas fa-calendar-alt"></i> ${pod.fecha}
+                            <i class="fas fa-clock" style="margin-left:0.8rem;"></i> ${pod.duracion}
+                        </div>
+                    </div>
+                    <audio controls>
+                        <source src="${pod.audio}" type="audio/mpeg" />
+                        Tu navegador no soporta el reproductor.
+                    </audio>
+                `;
+                listaPodcasts.appendChild(item);
+            });
+        }
+
+        renderPodcasts();
+
+        // ============================================================
+        // 6. CONTADOR DE OYENTES SIMULADO
+        // ============================================================
+        function actualizarOyentes() {
+            const oyentes = document.querySelector('.info-radio span:last-child');
+            if (oyentes) {
+                const num = Math.floor(Math.random() * 8) + 2; // entre 2 y 9
+                oyentes.innerHTML = `<i class="fas fa-headphones"></i> ${num} oyentes ahora`;
+            }
+        }
+        setInterval(actualizarOyentes, 15000);
+
+        // ============================================================
+        // MENSAJE INICIAL BIENVENIDA
+        // ============================================================
+        console.log('📻 Radio 21 - Escuela "21 de Noviembre"');
+        console.log('👨‍🏫 Prof. José Emmanuel Chan Ibáñez - Informática');
+        console.log('🎓 Proyecto educativo - ¡La voz de la comunidad escolar!');
+    </script>
+
+</body>
+</html>
