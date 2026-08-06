@@ -3,36 +3,70 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Radio y Podcast Escolar - Escuela 21 de Noviembre</title>
+  <title>Podcast 21 - Escuela 21 de Noviembre</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 
-  <header class="header-home">
-    <img src="img/escudo.png" alt="Escudo de la Escuela 21 de Noviembre" class="escudo" />
-    <h1>Escuela 21 de Noviembre</h1>
-    <p class="lema">Ciencia y Virtud - Esquipulas</p>
-    <p class="small">Proyecto de Informática del Profechan</p>
+  <header class="topbar">
+    <div class="topbar-izq">
+      <img src="img/escudo.png" alt="Escudo" class="topbar-escudo" />
+      <div class="topbar-texto">
+        <strong>Escuela 21 de Noviembre</strong>
+        <span>Ciencia y Virtud · Esquipulas</span>
+      </div>
+    </div>
+    <div class="topbar-centro">
+      <h1 class="logo">Podcast 21</h1>
+    </div>
+    <div class="topbar-der">
+      <span class="profe">Profechan</span>
+    </div>
   </header>
 
   <main>
+
+    <!-- REPRODUCTOR CENTRAL ALEATORIO -->
+    <section class="player-central">
+      <div class="player-cover">
+        <img id="playerImg" src="" alt="Portada" style="display:none;" />
+        <div id="playerPlaceholder" class="player-placeholder">🎧</div>
+      </div>
+      <div class="player-info">
+        <h2 id="playerTitulo">Cargando episodio...</h2>
+        <p id="playerAlumno" class="player-meta"></p>
+        <p id="playerCategoria" class="player-cat"></p>
+      </div>
+      <div class="player-controls">
+        <button id="btnPlayPause" class="btn-player btn-play" disabled>
+          <span class="icon-play">▶</span>
+        </button>
+        <button id="btnMute" class="btn-player btn-mute" disabled>
+          🔇 Activar sonido
+        </button>
+        <button id="btnSiguiente" class="btn-player btn-next" disabled>
+          ⏭ Siguiente
+        </button>
+      </div>
+      <audio id="playerAudio" loop></audio>
+      <p id="playerEstado" class="player-estado"></p>
+    </section>
+
     <h2 class="titulo-seccion">Elige una sección</h2>
 
     <div class="tarjetas">
 
-      <!-- TARJETA CABINA -->
       <a class="tarjeta" href="cabina.html">
         <div class="icono">🎙️</div>
         <h3>Cabina</h3>
-        <p>Grabación de audios, sala en vivo y administración de episodios.</p>
+        <p>Graba y administra los episodios del podcast escolar.</p>
         <span class="boton-tarjeta">Entrar a la cabina</span>
       </a>
 
-      <!-- TARJETA PODCAST -->
       <a class="tarjeta" href="podcast.html">
-        <img src="img/podcast-icon.png" alt="Icono del podcast escolar" class="icono-img" />
+        <img src="img/podcast-icon.png" alt="Podcast" class="icono-img" />
         <h3>Podcast</h3>
-        <p>Escucha los episodios grabados por los alumnos de la escuela.</p>
+        <p>Escucha los episodios grabados por los alumnos.</p>
         <span class="boton-tarjeta">Escuchar podcast</span>
       </a>
 
@@ -41,8 +75,12 @@
 
   <footer>
     <p>Escuela 21 de Noviembre - Esquipulas</p>
-    <p class="small">Ciencia y Virtud - Proyecto del Profechan</p>
+    <p class="small">Ciencia y Virtud · Proyecto del Profechan</p>
   </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/home.js"></script>
 
 </body>
 </html>
