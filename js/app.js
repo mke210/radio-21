@@ -26,7 +26,7 @@
 
   let ctx = null;
 
-  // ===== Locutores (micrófonos vivos con switch) =====
+  // ===== Locutores (micrófono vivo con switch) =====
   const loc = {
     1: { stream: null, src: null, an: null },
     2: { stream: null, src: null, an: null }
@@ -42,29 +42,38 @@
   let seg = 0;
   let pausado = false;
 
-  // ===== Música local =====
+  // ===== Música local (para mezclar al grabar) =====
   let musicPreview = null;
   let musicSrcNode = null;
   let musicGainNode = null;
   let musicAnalyser = null;
 
-  // ===== Ducking =====
+  // ===== Ducking (la voz baja la música) =====
   let ultimaVoz = 0;
 
-  // ===== Eventos =====
+  // ======================================================
+  // EVENTOS
+  // ======================================================
+
   on("btnGrabar", "click", iniciarGrabacion);
   on("btnPausa", "click", pausarReanudar);
   on("btnDetener", "click", () => { if (rec && rec.state !== "inactive") rec.stop(); });
+
   on("btnMusica", "click", toggleMusica);
-  on("musicaFile", "change", cargarMusicaLocal);
-    on("musicaLoop", "change", () => { if (musicPreview) musicPreview.loop = $("musicaLoop").checked; });
   on("btnQuitarMusica", "click", quitarMusicaLocal);
+  on("musicaFile", "change", cargarMusicaLocal);
+  on("musicaLoop", "change", () => { if (musicPreview) musicPreview.loop = $("musicaLoop").checked; });
+  on("musicaVol", "input", () => {
+    if (musicGainNode) musicGainNode.gain.value = parseFloat($("musicaVol").value);
+  });
+
   on("subirMusica", "change", subirMusicaDB);
   on("btnPlaySel", "click", reproducirSeleccion);
   on("btnLoopToggle", "click", toggleLoop);
   on("btnStop", "click", detenerReproduccion);
   on("btnActivarSonido", "click", activarSonido);
   on("btnActualizar", "click", () => cargarTodo());
+
   on("editForm", "submit", guardarEdicion);
   on("btnCancelarEditar", "click", () => $("editModal").close());
   on("reproductor", "ended", alTerminarEpisodio);
@@ -124,7 +133,7 @@
   }
 
   // ======================================================
-  // DUCKING: la voz baja la música al 50%
+  // DUCKING: al hablar, la música baja al 50%
   // ======================================================
 
   function nivelVoz(an) {
@@ -168,7 +177,7 @@
   }
 
   // ======================================================
-  // CARGA DE DATOS + AUTO-INICIO
+  // CARGA DE DATOS + AUTO-INICIO DEL PLAYER
   // ======================================================
 
   async function cargarTodo() {
@@ -214,7 +223,7 @@
   }
 
   // ======================================================
-  // BIBLIOTECA DE MÚSICA (PERSISTENTE)
+  // BIBLIOTECA DE MÚSICA (PERSISTENTE EN SUPABASE)
   // ======================================================
 
   async function cargarMusicaDB() {
@@ -254,8 +263,18 @@
     renderSeleccion();
   }
 
+  async function borrarMusicaDB(id) {
+    const item = musicas.find(m => m.id === id);
+    if (!item || !confirm(`¿Eliminar "${item.titulo}" de la biblioteca?`)) return;
+    if (item.archivo) await db.storage.from("musica").remove([item.archivo]);
+    await db.from("musica").delete().eq("id", id);
+    await cargarMusicaDB();
+    renderSeleccion();
+    estadoReproduccion("🗑 Pista eliminada de la biblioteca.");
+  }
+
   // ======================================================
-  // SELECCIÓN MIXTA
+  // SELECCIÓN MIXTA (MÚSICA + EPISODIOS)
   // ======================================================
 
   function renderSeleccion() {
@@ -268,7 +287,7 @@
     g1.textContent = "🎵 Música";
     cont.appendChild(g1);
 
-        if (!musicas.length) cont.appendChild(pSmall("Sin música subida. Usa 📤 Subir MP3."));
+    if (!musicas.length) cont.appendChild(pSmall("Sin música subida. Usa 📤 Subir MP3."));
     musicas.forEach(m => {
       const fila = document.createElement("div");
       fila.className = "sel-item";
@@ -413,7 +432,7 @@
   }
 
   // ======================================================
-  // MÚSICA LOCAL + ECUALIZADOR RETRO
+  // MÚSICA LOCAL + ECUALIZADOR RETRO + QUITAR PISTA
   // ======================================================
 
   function cargarMusicaLocal() {
@@ -431,11 +450,11 @@
     }
     if (ctx) construirGraficoMusica();
 
-        $("musicaNombre").textContent = "🎵 " + f.name;
+    $("musicaNombre").textContent = "🎵 " + f.name;
     $("btnMusica").disabled = false;
     $("btnMusica").textContent = "▶ Música";
     $("btnQuitarMusica").disabled = false;
-   }
+  }
 
   function construirGraficoMusica() {
     if (!ctx || !musicPreview || musicSrcNode) return;
@@ -449,7 +468,7 @@
     musicAnalyser.connect(ctx.destination);
   }
 
-    function toggleMusica() {
+  function toggleMusica() {
     if (!musicPreview) return;
     if (musicPreview.paused) {
       asegurarCtx();
@@ -476,16 +495,9 @@
     $("btnQuitarMusica").disabled = true;
   }
 
-  async function borrarMusicaDB(id) {
-    const item = musicas.find(m => m.id === id);
-    if (!item || !confirm(`¿Eliminar "${item.titulo}" de la biblioteca?`)) return;
-    if (item.archivo) await db.storage.from("musica").remove([item.archivo]);
-    await db.from("musica").delete().eq("id", id);
-    await cargarMusicaDB();
-    renderSeleccion();
-    estadoReproduccion("🗑 Pista eliminada de la biblioteca.");
-  }
-  }
+  // ======================================================
+  // DIBUJO DE ECUALIZADORES
+  // ======================================================
 
   function dibujarRetro(an, canvas) {
     if (!canvas) return;
@@ -538,7 +550,7 @@
   }
 
   // ======================================================
-  // GRABACIÓN
+  // GRABACIÓN DE LA SESIÓN
   // ======================================================
 
   async function iniciarGrabacion() {
@@ -716,7 +728,7 @@
   }
 
   // ======================================================
-  // TABLA / EDITAR / BORRAR
+  // TABLA / EDITAR / PUBLICAR / BORRAR
   // ======================================================
 
   async function cargarAudios() {
