@@ -8,94 +8,85 @@
 </head>
 <body>
 
-  <header class="header-app">
-    <img src="img/escudo.png" alt="Escudo de la escuela" class="escudo-mini" />
-    <div class="header-texto">
-      <h1>Cabina de Radio Escolar</h1>
-      <p class="small">Escuela 21 de Noviembre - Esquipulas - Ciencia y Virtud</p>
-      <p class="small">Proyecto de Informática del Profechan</p>
+  <header class="topbar">
+    <img src="img/escudo.png" alt="Escudo de la escuela" class="topbar-escudo" />
+    <div class="topbar-texto">
+      <strong>Cabina · Escuela 21 de Noviembre</strong>
+      <span>Ciencia y Virtud · Esquipulas · Profechan</span>
     </div>
-    <a class="volver" href="index.html">← Inicio</a>
+    <a class="topbar-link" href="index.html">← Inicio</a>
   </header>
 
-  <main>
+  <main class="container">
 
-    <!-- CABINA EN VIVO -->
-    <section>
-      <h2>Cabina en vivo</h2>
-      <p class="small">
-        Sala en vivo con Jitsi Meet. Puedes entrar con micrófono o solo escuchar.
-      </p>
+    <div class="grid-2">
 
-      <iframe
-        id="jitsiFrame"
-        title="Sala en vivo"
-        allow="camera; microphone; autoplay; display-capture; clipboard-write"
-      ></iframe>
-    </section>
+      <!-- GRABADORA -->
+      <section class="card">
+        <h2>Grabar episodio</h2>
 
-    <!-- GRABADORA -->
-    <section>
-      <h2>Grabar episodio</h2>
+        <div class="form-row">
+          <input id="titulo" type="text" placeholder="Título del episodio" maxlength="120" />
+          <input id="alumno" type="text" placeholder="Alumno o equipo" maxlength="120" />
+        </div>
 
-      <div class="fila">
-        <input id="titulo" type="text" placeholder="Título del episodio" maxlength="120" />
-        <input id="alumno" type="text" placeholder="Alumno o equipo" maxlength="120" />
+        <textarea id="descripcion" rows="2" placeholder="Descripción (opcional)"></textarea>
+
+        <div class="btn-row">
+          <button id="btnGrabar" class="btn btn-rec"><span class="dot"></span>Grabar</button>
+          <button id="btnDetener" class="btn" disabled>Detener</button>
+        </div>
+
+        <p id="estadoGrabacion" class="estado"></p>
+      </section>
+
+      <!-- SALA EN VIVO -->
+      <section class="card">
+        <h2>Sala en vivo</h2>
+        <iframe
+          id="jitsiFrame"
+          title="Sala en vivo"
+          allow="camera; microphone; autoplay; display-capture; clipboard-write"
+        ></iframe>
+      </section>
+
+    </div>
+
+    <!-- REPRODUCTOR -->
+    <section class="card">
+      <div class="card-head">
+        <h2>Reproductor de cabina</h2>
+        <div class="btn-row">
+          <button id="btnLoop" class="btn btn-gold">Loop 3 audios</button>
+          <button id="btnStop" class="btn btn-ghost">Detener</button>
+        </div>
       </div>
 
-      <textarea id="descripcion" rows="3" placeholder="Descripción del episodio (opcional)"></textarea>
-
-      <div class="botones">
-        <button id="btnGrabar">Grabar</button>
-        <button id="btnDetener" disabled>Detener</button>
-        <span id="estadoGrabacion" class="estado"></span>
-      </div>
-
-      <p class="small">
-        El audio se guarda en Supabase y aparece en la lista de administración.
-      </p>
-    </section>
-
-    <!-- REPRODUCTOR LOOP -->
-    <section>
-      <h2>Reproductor de cabina</h2>
-
-      <p class="small">
-        El botón de loop reproduce los 3 audios más recientes.
-      </p>
-
-      <div class="botones">
-        <button id="btnLoop">Reproducir 3 en loop</button>
-        <button id="btnStop">Detener reproducción</button>
-      </div>
-
-      <div id="estadoReproduccion" class="estado"></div>
-
+      <p id="estadoReproduccion" class="estado"></p>
       <audio id="reproductor" controls></audio>
-
-      <h3>Últimos audios para loop</h3>
-      <div id="loopList"></div>
+      <div id="loopList" class="loop-list"></div>
     </section>
 
-    <!-- ADMINISTRAR AUDIOS -->
-    <section>
-      <h2>Administrar episodios</h2>
-
-      <div class="botones">
-        <button id="btnActualizar">Actualizar lista</button>
+    <!-- ADMINISTRAR -->
+    <section class="card">
+      <div class="card-head">
+        <h2>Episodios</h2>
+        <button id="btnActualizar" class="btn btn-ghost">Actualizar</button>
       </div>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Título</th>
-            <th>Alumno</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody id="tablaAudios"></tbody>
-      </table>
+      <div class="tabla-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Título</th>
+              <th>Alumno</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tablaAudios"></tbody>
+        </table>
+      </div>
     </section>
 
   </main>
@@ -114,11 +105,11 @@
       <input id="editAlumno" />
 
       <label for="editDescripcion">Descripción</label>
-      <textarea id="editDescripcion" rows="3"></textarea>
+      <textarea id="editDescripcion" rows="2"></textarea>
 
-      <div class="botones">
-        <button type="button" id="btnCancelarEditar">Cancelar</button>
-        <button type="submit">Guardar cambios</button>
+      <div class="btn-row">
+        <button type="button" id="btnCancelarEditar" class="btn btn-ghost">Cancelar</button>
+        <button type="submit" class="btn btn-gold">Guardar cambios</button>
       </div>
     </form>
   </dialog>
