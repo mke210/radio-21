@@ -7,7 +7,8 @@
   };
 
   if (!window.supabase || !config.url || config.url.includes("PEGAR")) {
-    document.getElementById("playerEstado").textContent = "Configura Supabase primero.";
+    const est = document.getElementById("playerEstado");
+    if (est) est.textContent = "Configura Supabase primero.";
     return;
   }
 
@@ -26,6 +27,9 @@
   const btnPlayPause = $("btnPlayPause");
   const btnMute = $("btnMute");
   const btnSiguiente = $("btnSiguiente");
+
+  // Bloquear descarga
+  playerAudio.setAttribute("controlslist", "nodownload");
 
   let episodios = [];
   let indiceActual = -1;
@@ -57,7 +61,6 @@
     btnMute.disabled = false;
     btnSiguiente.disabled = false;
 
-    // Cargar episodio aleatorio
     reproducirAleatorio();
   }
 
@@ -72,12 +75,10 @@
     indiceActual = nuevoIndice;
     const episodio = episodios[indiceActual];
 
-    // Actualizar UI
     playerTitulo.textContent = episodio.titulo;
     playerAlumno.textContent = `🎤 ${episodio.alumno || "Anónimo"}`;
     playerCategoria.textContent = episodio.categoria || "General";
 
-    // Imagen
     if (episodio.imagen) {
       playerImg.src = episodio.imagen;
       playerImg.style.display = "block";
@@ -87,13 +88,12 @@
       playerPlaceholder.style.display = "flex";
     }
 
-    // Audio
     playerAudio.src = episodio.url;
-    playerAudio.muted = true; // Autoplay muted por políticas del navegador
+    playerAudio.muted = true;
 
     playerAudio.play()
       .then(() => {
-        playerEstado.textContent = "Reproduciendo (silenciado - haz clic en 'Activar sonido')";
+        playerEstado.textContent = "Reproduciendo (silenciado - pulsa 'Activar sonido')";
         actualizarIconoPlay(true);
       })
       .catch(() => {
@@ -107,7 +107,6 @@
     icon.textContent = reproduciendo ? "⏸" : "▶";
   }
 
-  // Eventos
   btnPlayPause.addEventListener("click", () => {
     if (playerAudio.paused) {
       playerAudio.play();
@@ -129,7 +128,6 @@
   btnSiguiente.addEventListener("click", reproducirAleatorio);
 
   playerAudio.addEventListener("ended", () => {
-    // Cuando termina, cargar otro aleatorio
     reproducirAleatorio();
   });
 

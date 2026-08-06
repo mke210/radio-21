@@ -20,98 +20,81 @@
       <h1 class="logo">Podcast 21</h1>
     </div>
     <div class="topbar-der">
+      <a class="topbar-link" href="stats.html">📊 Estadísticas</a>
       <a class="topbar-link" href="index.html">← Inicio</a>
     </div>
   </header>
 
   <main class="container">
 
-    <p class="info-dual">
-      💡 <strong>Grabación dual:</strong> Dos personas pueden grabar al mismo tiempo desde esta página.
-    </p>
+    <p class="info-dual">💡 <strong>Grabación dual:</strong> Dos personas pueden grabar al mismo tiempo.</p>
 
-    <!-- DOS GRABADORES -->
+    <datalist id="listaTemporadas">
+      <option value="Temporada 1 - 2026"></option>
+      <option value="Temporada 2 - 2026"></option>
+      <option value="Especiales"></option>
+    </datalist>
+
     <div class="grabadores-grid">
 
       <!-- LOCUTOR 1 -->
       <section class="card grabador">
         <h2>🎙️ Locutor 1</h2>
-
         <div class="form-row">
           <input id="titulo1" type="text" placeholder="Título del episodio" maxlength="120" />
           <input id="alumno1" type="text" placeholder="Alumno o equipo" maxlength="120" />
         </div>
-
         <div class="form-row">
+          <input id="temporada1" list="listaTemporadas" value="Temporada 1 - 2026" placeholder="Temporada" />
           <select id="categoria1">
-            <option value="General">Categoría: General</option>
+            <option value="General">General</option>
             <option value="Noticias">Noticias</option>
             <option value="Entrevistas">Entrevistas</option>
             <option value="Cultura">Cultura</option>
             <option value="Deportes">Deportes</option>
             <option value="Ciencia">Ciencia</option>
           </select>
-          <label class="imagen-label">
-            📷 Portada
-            <input id="imagen1" type="file" accept="image/*" />
-          </label>
+          <label class="imagen-label">📷 Portada<input id="imagen1" type="file" accept="image/*" /></label>
         </div>
-
         <textarea id="descripcion1" rows="2" placeholder="Descripción del episodio"></textarea>
-
         <div class="btn-row">
           <button id="btnGrabar1" class="btn btn-rec"><span class="dot"></span>Grabar</button>
           <button id="btnDetener1" class="btn" disabled>Detener</button>
-          <label class="check-label">
-            <input id="destacado1" type="checkbox" />
-            Destacar
-          </label>
+          <label class="check-label"><input id="destacado1" type="checkbox" /> Destacar</label>
         </div>
-
         <p id="estadoGrabacion1" class="estado"></p>
       </section>
 
       <!-- LOCUTOR 2 -->
       <section class="card grabador">
         <h2>🎙️ Locutor 2</h2>
-
         <div class="form-row">
           <input id="titulo2" type="text" placeholder="Título del episodio" maxlength="120" />
           <input id="alumno2" type="text" placeholder="Alumno o equipo" maxlength="120" />
         </div>
-
         <div class="form-row">
+          <input id="temporada2" list="listaTemporadas" value="Temporada 1 - 2026" placeholder="Temporada" />
           <select id="categoria2">
-            <option value="General">Categoría: General</option>
+            <option value="General">General</option>
             <option value="Noticias">Noticias</option>
             <option value="Entrevistas">Entrevistas</option>
             <option value="Cultura">Cultura</option>
             <option value="Deportes">Deportes</option>
             <option value="Ciencia">Ciencia</option>
           </select>
-          <label class="imagen-label">
-            📷 Portada
-            <input id="imagen2" type="file" accept="image/*" />
-          </label>
+          <label class="imagen-label">📷 Portada<input id="imagen2" type="file" accept="image/*" /></label>
         </div>
-
         <textarea id="descripcion2" rows="2" placeholder="Descripción del episodio"></textarea>
-
         <div class="btn-row">
           <button id="btnGrabar2" class="btn btn-rec"><span class="dot"></span>Grabar</button>
           <button id="btnDetener2" class="btn" disabled>Detener</button>
-          <label class="check-label">
-            <input id="destacado2" type="checkbox" />
-            Destacar
-          </label>
+          <label class="check-label"><input id="destacado2" type="checkbox" /> Destacar</label>
         </div>
-
         <p id="estadoGrabacion2" class="estado"></p>
       </section>
 
     </div>
 
-    <!-- REPRODUCTOR -->
     <section class="card">
       <div class="card-head">
         <h2>Reproductor</h2>
@@ -120,26 +103,23 @@
           <button id="btnStop" class="btn btn-ghost">Detener</button>
         </div>
       </div>
-
       <p id="estadoReproduccion" class="estado"></p>
-      <audio id="reproductor" controls></audio>
+      <audio id="reproductor" controls controlslist="nodownload"></audio>
       <div id="loopList" class="loop-list"></div>
     </section>
 
-    <!-- ADMINISTRAR -->
     <section class="card">
       <div class="card-head">
         <h2>Administrar episodios</h2>
         <button id="btnActualizar" class="btn btn-ghost">Actualizar</button>
       </div>
-
       <div class="tabla-wrap">
         <table>
           <thead>
             <tr>
               <th>Título</th>
               <th>Alumno</th>
-              <th>Categoría</th>
+              <th>Temporada</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
@@ -151,19 +131,16 @@
 
   </main>
 
-  <!-- MODAL EDITAR -->
   <dialog id="editModal">
     <form id="editForm">
       <h3>Editar episodio</h3>
-
       <input type="hidden" id="editId" />
-
       <label for="editTitulo">Título</label>
       <input id="editTitulo" required />
-
       <label for="editAlumno">Alumno</label>
       <input id="editAlumno" />
-
+      <label for="editTemporada">Temporada</label>
+      <input id="editTemporada" list="listaTemporadas" />
       <label for="editCategoria">Categoría</label>
       <select id="editCategoria">
         <option value="General">General</option>
@@ -173,13 +150,10 @@
         <option value="Deportes">Deportes</option>
         <option value="Ciencia">Ciencia</option>
       </select>
-
       <label for="editDescripcion">Descripción</label>
       <textarea id="editDescripcion" rows="2"></textarea>
-
       <label for="editImagen">Cambiar portada (opcional)</label>
       <input id="editImagen" type="file" accept="image/*" />
-
       <div class="btn-row">
         <button type="button" id="btnCancelarEditar" class="btn btn-ghost">Cancelar</button>
         <button type="submit" class="btn btn-gold">Guardar</button>

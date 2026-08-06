@@ -3,45 +3,81 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Podcast - Escuela 21 de Noviembre</title>
+  <title>Podcast 21 - Episodios</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 
-  <header class="header-app">
-    <img src="img/escudo.png" alt="Escudo de la escuela" class="escudo-mini" />
-    <div class="header-texto">
-      <h1>Podcast Escolar</h1>
-      <p class="small">Escuela 21 de Noviembre - Esquipulas - Ciencia y Virtud</p>
-      <p class="small">Proyecto de Informática del Profechan</p>
+  <header class="topbar">
+    <div class="topbar-izq">
+      <img src="img/escudo.png" alt="Escudo" class="topbar-escudo" />
+      <div class="topbar-texto">
+        <strong>Escuela 21 de Noviembre</strong>
+        <span>Ciencia y Virtud · Esquipulas</span>
+      </div>
     </div>
-    <a class="volver" href="index.html">← Inicio</a>
+    <div class="topbar-centro">
+      <h1 class="logo">Podcast 21</h1>
+    </div>
+    <div class="topbar-der">
+      <button id="btnNotificaciones" class="btn-bell" title="Activar notificaciones">🔔</button>
+      <a class="topbar-link" href="index.html">← Inicio</a>
+    </div>
   </header>
 
-  <main>
-    <section>
-      <div class="podcast-header">
-        <img src="img/podcast-icon.png" alt="Icono del podcast" class="icono-podcast" />
-        <div>
-          <h2>Episodios del podcast</h2>
-          <p class="small">
-            Temas grabados por los alumnos de la Escuela 21 de Noviembre.
-          </p>
+  <main class="container">
+
+    <section class="podcast-hero">
+      <img src="img/podcast-icon.png" alt="Podcast 21" class="hero-icon" />
+      <div class="hero-texto">
+        <h1>Podcast 21</h1>
+        <p class="lema">Ciencia y Virtud</p>
+        <p class="descripcion-hero">Voces de los alumnos de la Escuela 21 de Noviembre.</p>
+      </div>
+    </section>
+
+    <section id="destacadoSection" class="card destacado-card" style="display:none;">
+      <h2>⭐ Episodio destacado</h2>
+      <div id="destacadoContenido" class="episodio-destacado"></div>
+    </section>
+
+    <section class="card">
+      <div class="filtros">
+        <input id="buscar" type="text" placeholder="🔍 Buscar episodio..." />
+        <select id="filtroTemporada">
+          <option value="Todas">🗓️ Todas las temporadas</option>
+        </select>
+        <div class="categorias" id="categorias">
+          <button class="cat-btn activo" data-cat="Todas">Todas</button>
+          <button class="cat-btn" data-cat="Noticias">Noticias</button>
+          <button class="cat-btn" data-cat="Entrevistas">Entrevistas</button>
+          <button class="cat-btn" data-cat="Cultura">Cultura</button>
+          <button class="cat-btn" data-cat="Deportes">Deportes</button>
+          <button class="cat-btn" data-cat="Ciencia">Ciencia</button>
+          <button class="cat-btn" data-cat="General">General</button>
         </div>
       </div>
-
-      <div id="episodios"></div>
     </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>Todos los episodios</h2>
+        <span id="contadorEpisodios" class="small"></span>
+      </div>
+      <div id="episodios" class="episodios-grid"></div>
+    </section>
+
   </main>
 
   <footer>
     <p>Escuela 21 de Noviembre - Esquipulas</p>
-    <p class="small">Ciencia y Virtud - Proyecto del Profechan</p>
+    <p class="small">Ciencia y Virtud · Proyecto del Profechan</p>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js"></script>
   <script src="js/podcast.js"></script>
+  <script src="js/notificaciones.js"></script>
 
 </body>
 </html>

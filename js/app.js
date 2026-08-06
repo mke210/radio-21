@@ -32,18 +32,19 @@
   let indice = 0;
   let loopActivo = false;
 
-  // Estado para dos grabadores
+  // Estado para dos grabadores independientes
   const grabadores = {
     1: { mediaRecorder: null, audioChunks: [], stream: null, inicio: 0 },
     2: { mediaRecorder: null, audioChunks: [], stream: null, inicio: 0 }
   };
 
-  // Eventos para ambos grabadores
+  // Eventos de grabación dual
   on("btnGrabar1", "click", () => iniciarGrabacion(1));
   on("btnDetener1", "click", () => detenerGrabacion(1));
   on("btnGrabar2", "click", () => iniciarGrabacion(2));
   on("btnDetener2", "click", () => detenerGrabacion(2));
 
+  // Eventos de reproducción y administración
   on("btnLoop", "click", reproducirLoop);
   on("btnStop", "click", detenerReproduccion);
   on("btnActualizar", "click", cargarAudios);
@@ -53,14 +54,16 @@
 
   cargarAudios();
 
-  // ============ GRABACIÓN DUAL ============
+  // ======================================================
+  // GRABACIÓN DUAL
+  // ======================================================
 
   async function iniciarGrabacion(num) {
     const titulo = $(`titulo${num}`).value.trim();
     if (!titulo) { estadoGrabacion(num, "Escribe un título.", true); return; }
     if (!db) { estadoGrabacion(num, "Falta configurar Supabase.", true); return; }
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      estadoGrabacion(num, "Navegador no soporta micrófono.", true); return;
+      estadoGrabacion(num, "Navegador no soporta micrófono aquí.", true); return;
     }
 
     setGrabandoUI(num, true);
@@ -133,6 +136,7 @@
       const alumno = $(`alumno${num}`).value.trim() || "Anónimo";
       const descripcion = $(`descripcion${num}`).value.trim();
       const categoria = $(`categoria${num}`).value || "General";
+      const temporada = $(`temporada${num}`).value.trim() || "Temporada 1 - 2026";
       const destacado = $(`destacado${num}`).checked;
       const archivoImg = $(`imagen${num}`).files[0];
 
@@ -161,7 +165,7 @@
       }
 
       const { error: err2 } = await db.from("audios").insert({
-        titulo, alumno, descripcion, categoria, destacado,
+        titulo, alumno, descripcion, categoria, temporada, destacado,
         archivo, url: urlData.publicUrl, imagen: urlImagen,
         publicado: true, duracion: duracionSeg || 0
       });
@@ -175,6 +179,7 @@
       $(`imagen${num}`).value = "";
       $(`destacado${num}`).checked = false;
       $(`categoria${num}`).value = "General";
+      $(`temporada${num}`).value = "Temporada 1 - 2026";
 
       await cargarAudios();
     } catch (error) {
@@ -183,7 +188,9 @@
     }
   }
 
-  // ============ LISTAR ============
+  // ======================================================
+  // LISTAR
+  // ======================================================
 
   async function cargarAudios() {
     if (!db) return;
@@ -232,7 +239,7 @@
       tr.innerHTML = `
         <td>${item.titulo}</td>
         <td>${item.alumno || "Anónimo"}</td>
-        <td><span class="episodio-cat">${item.categoria || "General"}</span></td>
+        <td><span class="temporada-badge">🗓️ ${item.temporada || "Temporada 1 - 2026"}</span></td>
         <td><span class="badge ${publicado ? "badge-on" : "badge-off"}">${publicado ? "Publicado" : "Oculto"}</span></td>
       `;
 
@@ -260,7 +267,9 @@
     return b;
   }
 
-  // ============ REPRODUCCIÓN ============
+  // ======================================================
+  // REPRODUCCIÓN
+  // ======================================================
 
   function reproducirUno(id) {
     const item = audios.find(a => a.id === id);
@@ -305,7 +314,9 @@
     estadoReproduccion("Detenido.");
   }
 
-  // ============ EDITAR ============
+  // ======================================================
+  // EDITAR / PUBLICAR / BORRAR
+  // ======================================================
 
   function abrirEditar(id) {
     const item = audios.find(a => a.id === id);
@@ -315,6 +326,7 @@
     $("editAlumno").value = item.alumno || "";
     $("editDescripcion").value = item.descripcion || "";
     $("editCategoria").value = item.categoria || "General";
+    $("editTemporada").value = item.temporada || "Temporada 1 - 2026";
     $("editModal").showModal();
   }
 
@@ -325,6 +337,7 @@
     const alumno = $("editAlumno").value.trim() || "Anónimo";
     const descripcion = $("editDescripcion").value.trim();
     const categoria = $("editCategoria").value;
+    const temporada = $("editTemporada").value.trim() || "Temporada 1 - 2026";
     const archivoImg = $("editImagen").files[0];
 
     if (!titulo) { alert("Título vacío."); return; }
@@ -339,7 +352,7 @@
       }
     }
 
-    const update = { titulo, alumno, descripcion, categoria };
+    const update = { titulo, alumno, descripcion, categoria, temporada };
     if (urlImagen) update.imagen = urlImagen;
 
     const { error } = await db.from("audios").update(update).eq("id", id);
@@ -366,7 +379,9 @@
     await cargarAudios();
   }
 
-  // ============ UTILIDADES ============
+  // ======================================================
+  // UTILIDADES
+  // ======================================================
 
   function estadoGrabacion(num, t, err) {
     const el = $(`estadoGrabacion${num}`);

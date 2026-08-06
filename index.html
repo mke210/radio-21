@@ -20,13 +20,14 @@
       <h1 class="logo">Podcast 21</h1>
     </div>
     <div class="topbar-der">
+      <button id="btnNotificaciones" class="btn-bell" title="Activar notificaciones">🔔</button>
       <span class="profe">Profechan</span>
     </div>
   </header>
 
   <main>
 
-    <!-- REPRODUCTOR CENTRAL ALEATORIO -->
+    <!-- REPRODUCTOR CENTRAL -->
     <section class="player-central">
       <div class="player-cover">
         <img id="playerImg" src="" alt="Portada" style="display:none;" />
@@ -38,38 +39,29 @@
         <p id="playerCategoria" class="player-cat"></p>
       </div>
       <div class="player-controls">
-        <button id="btnPlayPause" class="btn-player btn-play" disabled>
-          <span class="icon-play">▶</span>
-        </button>
-        <button id="btnMute" class="btn-player btn-mute" disabled>
-          🔇 Activar sonido
-        </button>
-        <button id="btnSiguiente" class="btn-player btn-next" disabled>
-          ⏭ Siguiente
-        </button>
+        <button id="btnPlayPause" class="btn-player btn-play" disabled><span class="icon-play">▶</span></button>
+        <button id="btnMute" class="btn-player btn-mute" disabled>🔇 Activar sonido</button>
+        <button id="btnSiguiente" class="btn-player btn-next" disabled>⏭ Siguiente</button>
       </div>
-      <audio id="playerAudio" loop></audio>
+      <audio id="playerAudio" loop controlslist="nodownload"></audio>
       <p id="playerEstado" class="player-estado"></p>
     </section>
 
     <h2 class="titulo-seccion">Elige una sección</h2>
 
     <div class="tarjetas">
-
       <a class="tarjeta" href="cabina.html">
         <div class="icono">🎙️</div>
         <h3>Cabina</h3>
         <p>Graba y administra los episodios del podcast escolar.</p>
         <span class="boton-tarjeta">Entrar a la cabina</span>
       </a>
-
       <a class="tarjeta" href="podcast.html">
         <img src="img/podcast-icon.png" alt="Podcast" class="icono-img" />
         <h3>Podcast</h3>
         <p>Escucha los episodios grabados por los alumnos.</p>
         <span class="boton-tarjeta">Escuchar podcast</span>
       </a>
-
     </div>
   </main>
 
@@ -81,6 +73,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js"></script>
   <script src="js/home.js"></script>
+  <script src="js/notificaciones.js"></script>
 
 </body>
 </html>
