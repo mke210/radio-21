@@ -69,7 +69,21 @@
       .catch(() => { btnPlay.textContent = "▶"; });
   }
 
-  // ===== Vibración de la bocina =====
+  // ===== GIF: se activa con play, se oculta con pausa =====
+  function setGif(activo) {
+    const gif = $("pmGif");
+    const gifPh = $("pmGifPh");
+    if (!gif || !gifPh) return;
+    if (activo) {
+      gif.src = "img/radio-anim.gif";
+      gif.classList.remove("oculto");
+      gifPh.classList.add("oculto");
+    } else {
+      gif.classList.add("oculto");
+      gifPh.classList.remove("oculto");
+    }
+  }
+
   function setVibracion(activo) {
     if (activo) {
       btnMute.classList.add("vibrando");
@@ -93,7 +107,7 @@
     setVibracion(audio.muted);
   });
 
+  audio.addEventListener("play", () => { btnPlay.textContent = "⏸"; setGif(true); });
+  audio.addEventListener("pause", () => { btnPlay.textContent = "▶"; setGif(false); });
   audio.addEventListener("ended", aleatorio);
-  audio.addEventListener("play", () => { btnPlay.textContent = "⏸"; });
-  audio.addEventListener("pause", () => { btnPlay.textContent = "▶"; });
 })();

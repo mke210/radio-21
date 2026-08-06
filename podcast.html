@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Podcast 21 - Episodios</title>
+  <title>PODCAST 21 - Episodios</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -12,35 +12,41 @@
     <div class="topbar-izq">
       <img src="img/escudo.png" alt="Escudo" class="topbar-escudo" />
       <div class="topbar-texto">
-        <strong>Escuela 21 de Noviembre</strong>
+        <strong>Secundaria 21 de Noviembre</strong>
         <span>Ciencia y Virtud · Esquipulas</span>
       </div>
     </div>
     <div class="topbar-centro">
-      <h1 class="logo">Podcast 21</h1>
+      <h1 class="logo">🎙️ PODCAST 21</h1>
     </div>
     <div class="topbar-der">
       <button id="btnNotificaciones" class="btn-bell" title="Activar notificaciones">🔔</button>
+      <span class="profe">powered by elprofechan</span>
       <a class="topbar-link" href="index.html">← Inicio</a>
     </div>
   </header>
 
   <main class="container">
 
+    <!-- ============ HERO ============ -->
     <section class="podcast-hero">
       <img src="img/podcast-icon.png" alt="Podcast 21" class="hero-icon" />
       <div class="hero-texto">
-        <h1>Podcast 21</h1>
+        <h1>🎙️ PODCAST 21</h1>
         <p class="lema">Ciencia y Virtud</p>
-        <p class="descripcion-hero">Voces de los alumnos de la Escuela 21 de Noviembre.</p>
+        <p class="descripcion-hero">
+          Voces de los alumnos de la Secundaria 21 de Noviembre. Noticias, entrevistas, cultura y más.
+        </p>
       </div>
     </section>
 
+    <!-- ============ DESTACADO ============ -->
     <section id="destacadoSection" class="card destacado-card" style="display:none;">
       <h2>⭐ Episodio destacado</h2>
       <div id="destacadoContenido" class="episodio-destacado"></div>
     </section>
 
+    <!-- ============ FILTROS ============ -->
     <section class="card">
       <div class="filtros">
         <input id="buscar" type="text" placeholder="🔍 Buscar episodio..." />
@@ -59,6 +65,7 @@
       </div>
     </section>
 
+    <!-- ============ LISTA DE EPISODIOS ============ -->
     <section class="card">
       <div class="card-head">
         <h2>Todos los episodios</h2>
@@ -70,8 +77,8 @@
   </main>
 
   <footer>
-    <p>Escuela 21 de Noviembre - Esquipulas</p>
-    <p class="small">Ciencia y Virtud · Proyecto del Profechan</p>
+    <p>Secundaria 21 de Noviembre - Esquipulas</p>
+    <p class="small">Ciencia y Virtud · powered by elprofechan</p>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

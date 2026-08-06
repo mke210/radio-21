@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Podcast 21 - Escuela 21 de Noviembre</title>
+  <title>PODCAST 21 - Secundaria 21 de Noviembre</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -12,16 +12,16 @@
     <div class="topbar-izq">
       <img src="img/escudo.png" alt="Escudo" class="topbar-escudo" />
       <div class="topbar-texto">
-        <strong>Escuela 21 de Noviembre</strong>
+        <strong>Secundaria 21 de Noviembre</strong>
         <span>Ciencia y Virtud · Esquipulas</span>
       </div>
     </div>
     <div class="topbar-centro">
-      <h1 class="logo">Podcast 21</h1>
+      <h1 class="logo">🎙️ PODCAST 21</h1>
     </div>
     <div class="topbar-der">
       <button id="btnNotificaciones" class="btn-bell" title="Activar notificaciones">🔔</button>
-      <span class="profe">Profechan</span>
+      <span class="profe">powered by elprofechan</span>
     </div>
   </header>
 
@@ -44,30 +44,37 @@
       </a>
     </div>
 
-    <!-- REPRODUCTOR MINIMALISTA -->
-    <section class="player-minimal">
-      <img id="pmImg" class="pm-img" src="" alt="" style="display:none;" />
-      <div id="pmPh" class="pm-img pm-ph">🎧</div>
-      <div class="pm-info">
-        <strong id="pmTitulo">Cargando episodio…</strong>
-        <span id="pmMeta" class="small"></span>
+    <!-- REPRODUCTOR CON GIF -->
+    <section class="player-home">
+      <div class="anim-center anim-home">
+        <img id="pmGif" src="img/radio-anim.gif" alt="Radio animada" class="gif-radio gif-home oculto" />
+        <div id="pmGifPh" class="gif-placeholder gif-home-ph">🎧</div>
       </div>
-      <div class="pm-controls">
-        <button id="pmPlay" class="pm-btn" disabled>▶</button>
-        <button id="pmNext" class="pm-btn" disabled>⏭</button>
-        <span class="pm-speaker">
-          <button id="pmMute" class="pm-btn" disabled>🔇</button>
-          <span id="pmAviso" class="pm-aviso oculto">¡Activa el audio! 🔊</span>
-        </span>
+
+      <div class="player-minimal">
+        <img id="pmImg" class="pm-img" src="" alt="" style="display:none;" />
+        <div id="pmPh" class="pm-img pm-ph">🎧</div>
+        <div class="pm-info">
+          <strong id="pmTitulo">Cargando episodio…</strong>
+          <span id="pmMeta" class="small"></span>
+        </div>
+        <div class="pm-controls">
+          <button id="pmPlay" class="pm-btn" disabled>▶</button>
+          <button id="pmNext" class="pm-btn" disabled>⏭</button>
+          <span class="pm-speaker">
+            <button id="pmMute" class="pm-btn" disabled>🔇</button>
+            <span id="pmAviso" class="pm-aviso oculto">¡Activa el audio! 🔊</span>
+          </span>
+        </div>
+        <audio id="pmAudio" loop controlslist="nodownload"></audio>
       </div>
-      <audio id="pmAudio" loop controlslist="nodownload"></audio>
     </section>
 
   </main>
 
   <footer>
-    <p>Escuela 21 de Noviembre - Esquipulas</p>
-    <p class="small">Ciencia y Virtud · Proyecto del Profechan</p>
+    <p>Secundaria 21 de Noviembre - Esquipulas</p>
+    <p class="small">Ciencia y Virtud · powered by elprofechan</p>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

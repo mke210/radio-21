@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cabina - Podcast 21</title>
+  <title>Cabina - PODCAST 21</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -12,12 +12,12 @@
     <div class="topbar-izq">
       <img src="img/escudo.png" alt="Escudo" class="topbar-escudo" />
       <div class="topbar-texto">
-        <strong>Escuela 21 de Noviembre</strong>
+        <strong>Secundaria 21 de Noviembre</strong>
         <span>Ciencia y Virtud · Esquipulas</span>
       </div>
     </div>
     <div class="topbar-centro">
-      <h1 class="logo">Podcast 21</h1>
+      <h1 class="logo">🎙️ PODCAST 21</h1>
     </div>
     <div class="topbar-der">
       <a class="topbar-link" href="stats.html">📊</a>
@@ -99,7 +99,7 @@
       <p id="estadoGrabacion" class="estado"></p>
     </section>
 
-    <!-- ============ MÚSICA DE FONDO ============ -->
+    <!-- ============ MÚSICA DE FONDO (con ecualizador retro) ============ -->
     <section class="card">
       <div class="card-head">
         <h2>🎵 Música de fondo (para mezclar al grabar)</h2>
@@ -110,12 +110,10 @@
         </div>
       </div>
 
-            <div class="anim-center">
-        <img id="gifRadio" src="img/radio-anim.gif" alt="Radio animada" class="gif-radio oculto" />
-        <div id="gifPlaceholder" class="gif-placeholder">🎧</div>
-      </div>
+      <canvas id="eqMusica" class="eq-retro" width="600" height="70"></canvas>
 
       <span id="musicaNombre" class="small">Sin pista cargada</span>
+      <p class="small">🎚️ Al hablar un locutor, la música baja al 50% y se recupera sola.</p>
       <div class="btn-row">
         <label class="check-label"><input id="musicaIncluir" type="checkbox" checked /> Incluir en la grabación</label>
         <label class="check-label"><input id="musicaLoop" type="checkbox" /> Loop de música</label>

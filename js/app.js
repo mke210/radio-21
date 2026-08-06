@@ -24,27 +24,32 @@
   let loopActivo = false;
   let iniciadoAuto = false;
 
-  // ===== Audio compartido =====
   let ctx = null;
 
-  // ===== Sesión de grabación =====
+  // ===== Locutores (micrófonos vivos con switch) =====
+  const loc = {
+    1: { stream: null, src: null, an: null },
+    2: { stream: null, src: null, an: null }
+  };
+
+  // ===== Grabación =====
   let rec = null;
   let chunks = [];
-  let streams = [];
-  let anMaster = null, an1 = null, an2 = null;
+  let anMaster = null;
   let masterNode = null;
   let musicaConectada = false;
-  let rafId = null;
   let timerInt = null;
   let seg = 0;
   let pausado = false;
 
-  // ===== Música local (mezcla) =====
+  // ===== Música local =====
   let musicPreview = null;
   let musicSrcNode = null;
   let musicGainNode = null;
   let musicAnalyser = null;
-  let musicRaf = null;
+
+  // ===== Ducking =====
+  let ultimaVoz = 0;
 
   // ===== Eventos =====
   on("btnGrabar", "click", iniciarGrabacion);
@@ -53,9 +58,6 @@
   on("btnMusica", "click", toggleMusica);
   on("musicaFile", "change", cargarMusicaLocal);
   on("musicaLoop", "change", () => { if (musicPreview) musicPreview.loop = $("musicaLoop").checked; });
-  on("musicaVol", "input", () => {
-    if (musicGainNode) musicGainNode.gain.value = parseFloat($("musicaVol").value);
-  });
   on("subirMusica", "change", subirMusicaDB);
   on("btnPlaySel", "click", reproducirSeleccion);
   on("btnLoopToggle", "click", toggleLoop);
@@ -66,15 +68,102 @@
   on("btnCancelarEditar", "click", () => $("editModal").close());
   on("reproductor", "ended", alTerminarEpisodio);
 
+  on("loc1Activo", "change", () => toggleLocutor(1));
+  on("loc2Activo", "change", () => toggleLocutor(2));
+  on("mic1", "change", async () => {
+    if ($("loc1Activo").checked) { detenerLocutor(1); await asegurarLocutor(1); }
+  });
+  on("mic2", "change", async () => {
+    if ($("loc2Activo").checked) { detenerLocutor(2); await asegurarLocutor(2); }
+  });
+
   cargarMics();
   if (navigator.mediaDevices) navigator.mediaDevices.addEventListener("devicechange", cargarMics);
-  iniciarEqMusica();
+  iniciarLoopSiempre();
   cargarTodo();
 
   function asegurarCtx() {
     if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
     if (ctx.state === "suspended") ctx.resume();
     return ctx;
+  }
+
+  // ======================================================
+  // LOCUTORES: micrófono vivo al activar el switch
+  // ======================================================
+
+  async function toggleLocutor(num) {
+    if ($(`loc${num}Activo`).checked) await asegurarLocutor(num);
+    else detenerLocutor(num);
+  }
+
+  async function asegurarLocutor(num) {
+    if (loc[num].stream) return;
+    try {
+      asegurarCtx();
+      const stream = await pedirMic($(`mic${num}`).value);
+      const src = ctx.createMediaStreamSource(stream);
+      const an = ctx.createAnalyser();
+      an.fftSize = 512;
+      src.connect(an); // solo análisis, no se escucha (sin feedback)
+      loc[num] = { stream, src, an };
+      cargarMics();
+    } catch (e) {
+      console.error(e);
+      $(`loc${num}Activo`).checked = false;
+      estadoGrabacion("No se pudo abrir el micrófono del locutor " + num + ".", true);
+    }
+  }
+
+  function detenerLocutor(num) {
+    const L = loc[num];
+    if (L.stream) L.stream.getTracks().forEach(t => t.stop());
+    try { if (L.src) L.src.disconnect(); if (L.an) L.an.disconnect(); } catch (e) {}
+    loc[num] = { stream: null, src: null, an: null };
+  }
+
+  // ======================================================
+  // DUCKING: la voz baja la música al 50%
+  // ======================================================
+
+  function nivelVoz(an) {
+    if (!an) return 0;
+    const data = new Uint8Array(an.fftSize);
+    an.getByteTimeDomainData(data);
+    let sum = 0;
+    for (let i = 0; i < data.length; i++) {
+      const v = (data[i] - 128) / 128;
+      sum += v * v;
+    }
+    return Math.sqrt(sum / data.length);
+  }
+
+  function aplicarDucking() {
+    if (!musicGainNode || !ctx) return;
+    const nivel = Math.max(nivelVoz(loc[1].an), nivelVoz(loc[2].an));
+    if (nivel > 0.06) ultimaVoz = Date.now();
+    const conVoz = (Date.now() - ultimaVoz) < 800;
+    const base = parseFloat($("musicaVol").value) || 0.5;
+    const objetivo = conVoz ? base * 0.5 : base;
+    musicGainNode.gain.setTargetAtTime(objetivo, ctx.currentTime, 0.2);
+  }
+
+  // ======================================================
+  // BUCLE SIEMPRE ACTIVO: ecualizadores + ducking
+  // ======================================================
+
+  function iniciarLoopSiempre() {
+    const paso = () => {
+      requestAnimationFrame(paso);
+      dibujarBarras(loc[1].an, $("eq1"));
+      dibujarBarras(loc[2].an, $("eq2"));
+      dibujarRetro(musicAnalyser, $("eqMusica"));
+      aplicarDucking();
+      if (anMaster && rec && rec.state === "recording" && !pausado) {
+        dibujarBarras(anMaster, $("eqMaster"));
+      }
+    };
+    paso();
   }
 
   // ======================================================
@@ -100,7 +189,6 @@
     const r = $("reproductor");
     r.src = playlist[0].url;
 
-    // Intentar con sonido; si el navegador lo bloquea, silenciado + aviso
     r.play()
       .then(() => {
         $("avisoSonido").classList.add("oculto");
@@ -125,7 +213,7 @@
   }
 
   // ======================================================
-  // BIBLIOTECA DE MÚSICA (SUPABASE)
+  // BIBLIOTECA DE MÚSICA (PERSISTENTE)
   // ======================================================
 
   async function cargarMusicaDB() {
@@ -160,13 +248,13 @@
     }
 
     $("subirMusica").value = "";
-    estadoReproduccion("✅ Música agregada a la biblioteca.");
+    estadoReproduccion("✅ Música guardada. Ya no se pierde al recargar.");
     await cargarMusicaDB();
     renderSeleccion();
   }
 
   // ======================================================
-  // SELECCIÓN MIXTA (MÚSICA + EPISODIOS)
+  // SELECCIÓN MIXTA
   // ======================================================
 
   function renderSeleccion() {
@@ -179,9 +267,7 @@
     g1.textContent = "🎵 Música";
     cont.appendChild(g1);
 
-    if (!musicas.length) {
-      cont.appendChild(pSmall("Sin música subida. Usa 📤 Subir MP3."));
-    }
+    if (!musicas.length) cont.appendChild(pSmall("Sin música subida. Usa 📤 Subir MP3."));
     musicas.forEach(m => cont.appendChild(itemSel("m:" + m.id, "🎵 " + m.titulo)));
 
     const g2 = document.createElement("div");
@@ -189,9 +275,7 @@
     g2.textContent = "🎙️ Episodios";
     cont.appendChild(g2);
 
-    if (!audios.length) {
-      cont.appendChild(pSmall("Sin episodios todavía."));
-    }
+    if (!audios.length) cont.appendChild(pSmall("Sin episodios todavía."));
     audios.forEach(a => cont.appendChild(itemSel("e:" + a.id, a.titulo)));
   }
 
@@ -287,7 +371,7 @@
   }
 
   // ======================================================
-  // MICRÓFONOS
+  // MICRÓFONOS (lista de dispositivos)
   // ======================================================
 
   async function cargarMics() {
@@ -352,32 +436,16 @@
     musicAnalyser.connect(ctx.destination);
   }
 
-    function toggleMusica() {
+  function toggleMusica() {
     if (!musicPreview) return;
     if (musicPreview.paused) {
       asegurarCtx();
       construirGraficoMusica();
       musicPreview.play();
       $("btnMusica").textContent = "⏸ Música";
-      activarGif(true);
     } else {
       musicPreview.pause();
       $("btnMusica").textContent = "▶ Música";
-      activarGif(false);
-    }
-  }
-
-  function activarGif(activo) {
-    const gif = $("gifRadio");
-    const ph = $("gifPlaceholder");
-    if (!gif || !ph) return;
-    if (activo) {
-      gif.src = "img/radio-anim.gif"; // reinicia el movimiento desde el inicio
-      gif.classList.remove("oculto");
-      ph.classList.add("oculto");
-    } else {
-      gif.classList.add("oculto");
-      ph.classList.remove("oculto");
     }
   }
 
@@ -413,6 +481,24 @@
     }
   }
 
+  function dibujarBarras(an, canvas) {
+    if (!an || !canvas) return;
+    const data = new Uint8Array(an.frequencyBinCount);
+    an.getByteFrequencyData(data);
+    const c2 = canvas.getContext("2d");
+    const W = canvas.width, H = canvas.height;
+    c2.clearRect(0, 0, W, H);
+    const bars = 24;
+    const step = Math.max(1, Math.floor(data.length / bars));
+    const bw = W / bars;
+    for (let i = 0; i < bars; i++) {
+      const v = data[i * step] / 255;
+      const h = Math.max(2, v * H);
+      c2.fillStyle = v > 0.7 ? "#e05252" : "#e3b64f";
+      c2.fillRect(i * bw + 1, H - h, bw - 2, h);
+    }
+  }
+
   // ======================================================
   // GRABACIÓN
   // ======================================================
@@ -431,29 +517,17 @@
     try {
       asegurarCtx();
 
+      if (loc1) await asegurarLocutor(1);
+      if (loc2) await asegurarLocutor(2);
+
       masterNode = ctx.createGain();
       anMaster = ctx.createAnalyser(); anMaster.fftSize = 64;
       const dest = ctx.createMediaStreamDestination();
       masterNode.connect(anMaster);
       masterNode.connect(dest);
 
-      streams = [];
-
-      if (loc1) {
-        const s = await pedirMic($("mic1").value);
-        streams.push(s);
-        const src = ctx.createMediaStreamSource(s);
-        an1 = ctx.createAnalyser(); an1.fftSize = 64;
-        src.connect(masterNode); src.connect(an1);
-      } else an1 = null;
-
-      if (loc2) {
-        const s = await pedirMic($("mic2").value);
-        streams.push(s);
-        const src = ctx.createMediaStreamSource(s);
-        an2 = ctx.createAnalyser(); an2.fftSize = 64;
-        src.connect(masterNode); src.connect(an2);
-      } else an2 = null;
+      if (loc1 && loc[1].src) loc[1].src.connect(masterNode);
+      if (loc2 && loc[2].src) loc[2].src.connect(masterNode);
 
       musicaConectada = false;
       if ($("musicaIncluir").checked) {
@@ -464,17 +538,12 @@
         }
       }
 
-      cargarMics();
-
       chunks = [];
       rec = new MediaRecorder(dest.stream);
       rec.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
       rec.onstop = async () => {
         const blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
         const dur = seg;
-        if (musicaConectada && musicGainNode) {
-          try { musicGainNode.disconnect(masterNode); } catch (e) {}
-        }
         limpiarSesion();
         estadoGrabacion("Subiendo y guardando episodio...");
         await subirAudio(blob, dur);
@@ -484,7 +553,6 @@
       rec.start();
       seg = 0; pausado = false;
       iniciarTimer();
-      iniciarEcualizador();
       setUIGrabacion("grabando");
       estadoGrabacion("Grabando sesión...");
     } catch (error) {
@@ -515,16 +583,16 @@
   }
 
   function limpiarSesion() {
-    streams.forEach(s => s.getTracks().forEach(t => t.stop()));
-    streams = [];
-    if (rafId) cancelAnimationFrame(rafId);
+    // Desconecta del master, pero mantiene los micrófonos vivos para el ducking
+    try { if (loc[1].src && masterNode) loc[1].src.disconnect(masterNode); } catch (e) {}
+    try { if (loc[2].src && masterNode) loc[2].src.disconnect(masterNode); } catch (e) {}
+    try { if (musicaConectada && musicGainNode && masterNode) musicGainNode.disconnect(masterNode); } catch (e) {}
+    musicaConectada = false;
     if (timerInt) clearInterval(timerInt);
-    anMaster = an1 = an2 = null;
+    anMaster = null;
     masterNode = null;
-    ["eqMaster", "eq1", "eq2"].forEach(id => {
-      const c = $(id);
-      if (c) c.getContext("2d").clearRect(0, 0, c.width, c.height);
-    });
+    const c = $("eqMaster");
+    if (c) c.getContext("2d").clearRect(0, 0, c.width, c.height);
   }
 
   function setUIGrabacion(modo) {
@@ -551,35 +619,6 @@
       const s = String(seg % 60).padStart(2, "0");
       $("timer").textContent = `${m}:${s}`;
     }, 1000);
-  }
-
-  function iniciarEcualizador() {
-    if (rafId) cancelAnimationFrame(rafId);
-    const paso = () => {
-      rafId = requestAnimationFrame(paso);
-      dibujarBarras(anMaster, $("eqMaster"));
-      dibujarBarras(an1, $("eq1"));
-      dibujarBarras(an2, $("eq2"));
-    };
-    paso();
-  }
-
-  function dibujarBarras(an, canvas) {
-    if (!an || !canvas) return;
-    const data = new Uint8Array(an.frequencyBinCount);
-    an.getByteFrequencyData(data);
-    const c2 = canvas.getContext("2d");
-    const W = canvas.width, H = canvas.height;
-    c2.clearRect(0, 0, W, H);
-    const bars = 24;
-    const step = Math.max(1, Math.floor(data.length / bars));
-    const bw = W / bars;
-    for (let i = 0; i < bars; i++) {
-      const v = data[i * step] / 255;
-      const h = Math.max(2, v * H);
-      c2.fillStyle = v > 0.7 ? "#e05252" : "#e3b64f";
-      c2.fillRect(i * bw + 1, H - h, bw - 2, h);
-    }
   }
 
   // ======================================================

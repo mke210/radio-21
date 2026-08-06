@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Estadísticas - Podcast 21</title>
+  <title>PODCAST 21 - Estadísticas</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -12,14 +12,15 @@
     <div class="topbar-izq">
       <img src="img/escudo.png" alt="Escudo" class="topbar-escudo" />
       <div class="topbar-texto">
-        <strong>Escuela 21 de Noviembre</strong>
+        <strong>Secundaria 21 de Noviembre</strong>
         <span>Ciencia y Virtud · Esquipulas</span>
       </div>
     </div>
     <div class="topbar-centro">
-      <h1 class="logo">Podcast 21</h1>
+      <h1 class="logo">🎙️ PODCAST 21</h1>
     </div>
     <div class="topbar-der">
+      <span class="profe">powered by elprofechan</span>
       <a class="topbar-link" href="cabina.html">Cabina</a>
       <a class="topbar-link" href="index.html">← Inicio</a>
     </div>
@@ -27,11 +28,13 @@
 
   <main class="container">
 
+    <!-- ============ TOTALES ============ -->
     <section class="card">
       <h2>📊 Estadísticas del Profechan</h2>
       <div class="stats-grid" id="statsGrid"></div>
     </section>
 
+    <!-- ============ TOP 5 ============ -->
     <section class="card">
       <h2>🏆 Top 5 más escuchados</h2>
       <div class="tabla-wrap">
@@ -50,11 +53,13 @@
       </div>
     </section>
 
+    <!-- ============ POR CATEGORÍA ============ -->
     <section class="card">
       <h2>📂 Reproducciones por categoría</h2>
       <div id="barrasCategoria"></div>
     </section>
 
+    <!-- ============ POR TEMPORADA ============ -->
     <section class="card">
       <h2>🗓️ Episodios por temporada</h2>
       <div id="listaTemporadas"></div>
@@ -63,8 +68,8 @@
   </main>
 
   <footer>
-    <p>Escuela 21 de Noviembre - Esquipulas</p>
-    <p class="small">Ciencia y Virtud · Proyecto del Profechan</p>
+    <p>Secundaria 21 de Noviembre - Esquipulas</p>
+    <p class="small">Ciencia y Virtud · powered by elprofechan</p>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
