@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cabina - Escuela 21 de Noviembre</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <header class="header-app">
+    <img src="img/escudo.png" alt="Escudo de la escuela" class="escudo-mini" />
+    <div class="header-texto">
+      <h1>Cabina de Radio Escolar</h1>
+      <p class="small">Escuela 21 de Noviembre - Esquipulas - Ciencia y Virtud</p>
+      <p class="small">Proyecto de Informática del Profechan</p>
+    </div>
+    <a class="volver" href="index.html">← Inicio</a>
+  </header>
+
+  <main>
+
+    <!-- CABINA EN VIVO -->
+    <section>
+      <h2>Cabina en vivo</h2>
+      <p class="small">
+        Sala en vivo con Jitsi Meet. Puedes entrar con micrófono o solo escuchar.
+      </p>
+
+      <iframe
+        id="jitsiFrame"
+        title="Sala en vivo"
+        allow="camera; microphone; autoplay; display-capture; clipboard-write"
+      ></iframe>
+    </section>
+
+    <!-- GRABADORA -->
+    <section>
+      <h2>Grabar episodio</h2>
+
+      <div class="fila">
+        <input id="titulo" type="text" placeholder="Título del episodio" maxlength="120" />
+        <input id="alumno" type="text" placeholder="Alumno o equipo" maxlength="120" />
+      </div>
+
+      <textarea id="descripcion" rows="3" placeholder="Descripción del episodio (opcional)"></textarea>
+
+      <div class="botones">
+        <button id="btnGrabar">Grabar</button>
+        <button id="btnDetener" disabled>Detener</button>
+        <span id="estadoGrabacion" class="estado"></span>
+      </div>
+
+      <p class="small">
+        El audio se guarda en Supabase y aparece en la lista de administración.
+      </p>
+    </section>
+
+    <!-- REPRODUCTOR LOOP -->
+    <section>
+      <h2>Reproductor de cabina</h2>
+
+      <p class="small">
+        El botón de loop reproduce los 3 audios más recientes.
+      </p>
+
+      <div class="botones">
+        <button id="btnLoop">Reproducir 3 en loop</button>
+        <button id="btnStop">Detener reproducción</button>
+      </div>
+
+      <div id="estadoReproduccion" class="estado"></div>
+
+      <audio id="reproductor" controls></audio>
+
+      <h3>Últimos audios para loop</h3>
+      <div id="loopList"></div>
+    </section>
+
+    <!-- ADMINISTRAR AUDIOS -->
+    <section>
+      <h2>Administrar episodios</h2>
+
+      <div class="botones">
+        <button id="btnActualizar">Actualizar lista</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Título</th>
+            <th>Alumno</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tablaAudios"></tbody>
+      </table>
+    </section>
+
+  </main>
+
+  <!-- MODAL EDITAR -->
+  <dialog id="editModal">
+    <form id="editForm">
+      <h3>Editar episodio</h3>
+
+      <input type="hidden" id="editId" />
+
+      <label for="editTitulo">Título</label>
+      <input id="editTitulo" required />
+
+      <label for="editAlumno">Alumno</label>
+      <input id="editAlumno" />
+
+      <label for="editDescripcion">Descripción</label>
+      <textarea id="editDescripcion" rows="3"></textarea>
+
+      <div class="botones">
+        <button type="button" id="btnCancelarEditar">Cancelar</button>
+        <button type="submit">Guardar cambios</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>

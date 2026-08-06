@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Podcast - Escuela 21 de Noviembre</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <header class="header-app">
+    <img src="img/escudo.png" alt="Escudo de la escuela" class="escudo-mini" />
+    <div class="header-texto">
+      <h1>Podcast Escolar</h1>
+      <p class="small">Escuela 21 de Noviembre - Esquipulas - Ciencia y Virtud</p>
+      <p class="small">Proyecto de Informática del Profechan</p>
+    </div>
+    <a class="volver" href="index.html">← Inicio</a>
+  </header>
+
+  <main>
+    <section>
+      <div class="podcast-header">
+        <img src="img/podcast-icon.png" alt="Icono del podcast" class="icono-podcast" />
+        <div>
+          <h2>Episodios del podcast</h2>
+          <p class="small">
+            Temas grabados por los alumnos de la Escuela 21 de Noviembre.
+          </p>
+        </div>
+      </div>
+
+      <div id="episodios"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Escuela 21 de Noviembre - Esquipulas</p>
+    <p class="small">Ciencia y Virtud - Proyecto del Profechan</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/podcast.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,359 @@
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #0f141a;
+  color: #ffffff;
+}
+
+/* ================= HEADER ================= */
+
+header {
+  background: #182230;
+  padding: 20px;
+  border-bottom: 1px solid #2b3a4d;
+}
+
+.header-home {
+  text-align: center;
+  padding: 34px 20px;
+}
+
+.header-app {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.header-texto {
+  flex: 1;
+  min-width: 220px;
+}
+
+.header-texto h1 {
+  margin: 0 0 6px;
+}
+
+.volver {
+  color: #8ab4ff;
+  text-decoration: none;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.volver:hover {
+  text-decoration: underline;
+}
+
+.escudo {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  background: #ffffff;
+  border-radius: 50%;
+  padding: 8px;
+}
+
+.escudo-mini {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  background: #ffffff;
+  border-radius: 50%;
+  padding: 5px;
+}
+
+.lema {
+  color: #d7b45a;
+  margin: 6px 0;
+  font-weight: bold;
+}
+
+/* ================= MAIN ================= */
+
+main {
+  max-width: 1100px;
+  margin: auto;
+  padding: 20px;
+}
+
+.titulo-seccion {
+  text-align: center;
+  margin: 26px 0 18px;
+}
+
+/* ================= TARJETAS ================= */
+
+.tarjetas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 22px;
+}
+
+.tarjeta {
+  background: #151d27;
+  border: 1px solid #2b3a4d;
+  border-radius: 16px;
+  padding: 26px;
+  text-align: center;
+  color: #ffffff;
+  text-decoration: none;
+  display: block;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.tarjeta:hover {
+  transform: translateY(-4px);
+  border-color: #2f80ed;
+}
+
+.tarjeta h3 {
+  margin: 14px 0 8px;
+  font-size: 22px;
+}
+
+.tarjeta p {
+  color: #b7c6d6;
+  min-height: 44px;
+}
+
+.icono {
+  font-size: 58px;
+  line-height: 1;
+}
+
+.icono-img {
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 10px;
+}
+
+.boton-tarjeta {
+  display: inline-block;
+  margin-top: 10px;
+  background: #2f80ed;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+/* ================= SECCIONES ================= */
+
+section {
+  background: #151d27;
+  border: 1px solid #2b3a4d;
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 25px;
+}
+
+h2 {
+  margin-top: 0;
+}
+
+.fila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+input,
+textarea {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #3d5168;
+  background: #0e141b;
+  color: #ffffff;
+  min-width: 220px;
+}
+
+.fila input {
+  flex: 1;
+}
+
+textarea {
+  width: 100%;
+  resize: vertical;
+  margin-bottom: 12px;
+  font-family: inherit;
+}
+
+button {
+  background: #2f80ed;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+button:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+button:disabled {
+  background: #5b6570;
+  cursor: not-allowed;
+}
+
+.botones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 10px 0;
+}
+
+.estado {
+  color: #93e393;
+  min-height: 20px;
+}
+
+.small {
+  color: #b7c6d6;
+  font-size: 14px;
+}
+
+iframe {
+  width: 100%;
+  height: 480px;
+  border: 0;
+  border-radius: 12px;
+  background: #000;
+}
+
+audio {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.audio-item {
+  background: #1f2c3d;
+  border: 1px solid #34485e;
+  padding: 10px 12px;
+  border-radius: 10px;
+  margin: 8px 0;
+}
+
+/* ================= TABLA ================= */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+th,
+td {
+  padding: 10px;
+  border-bottom: 1px solid #2b3a4d;
+  vertical-align: middle;
+}
+
+th {
+  text-align: left;
+  color: #d7e3f0;
+}
+
+td .acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* ================= PODCAST ================= */
+
+.podcast-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.icono-podcast {
+  width: 84px;
+  height: 84px;
+  object-fit: contain;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 8px;
+}
+
+.episodio {
+  background: #1f2c3d;
+  border: 1px solid #34485e;
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 16px;
+}
+
+.episodio h3 {
+  margin: 6px 0;
+}
+
+.episodio .enlace {
+  display: inline-block;
+  margin-top: 10px;
+  color: #8ab4ff;
+}
+
+/* ================= DIALOG ================= */
+
+dialog {
+  border: 0;
+  border-radius: 14px;
+  padding: 20px;
+  width: min(92vw, 480px);
+  background: #17212d;
+  color: #ffffff;
+}
+
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+dialog label {
+  display: block;
+  margin: 12px 0 6px;
+  color: #d7e3f0;
+}
+
+dialog input,
+dialog textarea {
+  width: 100%;
+  min-width: 0;
+}
+
+/* ================= FOOTER ================= */
+
+footer {
+  text-align: center;
+  padding: 24px;
+  color: #b7c6d6;
+  border-top: 1px solid #2b3a4d;
+  margin-top: 10px;
+}
+
+@media (max-width: 700px) {
+  iframe {
+    height: 360px;
+  }
+
+  table {
+    display: block;
+    overflow-x: auto;
+  }
+}
