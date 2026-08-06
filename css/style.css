@@ -674,3 +674,191 @@ footer p { margin: 4px 0; }
 
 .lema { color: var(--gold); font-weight: bold; }
 .small { color: var(--muted); font-size: 12.5px; }
+
+/* ============ CABINA PROFESIONAL ============ */
+
+.locutores-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+@media (max-width: 700px) {
+  .locutores-grid { grid-template-columns: 1fr; }
+}
+
+.locutor-box {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.locutor-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+/* Switch encendido/apagado */
+.switch { position: relative; display: inline-block; width: 40px; height: 22px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.switch .slider {
+  position: absolute; cursor: pointer; inset: 0;
+  background: #3a4656; border-radius: 999px; transition: 0.2s;
+}
+.switch .slider:before {
+  content: ""; position: absolute; height: 16px; width: 16px;
+  left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: 0.2s;
+}
+.switch input:checked + .slider { background: var(--green); }
+.switch input:checked + .slider:before { transform: translateX(18px); }
+
+.mic-select { width: 100%; margin-bottom: 10px; }
+
+.eq-canvas {
+  width: 100%;
+  height: 42px;
+  background: var(--bg);
+  border-radius: 8px;
+  display: block;
+}
+
+.eq-master {
+  width: 100%;
+  height: 60px;
+  background: var(--bg);
+  border-radius: 10px;
+  display: block;
+  margin-top: 12px;
+}
+
+.musica-box {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 14px;
+}
+
+.musica-box h3 { margin: 0 0 10px; font-size: 13px; color: var(--blue); }
+
+.musica-box input[type="range"] {
+  width: 120px;
+  accent-color: var(--gold);
+}
+
+.controles-grab { margin-top: 14px; }
+
+.timer {
+  font-family: monospace;
+  font-size: 18px;
+  color: var(--gold);
+  margin-left: auto;
+  background: var(--bg);
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+/* ============ SELECCIÓN DE CAPÍTULOS ============ */
+
+.lista-seleccion {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.sel-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.sel-item input { accent-color: var(--gold); }
+
+/* ============ PLAYER MINIMALISTA (INICIO) ============ */
+
+.player-minimal {
+  max-width: 800px;
+  margin: 26px auto 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 16px;
+}
+
+.pm-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.pm-ph {
+  background: var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.pm-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pm-info strong {
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pm-info .small {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pm-controls { display: flex; gap: 6px; }
+
+.pm-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.pm-btn:hover:not(:disabled) { border-color: var(--gold); }
+.pm-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+#pmPlay { background: var(--gold); color: #141414; border-color: var(--gold); }
+
+.player-minimal audio { display: none; }
+
+@media (max-width: 600px) {
+  .player-minimal { border-radius: 20px; flex-wrap: wrap; justify-content: center; }
+  .pm-info { width: 100%; order: 3; }
+}

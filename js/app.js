@@ -8,139 +8,308 @@
     if (el) el.addEventListener(evento, fn);
   }
 
-  const config = {
-    url: window.SUPABASE_URL,
-    key: window.SUPABASE_ANON_KEY
-  };
-
-  const configOk =
-    config.url && !config.url.includes("PEGAR") &&
-    config.key && !config.key.includes("PEGAR");
+  const config = { url: window.SUPABASE_URL, key: window.SUPABASE_ANON_KEY };
+  const configOk = config.url && !config.url.includes("PEGAR") && config.key && !config.key.includes("PEGAR");
 
   let db = null;
+  if (!window.supabase) console.error("No se cargó Supabase.");
+  else if (!configOk) console.error("Falta configurar js/config.js");
+  else db = window.P21_DB || window.supabase.createClient(config.url, config.key);
 
-  if (!window.supabase) {
-    console.error("No se cargó Supabase.");
-  } else if (!configOk) {
-    console.error("Falta configurar js/config.js");
-  } else {
-    db = window.supabase.createClient(config.url, config.key);
-  }
-
+  // ===== Estado general =====
   let audios = [];
   let playlist = [];
   let indice = 0;
   let loopActivo = false;
 
-  // Estado para dos grabadores independientes
-  const grabadores = {
-    1: { mediaRecorder: null, audioChunks: [], stream: null, inicio: 0 },
-    2: { mediaRecorder: null, audioChunks: [], stream: null, inicio: 0 }
-  };
+  // ===== Estado de sesión de grabación =====
+  let audioCtx = null;
+  let rec = null;
+  let chunks = [];
+  let streams = [];
+  let anMaster = null, an1 = null, an2 = null;
+  let musicFile = null;
+  let musicPreview = null;
+  let musicRouted = null;
+  let musicGainNode = null;
+  let rafId = null;
+  let timerInt = null;
+  let seg = 0;
+  let pausado = false;
 
-  // Eventos de grabación dual
-  on("btnGrabar1", "click", () => iniciarGrabacion(1));
-  on("btnDetener1", "click", () => detenerGrabacion(1));
-  on("btnGrabar2", "click", () => iniciarGrabacion(2));
-  on("btnDetener2", "click", () => detenerGrabacion(2));
-
-  // Eventos de reproducción y administración
-  on("btnLoop", "click", reproducirLoop);
+  // ===== Eventos =====
+  on("btnGrabar", "click", iniciarGrabacion);
+  on("btnPausa", "click", pausarReanudar);
+  on("btnDetener", "click", () => { if (rec && rec.state !== "inactive") rec.stop(); });
+  on("btnMusica", "click", toggleMusicaPreview);
+  on("musicaFile", "change", cargarMusica);
+  on("musicaVol", "input", () => {
+    const v = parseFloat($("musicaVol").value);
+    if (musicPreview) musicPreview.volume = v;
+    if (musicGainNode) musicGainNode.gain.value = v;
+  });
+  on("btnPlaySel", "click", reproducirSeleccion);
+  on("btnLoopToggle", "click", toggleLoop);
   on("btnStop", "click", detenerReproduccion);
   on("btnActualizar", "click", cargarAudios);
   on("editForm", "submit", guardarEdicion);
   on("btnCancelarEditar", "click", () => $("editModal").close());
-  on("reproductor", "ended", siguienteSiLoop);
+  on("reproductor", "ended", alTerminarEpisodio);
 
+  cargarMics();
+  if (navigator.mediaDevices) navigator.mediaDevices.addEventListener("devicechange", cargarMics);
   cargarAudios();
 
   // ======================================================
-  // GRABACIÓN DUAL
+  // MICRÓFONOS
   // ======================================================
 
-  async function iniciarGrabacion(num) {
-    const titulo = $(`titulo${num}`).value.trim();
-    if (!titulo) { estadoGrabacion(num, "Escribe un título.", true); return; }
-    if (!db) { estadoGrabacion(num, "Falta configurar Supabase.", true); return; }
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      estadoGrabacion(num, "Navegador no soporta micrófono aquí.", true); return;
-    }
+  async function cargarMics() {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const mics = devices.filter(d => d.kind === "audioinput");
+      ["mic1", "mic2"].forEach(id => {
+        const sel = $(id);
+        const val = sel.value;
+        sel.innerHTML = '<option value="">Micrófono predeterminado</option>';
+        mics.forEach((m, i) => {
+          sel.innerHTML += `<option value="${m.deviceId}">${m.label || "Micrófono " + (i + 1)}</option>`;
+        });
+        sel.value = val;
+      });
+    } catch (e) { console.error(e); }
+  }
 
-    setGrabandoUI(num, true);
-    estadoGrabacion(num, "Pidiendo permiso de micrófono...");
+  async function pedirMic(deviceId) {
+    try {
+      return await navigator.mediaDevices.getUserMedia({
+        audio: deviceId ? { deviceId: { exact: deviceId } } : true
+      });
+    } catch (e) {
+      return await navigator.mediaDevices.getUserMedia({ audio: true });
+    }
+  }
+
+  // ======================================================
+  // MÚSICA DE FONDO
+  // ======================================================
+
+  function cargarMusica() {
+    const f = $("musicaFile").files[0];
+    if (!f) return;
+    musicFile = f;
+    $("musicaNombre").textContent = "🎵 " + f.name;
+    if (musicPreview) musicPreview.pause();
+    musicPreview = new Audio(URL.createObjectURL(f));
+    musicPreview.volume = parseFloat($("musicaVol").value);
+    $("btnMusica").disabled = false;
+  }
+
+  function toggleMusicaPreview() {
+    if (!musicPreview) return;
+    if (musicPreview.paused) {
+      musicPreview.loop = $("musicaLoop").checked;
+      musicPreview.play();
+      $("btnMusica").textContent = "⏸ Música";
+    } else {
+      musicPreview.pause();
+      $("btnMusica").textContent = "▶ Música";
+    }
+  }
+
+  // ======================================================
+  // GRABACIÓN (mezcla de locutores + música)
+  // ======================================================
+
+  async function iniciarGrabacion() {
+    const titulo = $("titulo").value.trim();
+    if (!titulo) { estadoGrabacion("Escribe un título.", true); return; }
+    if (!db) { estadoGrabacion("Falta configurar Supabase.", true); return; }
+
+    const loc1 = $("loc1Activo").checked;
+    const loc2 = $("loc2Activo").checked;
+    if (!loc1 && !loc2) { estadoGrabacion("Activa al menos un locutor.", true); return; }
+
+    estadoGrabacion("Preparando sesión...");
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      grabadores[num].stream = stream;
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      await audioCtx.resume();
 
-      const options = {};
-      if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
-        options.mimeType = "audio/webm;codecs=opus";
-      } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
-        options.mimeType = "audio/mp4";
+      const master = audioCtx.createGain();
+      anMaster = audioCtx.createAnalyser(); anMaster.fftSize = 64;
+      const dest = audioCtx.createMediaStreamDestination();
+      master.connect(anMaster);
+      master.connect(dest);
+
+      streams = [];
+
+      if (loc1) {
+        const s = await pedirMic($("mic1").value);
+        streams.push(s);
+        const src = audioCtx.createMediaStreamSource(s);
+        an1 = audioCtx.createAnalyser(); an1.fftSize = 64;
+        src.connect(master); src.connect(an1);
+      } else { an1 = null; }
+
+      if (loc2) {
+        const s = await pedirMic($("mic2").value);
+        streams.push(s);
+        const src = audioCtx.createMediaStreamSource(s);
+        an2 = audioCtx.createAnalyser(); an2.fftSize = 64;
+        src.connect(master); src.connect(an2);
+      } else { an2 = null; }
+
+      // Música incluida en la grabación
+      if (musicFile && $("musicaIncluir").checked) {
+        musicRouted = new Audio(URL.createObjectURL(musicFile));
+        musicRouted.loop = $("musicaLoop").checked;
+        const srcNode = audioCtx.createMediaElementSource(musicRouted);
+        musicGainNode = audioCtx.createGain();
+        musicGainNode.gain.value = parseFloat($("musicaVol").value);
+        srcNode.connect(musicGainNode);
+        musicGainNode.connect(master);
+        musicGainNode.connect(audioCtx.destination);
+        musicRouted.play();
+        if (musicPreview) musicPreview.pause();
       }
 
-      grabadores[num].audioChunks = [];
-      grabadores[num].inicio = Date.now();
+      cargarMics(); // refresca nombres tras dar permiso
 
-      const mediaRecorder = new MediaRecorder(stream, options);
-      grabadores[num].mediaRecorder = mediaRecorder;
-
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) grabadores[num].audioChunks.push(e.data);
+      chunks = [];
+      rec = new MediaRecorder(dest.stream);
+      rec.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+      rec.onstop = async () => {
+        const blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
+        const dur = seg;
+        limpiarSesion();
+        estadoGrabacion("Subiendo y guardando episodio...");
+        await subirAudio(blob, dur);
+        setUIGrabacion("idle");
       };
 
-      mediaRecorder.onstop = async () => {
-        if (grabadores[num].stream) {
-          grabadores[num].stream.getTracks().forEach(t => t.stop());
-        }
-        const duracionSeg = Math.round((Date.now() - grabadores[num].inicio) / 1000);
-        estadoGrabacion(num, "Subiendo y guardando...");
-        const blob = new Blob(grabadores[num].audioChunks, {
-          type: mediaRecorder.mimeType || "audio/webm"
-        });
-        await subirAudio(blob, duracionSeg, num);
-        setGrabandoUI(num, false);
-      };
-
-      mediaRecorder.start();
-      estadoGrabacion(num, "Grabando... clic en Detener cuando termines.");
+      rec.start();
+      seg = 0; pausado = false;
+      iniciarTimer();
+      iniciarEcualizador();
+      setUIGrabacion("grabando");
+      estadoGrabacion("Grabando sesión...");
     } catch (error) {
       console.error(error);
-      setGrabandoUI(num, false);
-      if (error.name === "NotAllowedError") {
-        estadoGrabacion(num, "Permiso de micrófono denegado.", true);
-      } else if (error.name === "NotFoundError") {
-        estadoGrabacion(num, "No se encontró micrófono.", true);
-      } else {
-        estadoGrabacion(num, "Error al abrir micrófono.", true);
-      }
+      limpiarSesion();
+      setUIGrabacion("idle");
+      estadoGrabacion(error.name === "NotAllowedError"
+        ? "Permiso de micrófono denegado."
+        : "Error al iniciar la sesión de grabación.", true);
     }
   }
 
-  function detenerGrabacion(num) {
-    const rec = grabadores[num].mediaRecorder;
-    if (rec && rec.state !== "inactive") rec.stop();
+  function pausarReanudar() {
+    if (!rec) return;
+    if (!pausado) {
+      rec.pause();
+      if (musicRouted) musicRouted.pause();
+      pausado = true;
+      clearInterval(timerInt);
+      $("btnPausa").textContent = "▶ Reanudar";
+      estadoGrabacion("Grabación en pausa.");
+    } else {
+      rec.resume();
+      if (musicRouted) musicRouted.play();
+      pausado = false;
+      iniciarTimer();
+      $("btnPausa").textContent = "⏸ Pausa";
+      estadoGrabacion("Grabando sesión...");
+    }
   }
 
-  function setGrabandoUI(num, grabando) {
-    const btnG = $(`btnGrabar${num}`);
-    const btnD = $(`btnDetener${num}`);
-    if (btnG) { btnG.disabled = grabando; btnG.classList.toggle("recording", grabando); }
-    if (btnD) btnD.disabled = !grabando;
+  function limpiarSesion() {
+    streams.forEach(s => s.getTracks().forEach(t => t.stop()));
+    streams = [];
+    if (musicRouted) { musicRouted.pause(); musicRouted = null; }
+    musicGainNode = null;
+    if (rafId) cancelAnimationFrame(rafId);
+    if (timerInt) clearInterval(timerInt);
+    if (audioCtx) { audioCtx.close(); audioCtx = null; }
+    anMaster = an1 = an2 = null;
+    ["eqMaster", "eq1", "eq2"].forEach(id => {
+      const c = $(id);
+      if (c) c.getContext("2d").clearRect(0, 0, c.width, c.height);
+    });
   }
 
-  async function subirAudio(blob, duracionSeg, num) {
+  function setUIGrabacion(modo) {
+    if (modo === "grabando") {
+      $("btnGrabar").disabled = true;
+      $("btnGrabar").classList.add("recording");
+      $("btnPausa").disabled = false;
+      $("btnDetener").disabled = false;
+    } else {
+      $("btnGrabar").disabled = false;
+      $("btnGrabar").classList.remove("recording");
+      $("btnPausa").disabled = true;
+      $("btnPausa").textContent = "⏸ Pausa";
+      $("btnDetener").disabled = true;
+      $("timer").textContent = "00:00";
+    }
+  }
+
+  function iniciarTimer() {
+    clearInterval(timerInt);
+    timerInt = setInterval(() => {
+      seg++;
+      const m = String(Math.floor(seg / 60)).padStart(2, "0");
+      const s = String(seg % 60).padStart(2, "0");
+      $("timer").textContent = `${m}:${s}`;
+    }, 1000);
+  }
+
+  // ======================================================
+  // ECUALIZADOR
+  // ======================================================
+
+  function iniciarEcualizador() {
+    if (rafId) cancelAnimationFrame(rafId);
+    const paso = () => {
+      rafId = requestAnimationFrame(paso);
+      dibujar(anMaster, $("eqMaster"));
+      dibujar(an1, $("eq1"));
+      dibujar(an2, $("eq2"));
+    };
+    paso();
+  }
+
+  function dibujar(an, canvas) {
+    if (!an || !canvas) return;
+    const data = new Uint8Array(an.frequencyBinCount);
+    an.getByteFrequencyData(data);
+    const ctx = canvas.getContext("2d");
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+    const bars = 24;
+    const step = Math.max(1, Math.floor(data.length / bars));
+    const bw = W / bars;
+    for (let i = 0; i < bars; i++) {
+      const v = data[i * step] / 255;
+      const h = Math.max(2, v * H);
+      ctx.fillStyle = v > 0.7 ? "#e05252" : "#e3b64f";
+      ctx.fillRect(i * bw + 1, H - h, bw - 2, h);
+    }
+  }
+
+  // ======================================================
+  // GUARDAR EPISODIO
+  // ======================================================
+
+  async function subirAudio(blob, duracionSeg) {
     try {
-      const titulo = $(`titulo${num}`).value.trim();
-      const alumno = $(`alumno${num}`).value.trim() || "Anónimo";
-      const descripcion = $(`descripcion${num}`).value.trim();
-      const categoria = $(`categoria${num}`).value || "General";
-      const temporada = $(`temporada${num}`).value.trim() || "Temporada 1 - 2026";
-      const destacado = $(`destacado${num}`).checked;
-      const archivoImg = $(`imagen${num}`).files[0];
-
-      if (!titulo) { estadoGrabacion(num, "Falta título.", true); return; }
+      const titulo = $("titulo").value.trim();
+      const alumno = $("alumno").value.trim() || "Anónimo";
+      const descripcion = $("descripcion").value.trim();
+      const categoria = $("categoria").value || "General";
+      const temporada = $("temporada").value.trim() || "Temporada 1 - 2026";
+      const destacado = $("destacado").checked;
+      const archivoImg = $("imagen").files[0];
 
       const extension = extensionDesdeBlob(blob);
       const archivo = `${Date.now()}-${slug(titulo)}.${extension}`;
@@ -148,7 +317,7 @@
       const { error: err1 } = await db.storage.from("audios").upload(archivo, blob, {
         contentType: blob.type || "audio/webm", upsert: false
       });
-      if (err1) { estadoGrabacion(num, "Error al subir audio.", true); return; }
+      if (err1) { estadoGrabacion("Error al subir audio.", true); return; }
 
       const { data: urlData } = db.storage.from("audios").getPublicUrl(archivo);
 
@@ -170,90 +339,135 @@
         publicado: true, duracion: duracionSeg || 0
       });
 
-      if (err2) { estadoGrabacion(num, "Error al guardar.", true); return; }
+      if (err2) { estadoGrabacion("Error al guardar.", true); return; }
 
-      estadoGrabacion(num, "Episodio guardado correctamente.");
-      $(`titulo${num}`).value = "";
-      $(`alumno${num}`).value = "";
-      $(`descripcion${num}`).value = "";
-      $(`imagen${num}`).value = "";
-      $(`destacado${num}`).checked = false;
-      $(`categoria${num}`).value = "General";
-      $(`temporada${num}`).value = "Temporada 1 - 2026";
+      estadoGrabacion("✅ Episodio guardado correctamente.");
+      ["titulo", "alumno", "descripcion"].forEach(id => $(id).value = "");
+      $("imagen").value = "";
+      $("destacado").checked = false;
 
       await cargarAudios();
     } catch (error) {
       console.error(error);
-      estadoGrabacion(num, "Error al guardar.", true);
+      estadoGrabacion("Error al guardar.", true);
     }
   }
 
   // ======================================================
-  // LISTAR
+  // PLAYER DE CABINA (selección + loop)
+  // ======================================================
+
+  function renderSeleccion() {
+    const cont = $("listaSeleccion");
+    if (!cont) return;
+    cont.innerHTML = "";
+    if (!audios.length) {
+      cont.innerHTML = "<p class='small'>No hay episodios.</p>";
+      return;
+    }
+    audios.forEach(a => {
+      const label = document.createElement("label");
+      label.className = "sel-item";
+      label.innerHTML = `<input type="checkbox" value="${a.id}" /> <span>${a.titulo}</span>`;
+      cont.appendChild(label);
+    });
+  }
+
+  function reproducirSeleccion() {
+    const marcados = [...document.querySelectorAll("#listaSeleccion input:checked")]
+      .map(c => c.value);
+    playlist = marcados.length
+      ? audios.filter(a => marcados.includes(a.id))
+      : audios.slice();
+    if (!playlist.length) { estadoReproduccion("No hay episodios.", true); return; }
+    indice = 0;
+    reproducirActual();
+  }
+
+  function toggleLoop() {
+    loopActivo = !loopActivo;
+    const btn = $("btnLoopToggle");
+    btn.textContent = loopActivo ? "🔁 Loop: ON" : "🔁 Loop: OFF";
+    btn.classList.toggle("btn-gold", loopActivo);
+    btn.classList.toggle("btn-ghost", !loopActivo);
+  }
+
+  function alTerminarEpisodio() {
+    if (!playlist.length) return;
+    if (loopActivo) {
+      indice = (indice + 1) % playlist.length;
+      reproducirActual();
+    } else if (indice < playlist.length - 1) {
+      indice++;
+      reproducirActual();
+    } else {
+      estadoReproduccion("Fin de la selección.");
+    }
+  }
+
+  function reproducirActual() {
+    const item = playlist[indice];
+    if (!item) return;
+    const r = $("reproductor");
+    r.src = item.url;
+    r.play().catch(() => {});
+    estadoReproduccion(`Sonando: ${item.titulo}`);
+  }
+
+  function reproducirUno(id) {
+    const item = audios.find(a => a.id === id);
+    if (!item) return;
+    playlist = [item];
+    indice = 0;
+    reproducirActual();
+  }
+
+  function detenerReproduccion() {
+    const r = $("reproductor");
+    r.pause();
+    r.removeAttribute("src");
+    r.load();
+    estadoReproduccion("Detenido.");
+  }
+
+  // ======================================================
+  // LISTAR / TABLA / EDITAR / BORRAR
   // ======================================================
 
   async function cargarAudios() {
     if (!db) return;
-
-    const { data, error } = await db
-      .from("audios").select("*").order("creado_en", { ascending: false });
-
-    if (error) { estadoGrabacion(1, "Error al cargar: " + error.message, true); return; }
-
+    const { data, error } = await db.from("audios").select("*").order("creado_en", { ascending: false });
+    if (error) { estadoGrabacion("Error al cargar: " + error.message, true); return; }
     audios = data || [];
-    renderLoop();
+    renderSeleccion();
     renderTabla();
-  }
-
-  function renderLoop() {
-    const loopList = $("loopList");
-    if (!loopList) return;
-    loopList.innerHTML = "";
-    const latest = audios.slice(0, 3);
-    if (!latest.length) {
-      loopList.innerHTML = "<p class='small'>No hay audios todavía.</p>";
-      return;
-    }
-    latest.forEach((item, i) => {
-      const div = document.createElement("div");
-      div.className = "audio-item";
-      div.textContent = `${i + 1}. ${item.titulo} — ${item.alumno || "Anónimo"}`;
-      loopList.appendChild(div);
-    });
   }
 
   function renderTabla() {
     const tbody = $("tablaAudios");
     if (!tbody) return;
     tbody.innerHTML = "";
-
     if (!audios.length) {
       tbody.innerHTML = "<tr><td colspan='5'>No hay episodios.</td></tr>";
       return;
     }
-
     audios.forEach(item => {
       const publicado = item.publicado !== false;
       const tr = document.createElement("tr");
-
       tr.innerHTML = `
         <td>${item.titulo}</td>
         <td>${item.alumno || "Anónimo"}</td>
         <td><span class="temporada-badge">🗓️ ${item.temporada || "Temporada 1 - 2026"}</span></td>
         <td><span class="badge ${publicado ? "badge-on" : "badge-off"}">${publicado ? "Publicado" : "Oculto"}</span></td>
       `;
-
       const tdA = document.createElement("td");
-      const acciones = document.createElement("div");
-      acciones.className = "acciones";
-
-      const b1 = btnMini("Escuchar", "btn-blue", () => reproducirUno(item.id));
-      const b2 = btnMini("Editar", "btn-edit", () => abrirEditar(item.id));
-      const b3 = btnMini(publicado ? "Ocultar" : "Publicar", publicado ? "btn-hide" : "btn-pub", () => togglePublicar(item.id));
-      const b4 = btnMini("Borrar", "btn-del", () => borrarAudio(item.id));
-
-      [b1, b2, b3, b4].forEach(b => acciones.appendChild(b));
-      tdA.appendChild(acciones);
+      const acc = document.createElement("div");
+      acc.className = "acciones";
+      acc.appendChild(btnMini("Escuchar", "btn-blue", () => reproducirUno(item.id)));
+      acc.appendChild(btnMini("Editar", "btn-edit", () => abrirEditar(item.id)));
+      acc.appendChild(btnMini(publicado ? "Ocultar" : "Publicar", publicado ? "btn-hide" : "btn-pub", () => togglePublicar(item.id)));
+      acc.appendChild(btnMini("Borrar", "btn-del", () => borrarAudio(item.id)));
+      tdA.appendChild(acc);
       tr.appendChild(tdA);
       tbody.appendChild(tr);
     });
@@ -266,57 +480,6 @@
     b.onclick = onclick;
     return b;
   }
-
-  // ======================================================
-  // REPRODUCCIÓN
-  // ======================================================
-
-  function reproducirUno(id) {
-    const item = audios.find(a => a.id === id);
-    if (!item) return;
-    loopActivo = false;
-    const r = $("reproductor");
-    r.src = item.url;
-    r.play().catch(() => estadoReproduccion("Pulsa play.", true));
-    estadoReproduccion(`Reproduciendo: ${item.titulo}`);
-  }
-
-  function reproducirLoop() {
-    playlist = audios.slice(0, 3);
-    if (!playlist.length) { estadoReproduccion("No hay audios.", true); return; }
-    loopActivo = true;
-    indice = 0;
-    reproducirActual();
-  }
-
-  function reproducirActual() {
-    const item = playlist[indice];
-    if (!item) return;
-    const r = $("reproductor");
-    r.src = item.url;
-    r.play().catch(() => {});
-    estadoReproduccion(`Loop: ${item.titulo}`);
-  }
-
-  function siguienteSiLoop() {
-    if (loopActivo && playlist.length > 0) {
-      indice = (indice + 1) % playlist.length;
-      reproducirActual();
-    }
-  }
-
-  function detenerReproduccion() {
-    loopActivo = false;
-    const r = $("reproductor");
-    r.pause();
-    r.removeAttribute("src");
-    r.load();
-    estadoReproduccion("Detenido.");
-  }
-
-  // ======================================================
-  // EDITAR / PUBLICAR / BORRAR
-  // ======================================================
 
   function abrirEditar(id) {
     const item = audios.find(a => a.id === id);
@@ -365,8 +528,7 @@
   async function togglePublicar(id) {
     const item = audios.find(a => a.id === id);
     if (!item) return;
-    const nuevo = !(item.publicado !== false);
-    await db.from("audios").update({ publicado: nuevo }).eq("id", id);
+    await db.from("audios").update({ publicado: !(item.publicado !== false) }).eq("id", id);
     await cargarAudios();
   }
 
@@ -383,8 +545,8 @@
   // UTILIDADES
   // ======================================================
 
-  function estadoGrabacion(num, t, err) {
-    const el = $(`estadoGrabacion${num}`);
+  function estadoGrabacion(t, err) {
+    const el = $("estadoGrabacion");
     if (!el) return;
     el.textContent = t;
     el.classList.toggle("error", !!err);

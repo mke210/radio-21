@@ -1,136 +1,86 @@
 (function () {
   "use strict";
 
-  const config = {
-    url: window.SUPABASE_URL,
-    key: window.SUPABASE_ANON_KEY
-  };
+  const config = { url: window.SUPABASE_URL, key: window.SUPABASE_ANON_KEY };
+  if (!window.supabase || !config.url || config.url.includes("PEGAR")) return;
 
-  if (!window.supabase || !config.url || config.url.includes("PEGAR")) {
-    const est = document.getElementById("playerEstado");
-    if (est) est.textContent = "Configura Supabase primero.";
-    return;
-  }
-
-  const db = window.supabase.createClient(config.url, config.key);
+  const db = window.P21_DB || window.supabase.createClient(config.url, config.key);
 
   const $ = (id) => document.getElementById(id);
 
-  const playerAudio = $("playerAudio");
-  const playerImg = $("playerImg");
-  const playerPlaceholder = $("playerPlaceholder");
-  const playerTitulo = $("playerTitulo");
-  const playerAlumno = $("playerAlumno");
-  const playerCategoria = $("playerCategoria");
-  const playerEstado = $("playerEstado");
-
-  const btnPlayPause = $("btnPlayPause");
-  const btnMute = $("btnMute");
-  const btnSiguiente = $("btnSiguiente");
-
-  // Bloquear descarga
-  playerAudio.setAttribute("controlslist", "nodownload");
+  const audio = $("pmAudio");
+  const img = $("pmImg");
+  const ph = $("pmPh");
+  const titulo = $("pmTitulo");
+  const meta = $("pmMeta");
+  const btnPlay = $("pmPlay");
+  const btnNext = $("pmNext");
+  const btnMute = $("pmMute");
 
   let episodios = [];
-  let indiceActual = -1;
+  let indice = -1;
 
-  cargarEpisodios();
+  cargar();
 
-  async function cargarEpisodios() {
-    playerEstado.textContent = "Cargando episodios...";
-
+  async function cargar() {
     const { data, error } = await db
-      .from("audios")
-      .select("*")
+      .from("audios").select("*")
       .eq("publicado", true)
       .order("creado_en", { ascending: false });
 
-    if (error) {
-      playerEstado.textContent = "Error al cargar episodios.";
+    if (error || !data || !data.length) {
+      titulo.textContent = "Aún no hay episodios";
+      meta.textContent = "Graba el primero desde la cabina 🎙️";
       return;
     }
 
-    episodios = data || [];
-
-    if (!episodios.length) {
-      playerEstado.textContent = "No hay episodios publicados todavía.";
-      return;
-    }
-
-    btnPlayPause.disabled = false;
+    episodios = data;
+    btnPlay.disabled = false;
+    btnNext.disabled = false;
     btnMute.disabled = false;
-    btnSiguiente.disabled = false;
 
-    reproducirAleatorio();
+    aleatorio();
   }
 
-  function reproducirAleatorio() {
-    if (!episodios.length) return;
+  function aleatorio() {
+    let n;
+    do { n = Math.floor(Math.random() * episodios.length); }
+    while (n === indice && episodios.length > 1);
+    indice = n;
 
-    let nuevoIndice;
-    do {
-      nuevoIndice = Math.floor(Math.random() * episodios.length);
-    } while (nuevoIndice === indiceActual && episodios.length > 1);
+    const ep = episodios[indice];
+    titulo.textContent = ep.titulo;
+    meta.textContent = `🎤 ${ep.alumno || "Anónimo"} · ${ep.categoria || "General"}`;
 
-    indiceActual = nuevoIndice;
-    const episodio = episodios[indiceActual];
-
-    playerTitulo.textContent = episodio.titulo;
-    playerAlumno.textContent = `🎤 ${episodio.alumno || "Anónimo"}`;
-    playerCategoria.textContent = episodio.categoria || "General";
-
-    if (episodio.imagen) {
-      playerImg.src = episodio.imagen;
-      playerImg.style.display = "block";
-      playerPlaceholder.style.display = "none";
+    if (ep.imagen) {
+      img.src = ep.imagen;
+      img.style.display = "block";
+      ph.style.display = "none";
     } else {
-      playerImg.style.display = "none";
-      playerPlaceholder.style.display = "flex";
+      img.style.display = "none";
+      ph.style.display = "flex";
     }
 
-    playerAudio.src = episodio.url;
-    playerAudio.muted = true;
-
-    playerAudio.play()
-      .then(() => {
-        playerEstado.textContent = "Reproduciendo (silenciado - pulsa 'Activar sonido')";
-        actualizarIconoPlay(true);
-      })
-      .catch(() => {
-        playerEstado.textContent = "Haz clic en ▶ para reproducir";
-        actualizarIconoPlay(false);
-      });
+    audio.src = ep.url;
+    audio.muted = true;
+    audio.play()
+      .then(() => { btnPlay.textContent = "⏸"; })
+      .catch(() => { btnPlay.textContent = "▶"; });
   }
 
-  function actualizarIconoPlay(reproduciendo) {
-    const icon = btnPlayPause.querySelector(".icon-play");
-    icon.textContent = reproduciendo ? "⏸" : "▶";
-  }
-
-  btnPlayPause.addEventListener("click", () => {
-    if (playerAudio.paused) {
-      playerAudio.play();
-      actualizarIconoPlay(true);
-    } else {
-      playerAudio.pause();
-      actualizarIconoPlay(false);
-    }
+  btnPlay.addEventListener("click", () => {
+    if (audio.paused) { audio.play(); btnPlay.textContent = "⏸"; }
+    else { audio.pause(); btnPlay.textContent = "▶"; }
   });
+
+  btnNext.addEventListener("click", aleatorio);
 
   btnMute.addEventListener("click", () => {
-    playerAudio.muted = !playerAudio.muted;
-    btnMute.textContent = playerAudio.muted ? "🔇 Activar sonido" : "🔊 Silenciar";
-    playerEstado.textContent = playerAudio.muted
-      ? "Reproduciendo (silenciado)"
-      : "Reproduciendo con sonido";
+    audio.muted = !audio.muted;
+    btnMute.textContent = audio.muted ? "🔇" : "🔊";
   });
 
-  btnSiguiente.addEventListener("click", reproducirAleatorio);
-
-  playerAudio.addEventListener("ended", () => {
-    reproducirAleatorio();
-  });
-
-  playerAudio.addEventListener("play", () => actualizarIconoPlay(true));
-  playerAudio.addEventListener("pause", () => actualizarIconoPlay(false));
+  audio.addEventListener("ended", aleatorio);
+  audio.addEventListener("play", () => { btnPlay.textContent = "⏸"; });
+  audio.addEventListener("pause", () => { btnPlay.textContent = "▶"; });
 })();

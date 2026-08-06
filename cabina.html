@@ -20,14 +20,12 @@
       <h1 class="logo">Podcast 21</h1>
     </div>
     <div class="topbar-der">
-      <a class="topbar-link" href="stats.html">📊 Estadísticas</a>
+      <a class="topbar-link" href="stats.html">📊</a>
       <a class="topbar-link" href="index.html">← Inicio</a>
     </div>
   </header>
 
   <main class="container">
-
-    <p class="info-dual">💡 <strong>Grabación dual:</strong> Dos personas pueden grabar al mismo tiempo.</p>
 
     <datalist id="listaTemporadas">
       <option value="Temporada 1 - 2026"></option>
@@ -35,79 +33,109 @@
       <option value="Especiales"></option>
     </datalist>
 
-    <div class="grabadores-grid">
-
-      <!-- LOCUTOR 1 -->
-      <section class="card grabador">
-        <h2>🎙️ Locutor 1</h2>
-        <div class="form-row">
-          <input id="titulo1" type="text" placeholder="Título del episodio" maxlength="120" />
-          <input id="alumno1" type="text" placeholder="Alumno o equipo" maxlength="120" />
-        </div>
-        <div class="form-row">
-          <input id="temporada1" list="listaTemporadas" value="Temporada 1 - 2026" placeholder="Temporada" />
-          <select id="categoria1">
-            <option value="General">General</option>
-            <option value="Noticias">Noticias</option>
-            <option value="Entrevistas">Entrevistas</option>
-            <option value="Cultura">Cultura</option>
-            <option value="Deportes">Deportes</option>
-            <option value="Ciencia">Ciencia</option>
-          </select>
-          <label class="imagen-label">📷 Portada<input id="imagen1" type="file" accept="image/*" /></label>
-        </div>
-        <textarea id="descripcion1" rows="2" placeholder="Descripción del episodio"></textarea>
-        <div class="btn-row">
-          <button id="btnGrabar1" class="btn btn-rec"><span class="dot"></span>Grabar</button>
-          <button id="btnDetener1" class="btn" disabled>Detener</button>
-          <label class="check-label"><input id="destacado1" type="checkbox" /> Destacar</label>
-        </div>
-        <p id="estadoGrabacion1" class="estado"></p>
-      </section>
-
-      <!-- LOCUTOR 2 -->
-      <section class="card grabador">
-        <h2>🎙️ Locutor 2</h2>
-        <div class="form-row">
-          <input id="titulo2" type="text" placeholder="Título del episodio" maxlength="120" />
-          <input id="alumno2" type="text" placeholder="Alumno o equipo" maxlength="120" />
-        </div>
-        <div class="form-row">
-          <input id="temporada2" list="listaTemporadas" value="Temporada 1 - 2026" placeholder="Temporada" />
-          <select id="categoria2">
-            <option value="General">General</option>
-            <option value="Noticias">Noticias</option>
-            <option value="Entrevistas">Entrevistas</option>
-            <option value="Cultura">Cultura</option>
-            <option value="Deportes">Deportes</option>
-            <option value="Ciencia">Ciencia</option>
-          </select>
-          <label class="imagen-label">📷 Portada<input id="imagen2" type="file" accept="image/*" /></label>
-        </div>
-        <textarea id="descripcion2" rows="2" placeholder="Descripción del episodio"></textarea>
-        <div class="btn-row">
-          <button id="btnGrabar2" class="btn btn-rec"><span class="dot"></span>Grabar</button>
-          <button id="btnDetener2" class="btn" disabled>Detener</button>
-          <label class="check-label"><input id="destacado2" type="checkbox" /> Destacar</label>
-        </div>
-        <p id="estadoGrabacion2" class="estado"></p>
-      </section>
-
-    </div>
-
+    <!-- ============ SESIÓN DE GRABACIÓN ============ -->
     <section class="card">
-      <div class="card-head">
-        <h2>Reproductor</h2>
+      <h2>🎙️ Sesión de grabación</h2>
+
+      <div class="locutores-grid">
+
+        <!-- LOCUTOR 1 -->
+        <div class="locutor-box">
+          <div class="locutor-head">
+            <label class="switch">
+              <input type="checkbox" id="loc1Activo" checked />
+              <span class="slider"></span>
+            </label>
+            <strong>Locutor 1</strong>
+          </div>
+          <select id="mic1" class="mic-select">
+            <option value="">Micrófono predeterminado</option>
+          </select>
+          <canvas id="eq1" class="eq-canvas" width="240" height="42"></canvas>
+        </div>
+
+        <!-- LOCUTOR 2 -->
+        <div class="locutor-box">
+          <div class="locutor-head">
+            <label class="switch">
+              <input type="checkbox" id="loc2Activo" />
+              <span class="slider"></span>
+            </label>
+            <strong>Locutor 2</strong>
+          </div>
+          <select id="mic2" class="mic-select">
+            <option value="">Micrófono predeterminado</option>
+          </select>
+          <canvas id="eq2" class="eq-canvas" width="240" height="42"></canvas>
+        </div>
+
+      </div>
+
+      <!-- MÚSICA DE FONDO -->
+      <div class="musica-box">
+        <h3>🎵 Música de fondo</h3>
         <div class="btn-row">
-          <button id="btnLoop" class="btn btn-gold">Loop 3 audios</button>
-          <button id="btnStop" class="btn btn-ghost">Detener</button>
+          <label class="imagen-label">📁 Cargar MP3<input id="musicaFile" type="file" accept="audio/*" /></label>
+          <button id="btnMusica" class="btn btn-ghost" disabled>▶ Música</button>
+          <input type="range" id="musicaVol" min="0" max="1" step="0.05" value="0.5" title="Volumen música" />
+        </div>
+        <span id="musicaNombre" class="small">Sin pista cargada</span>
+        <div class="btn-row">
+          <label class="check-label"><input id="musicaIncluir" type="checkbox" checked /> Incluir en la grabación</label>
+          <label class="check-label"><input id="musicaLoop" type="checkbox" /> Loop de música</label>
         </div>
       </div>
-      <p id="estadoReproduccion" class="estado"></p>
-      <audio id="reproductor" controls controlslist="nodownload"></audio>
-      <div id="loopList" class="loop-list"></div>
+
+      <!-- DATOS DEL EPISODIO -->
+      <div class="form-row">
+        <input id="titulo" type="text" placeholder="Título del episodio" maxlength="120" />
+        <input id="alumno" type="text" placeholder="Alumno o equipo" maxlength="120" />
+      </div>
+      <div class="form-row">
+        <input id="temporada" list="listaTemporadas" value="Temporada 1 - 2026" placeholder="Temporada" />
+        <select id="categoria">
+          <option value="General">General</option>
+          <option value="Noticias">Noticias</option>
+          <option value="Entrevistas">Entrevistas</option>
+          <option value="Cultura">Cultura</option>
+          <option value="Deportes">Deportes</option>
+          <option value="Ciencia">Ciencia</option>
+        </select>
+        <label class="imagen-label">📷 Portada<input id="imagen" type="file" accept="image/*" /></label>
+      </div>
+      <textarea id="descripcion" rows="2" placeholder="Descripción del episodio"></textarea>
+      <label class="check-label"><input id="destacado" type="checkbox" /> ⭐ Destacar episodio</label>
+
+      <!-- CONTROLES -->
+      <div class="btn-row controles-grab">
+        <button id="btnGrabar" class="btn btn-rec"><span class="dot"></span>Grabar</button>
+        <button id="btnPausa" class="btn btn-gold" disabled>⏸ Pausa</button>
+        <button id="btnDetener" class="btn" disabled>⏹ Detener y guardar</button>
+        <span id="timer" class="timer">00:00</span>
+      </div>
+
+      <canvas id="eqMaster" class="eq-master" width="600" height="60"></canvas>
+      <p id="estadoGrabacion" class="estado"></p>
     </section>
 
+    <!-- ============ PLAYER DE CABINA ============ -->
+    <section class="card">
+      <h2>🎧 Player de cabina</h2>
+
+      <div class="btn-row">
+        <button id="btnPlaySel" class="btn btn-blue">▶ Reproducir selección</button>
+        <button id="btnLoopToggle" class="btn btn-ghost">🔁 Loop: OFF</button>
+        <button id="btnStop" class="btn btn-ghost">⏹</button>
+      </div>
+
+      <p id="estadoReproduccion" class="estado"></p>
+      <audio id="reproductor" controls controlslist="nodownload"></audio>
+
+      <p class="small" style="margin-top:10px;">Marca los capítulos que quieras sonar:</p>
+      <div id="listaSeleccion" class="lista-seleccion"></div>
+    </section>
+
+    <!-- ============ ADMINISTRAR ============ -->
     <section class="card">
       <div class="card-head">
         <h2>Administrar episodios</h2>
@@ -131,6 +159,7 @@
 
   </main>
 
+  <!-- MODAL EDITAR -->
   <dialog id="editModal">
     <form id="editForm">
       <h3>Editar episodio</h3>
