@@ -47,6 +47,9 @@
     btnNext.disabled = false;
     btnMute.disabled = false;
 
+    // El GIF se muestra desde que abre la página
+    setGif(true);
+
     aleatorio();
   }
 
@@ -63,13 +66,36 @@
       : `🎤 ${item.alumno || "Anónimo"} · ${item.categoria || "General"}`;
 
     audio.src = item.url;
-    audio.muted = true;
+
+    // Intenta sonar CON sonido; si el navegador lo bloquea,
+    // inicia silenciado y avisa (cualquier clic activa el sonido)
+    audio.muted = false;
     audio.play()
-      .then(() => { btnPlay.textContent = "⏸"; setVibracion(true); })
-      .catch(() => { btnPlay.textContent = "▶"; });
+      .then(() => { btnPlay.textContent = "⏸"; })
+      .catch(() => {
+        audio.muted = true;
+        audio.play()
+          .then(() => { btnPlay.textContent = "⏸"; setVibracion(true); })
+          .catch(() => { btnPlay.textContent = "▶"; });
+      });
   }
 
-  // ===== GIF: aparece al centro cuando suena, se oculta al pausar =====
+  // ===== Cualquier clic en la página activa el sonido =====
+  function desbloquearSonido(e) {
+    // No intervenir si el clic fue en los controles del reproductor
+    if (e.target.closest(".pm-controls")) return;
+    if (audio.muted && !audio.paused) {
+      audio.muted = false;
+      btnMute.textContent = "🔊";
+      setVibracion(false);
+    }
+    window.removeEventListener("click", desbloquearSonido);
+    window.removeEventListener("keydown", desbloquearSonido);
+  }
+  window.addEventListener("click", desbloquearSonido);
+  window.addEventListener("keydown", desbloquearSonido);
+
+  // ===== GIF visible desde la apertura =====
   function setGif(activo) {
     if (!gif) return;
     if (activo) {
@@ -105,6 +131,5 @@
   });
 
   audio.addEventListener("play", () => { btnPlay.textContent = "⏸"; setGif(true); });
-  audio.addEventListener("pause", () => { btnPlay.textContent = "▶"; setGif(false); });
   audio.addEventListener("ended", aleatorio);
 })();
