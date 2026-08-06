@@ -977,3 +977,17 @@ footer p { margin: 4px 0; }
 git add .
 git commit -m "Tarjetas compactas, GIF 3cm a la izquierda y autoplay al abrir"
 git push
+/* ============ GIF CENTRADO EN EL CAMPO DEL REPRODUCTOR ============ */
+
+.pm-center {
+  margin-right: 0;
+}
+
+.player-minimal .pm-info {
+  flex: 1;
+}
+
+.player-minimal .pm-controls {
+  flex: 1;
+  justify-content: flex-end;
+}

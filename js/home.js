@@ -11,6 +11,7 @@
   const audio = $("pmAudio");
   const titulo = $("pmTitulo");
   const meta = $("pmMeta");
+  const btnPrev = $("pmPrev");
   const btnPlay = $("pmPlay");
   const btnNext = $("pmNext");
   const btnMute = $("pmMute");
@@ -19,10 +20,11 @@
 
   let pool = [];
   let indice = -1;
+  let historial = [];
 
   cargar();
 
-  // ===== Carga episodios Y música de la biblioteca =====
+  // ===== Carga episodios Y música =====
   async function cargar() {
     const [rAud, rMus] = await Promise.all([
       db.from("audios").select("*").eq("publicado", true).order("creado_en", { ascending: false }),
@@ -43,22 +45,22 @@
       return;
     }
 
+    btnPrev.disabled = false;
     btnPlay.disabled = false;
     btnNext.disabled = false;
     btnMute.disabled = false;
 
-    // El GIF se muestra desde que abre la página
+    // Al abrir la página: reproduciendo SIN sonido,
+    // GIF visible y mensaje "¡Activa el audio!"
+    audio.muted = true;
     setGif(true);
-
+    setVibracion(true);
     aleatorio();
   }
 
-  function aleatorio() {
-    let n;
-    do { n = Math.floor(Math.random() * pool.length); }
-    while (n === indice && pool.length > 1);
+  // ===== Poner una pista =====
+  function cargarPista(n) {
     indice = n;
-
     const item = pool[indice];
     titulo.textContent = item.titulo;
     meta.textContent = item._tipo === "m"
@@ -66,36 +68,27 @@
       : `🎤 ${item.alumno || "Anónimo"} · ${item.categoria || "General"}`;
 
     audio.src = item.url;
-
-    // Intenta sonar CON sonido; si el navegador lo bloquea,
-    // inicia silenciado y avisa (cualquier clic activa el sonido)
-    audio.muted = false;
     audio.play()
       .then(() => { btnPlay.textContent = "⏸"; })
-      .catch(() => {
-        audio.muted = true;
-        audio.play()
-          .then(() => { btnPlay.textContent = "⏸"; setVibracion(true); })
-          .catch(() => { btnPlay.textContent = "▶"; });
-      });
+      .catch(() => { btnPlay.textContent = "▶"; });
   }
 
-  // ===== Cualquier clic en la página activa el sonido =====
-  function desbloquearSonido(e) {
-    // No intervenir si el clic fue en los controles del reproductor
-    if (e.target.closest(".pm-controls")) return;
-    if (audio.muted && !audio.paused) {
-      audio.muted = false;
-      btnMute.textContent = "🔊";
-      setVibracion(false);
-    }
-    window.removeEventListener("click", desbloquearSonido);
-    window.removeEventListener("keydown", desbloquearSonido);
+  // ===== Pista siguiente aleatoria =====
+  function aleatorio() {
+    let n;
+    do { n = Math.floor(Math.random() * pool.length); }
+    while (n === indice && pool.length > 1);
+    if (indice >= 0) historial.push(indice);
+    cargarPista(n);
   }
-  window.addEventListener("click", desbloquearSonido);
-  window.addEventListener("keydown", desbloquearSonido);
 
-  // ===== GIF visible desde la apertura =====
+  // ===== Pista anterior =====
+  function anterior() {
+    if (!historial.length) return;
+    cargarPista(historial.pop());
+  }
+
+  // ===== GIF =====
   function setGif(activo) {
     if (!gif) return;
     if (activo) {
@@ -107,6 +100,7 @@
     }
   }
 
+  // ===== Bocina vibrante + aviso =====
   function setVibracion(activo) {
     if (activo) {
       btnMute.classList.add("vibrando");
@@ -116,6 +110,9 @@
       aviso.classList.add("oculto");
     }
   }
+
+  // ===== Controles =====
+  btnPrev.addEventListener("click", anterior);
 
   btnPlay.addEventListener("click", () => {
     if (audio.paused) { audio.play(); btnPlay.textContent = "⏸"; }
@@ -131,5 +128,6 @@
   });
 
   audio.addEventListener("play", () => { btnPlay.textContent = "⏸"; setGif(true); });
+  audio.addEventListener("pause", () => { btnPlay.textContent = "▶"; });
   audio.addEventListener("ended", aleatorio);
 })();
