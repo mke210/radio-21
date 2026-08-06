@@ -15,6 +15,7 @@
   const btnNext = $("pmNext");
   const btnMute = $("pmMute");
   const aviso = $("pmAviso");
+  const gif = $("pmGif");
 
   let pool = [];
   let indice = -1;
@@ -68,18 +69,15 @@
       .catch(() => { btnPlay.textContent = "▶"; });
   }
 
-  // ===== GIF: se activa con play =====
+  // ===== GIF: aparece al centro cuando suena, se oculta al pausar =====
   function setGif(activo) {
-    const gif = $("pmGif");
-    const gifPh = $("pmGifPh");
-    if (!gif || !gifPh) return;
+    if (!gif) return;
     if (activo) {
       gif.src = "img/radio-anim.gif";
       gif.classList.remove("oculto");
-      gifPh.classList.add("oculto");
     } else {
       gif.classList.add("oculto");
-      gifPh.classList.remove("oculto");
+      gif.src = "";
     }
   }
 
