@@ -22,31 +22,37 @@
   let indice = 0;
   let loopActivo = false;
 
-  // ===== Estado de sesión de grabación =====
-  let audioCtx = null;
+  // ===== Audio compartido (música + micrófonos + grabación) =====
+  let ctx = null;
+
+  // ===== Sesión de grabación =====
   let rec = null;
   let chunks = [];
   let streams = [];
   let anMaster = null, an1 = null, an2 = null;
-  let musicFile = null;
-  let musicPreview = null;
-  let musicRouted = null;
-  let musicGainNode = null;
+  let masterNode = null;
+  let musicaConectada = false;
   let rafId = null;
   let timerInt = null;
   let seg = 0;
   let pausado = false;
 
+  // ===== Música =====
+  let musicPreview = null;
+  let musicSrcNode = null;
+  let musicGainNode = null;
+  let musicAnalyser = null;
+  let musicRaf = null;
+
   // ===== Eventos =====
   on("btnGrabar", "click", iniciarGrabacion);
   on("btnPausa", "click", pausarReanudar);
   on("btnDetener", "click", () => { if (rec && rec.state !== "inactive") rec.stop(); });
-  on("btnMusica", "click", toggleMusicaPreview);
+  on("btnMusica", "click", toggleMusica);
   on("musicaFile", "change", cargarMusica);
+  on("musicaLoop", "change", () => { if (musicPreview) musicPreview.loop = $("musicaLoop").checked; });
   on("musicaVol", "input", () => {
-    const v = parseFloat($("musicaVol").value);
-    if (musicPreview) musicPreview.volume = v;
-    if (musicGainNode) musicGainNode.gain.value = v;
+    if (musicGainNode) musicGainNode.gain.value = parseFloat($("musicaVol").value);
   });
   on("btnPlaySel", "click", reproducirSeleccion);
   on("btnLoopToggle", "click", toggleLoop);
@@ -59,6 +65,13 @@
   cargarMics();
   if (navigator.mediaDevices) navigator.mediaDevices.addEventListener("devicechange", cargarMics);
   cargarAudios();
+  iniciarEqMusica();
+
+  function asegurarCtx() {
+    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === "suspended") ctx.resume();
+    return ctx;
+  }
 
   // ======================================================
   // MICRÓFONOS
@@ -91,24 +104,47 @@
   }
 
   // ======================================================
-  // MÚSICA DE FONDO
+  // MÚSICA + ECUALIZADOR RETRO
   // ======================================================
 
   function cargarMusica() {
     const f = $("musicaFile").files[0];
     if (!f) return;
-    musicFile = f;
-    $("musicaNombre").textContent = "🎵 " + f.name;
+
     if (musicPreview) musicPreview.pause();
     musicPreview = new Audio(URL.createObjectURL(f));
-    musicPreview.volume = parseFloat($("musicaVol").value);
+    musicPreview.volume = 1;
+    musicPreview.loop = $("musicaLoop").checked;
+
+    // Reiniciar gráfico de audio para el nuevo elemento
+    if (musicSrcNode) {
+      try { musicSrcNode.disconnect(); musicGainNode.disconnect(); musicAnalyser.disconnect(); } catch (e) {}
+      musicSrcNode = musicGainNode = musicAnalyser = null;
+    }
+    if (ctx) construirGraficoMusica();
+
+    $("musicaNombre").textContent = "🎵 " + f.name;
     $("btnMusica").disabled = false;
+    $("btnMusica").textContent = "▶ Música";
   }
 
-  function toggleMusicaPreview() {
+  function construirGraficoMusica() {
+    if (!ctx || !musicPreview || musicSrcNode) return;
+    musicSrcNode = ctx.createMediaElementSource(musicPreview);
+    musicGainNode = ctx.createGain();
+    musicGainNode.gain.value = parseFloat($("musicaVol").value);
+    musicAnalyser = ctx.createAnalyser();
+    musicAnalyser.fftSize = 64;
+    musicSrcNode.connect(musicGainNode);
+    musicGainNode.connect(musicAnalyser);
+    musicAnalyser.connect(ctx.destination);
+  }
+
+  function toggleMusica() {
     if (!musicPreview) return;
     if (musicPreview.paused) {
-      musicPreview.loop = $("musicaLoop").checked;
+      asegurarCtx();
+      construirGraficoMusica();
       musicPreview.play();
       $("btnMusica").textContent = "⏸ Música";
     } else {
@@ -117,8 +153,52 @@
     }
   }
 
+  function iniciarEqMusica() {
+    if (musicRaf) return;
+    const paso = () => {
+      musicRaf = requestAnimationFrame(paso);
+      dibujarRetro(musicAnalyser, $("eqMusica"));
+    };
+    paso();
+  }
+
+  // Ecualizador retro tipo estéreo (segmentos verde/amarillo/rojo)
+  function dibujarRetro(an, canvas) {
+    if (!canvas) return;
+    const c2 = canvas.getContext("2d");
+    const W = canvas.width, H = canvas.height;
+    c2.clearRect(0, 0, W, H);
+
+    const bars = 20;
+    const segs = 12;
+    const bw = W / bars;
+    const segH = H / segs;
+
+    let data = null;
+    if (an) {
+      data = new Uint8Array(an.frequencyBinCount);
+      an.getByteFrequencyData(data);
+    }
+
+    const step = data ? Math.max(1, Math.floor(data.length / bars)) : 1;
+
+    for (let i = 0; i < bars; i++) {
+      const v = data ? data[i * step] / 255 : 0;
+      const lit = Math.round(v * segs);
+      for (let s = 0; s < segs; s++) {
+        const y = H - (s + 1) * segH;
+        if (s < lit) {
+          c2.fillStyle = s < 6 ? "#39d353" : s < 9 ? "#ffd300" : "#ff4136";
+        } else {
+          c2.fillStyle = "rgba(255,255,255,0.06)";
+        }
+        c2.fillRect(i * bw + 2, y + 1, bw - 4, segH - 2);
+      }
+    }
+  }
+
   // ======================================================
-  // GRABACIÓN (mezcla de locutores + música)
+  // GRABACIÓN
   // ======================================================
 
   async function iniciarGrabacion() {
@@ -133,48 +213,43 @@
     estadoGrabacion("Preparando sesión...");
 
     try {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      await audioCtx.resume();
+      asegurarCtx();
 
-      const master = audioCtx.createGain();
-      anMaster = audioCtx.createAnalyser(); anMaster.fftSize = 64;
-      const dest = audioCtx.createMediaStreamDestination();
-      master.connect(anMaster);
-      master.connect(dest);
+      masterNode = ctx.createGain();
+      anMaster = ctx.createAnalyser(); anMaster.fftSize = 64;
+      const dest = ctx.createMediaStreamDestination();
+      masterNode.connect(anMaster);
+      masterNode.connect(dest);
 
       streams = [];
 
       if (loc1) {
         const s = await pedirMic($("mic1").value);
         streams.push(s);
-        const src = audioCtx.createMediaStreamSource(s);
-        an1 = audioCtx.createAnalyser(); an1.fftSize = 64;
-        src.connect(master); src.connect(an1);
-      } else { an1 = null; }
+        const src = ctx.createMediaStreamSource(s);
+        an1 = ctx.createAnalyser(); an1.fftSize = 64;
+        src.connect(masterNode); src.connect(an1);
+      } else an1 = null;
 
       if (loc2) {
         const s = await pedirMic($("mic2").value);
         streams.push(s);
-        const src = audioCtx.createMediaStreamSource(s);
-        an2 = audioCtx.createAnalyser(); an2.fftSize = 64;
-        src.connect(master); src.connect(an2);
-      } else { an2 = null; }
+        const src = ctx.createMediaStreamSource(s);
+        an2 = ctx.createAnalyser(); an2.fftSize = 64;
+        src.connect(masterNode); src.connect(an2);
+      } else an2 = null;
 
-      // Música incluida en la grabación
-      if (musicFile && $("musicaIncluir").checked) {
-        musicRouted = new Audio(URL.createObjectURL(musicFile));
-        musicRouted.loop = $("musicaLoop").checked;
-        const srcNode = audioCtx.createMediaElementSource(musicRouted);
-        musicGainNode = audioCtx.createGain();
-        musicGainNode.gain.value = parseFloat($("musicaVol").value);
-        srcNode.connect(musicGainNode);
-        musicGainNode.connect(master);
-        musicGainNode.connect(audioCtx.destination);
-        musicRouted.play();
-        if (musicPreview) musicPreview.pause();
+      // Conectar música a la grabación
+      musicaConectada = false;
+      if ($("musicaIncluir").checked) {
+        if (!musicSrcNode && musicPreview) construirGraficoMusica();
+        if (musicGainNode) {
+          musicGainNode.connect(masterNode);
+          musicaConectada = true;
+        }
       }
 
-      cargarMics(); // refresca nombres tras dar permiso
+      cargarMics();
 
       chunks = [];
       rec = new MediaRecorder(dest.stream);
@@ -182,6 +257,9 @@
       rec.onstop = async () => {
         const blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
         const dur = seg;
+        if (musicaConectada && musicGainNode) {
+          try { musicGainNode.disconnect(masterNode); } catch (e) {}
+        }
         limpiarSesion();
         estadoGrabacion("Subiendo y guardando episodio...");
         await subirAudio(blob, dur);
@@ -208,14 +286,12 @@
     if (!rec) return;
     if (!pausado) {
       rec.pause();
-      if (musicRouted) musicRouted.pause();
       pausado = true;
       clearInterval(timerInt);
       $("btnPausa").textContent = "▶ Reanudar";
       estadoGrabacion("Grabación en pausa.");
     } else {
       rec.resume();
-      if (musicRouted) musicRouted.play();
       pausado = false;
       iniciarTimer();
       $("btnPausa").textContent = "⏸ Pausa";
@@ -226,12 +302,10 @@
   function limpiarSesion() {
     streams.forEach(s => s.getTracks().forEach(t => t.stop()));
     streams = [];
-    if (musicRouted) { musicRouted.pause(); musicRouted = null; }
-    musicGainNode = null;
     if (rafId) cancelAnimationFrame(rafId);
     if (timerInt) clearInterval(timerInt);
-    if (audioCtx) { audioCtx.close(); audioCtx = null; }
     anMaster = an1 = an2 = null;
+    masterNode = null;
     ["eqMaster", "eq1", "eq2"].forEach(id => {
       const c = $(id);
       if (c) c.getContext("2d").clearRect(0, 0, c.width, c.height);
@@ -264,41 +338,37 @@
     }, 1000);
   }
 
-  // ======================================================
-  // ECUALIZADOR
-  // ======================================================
-
   function iniciarEcualizador() {
     if (rafId) cancelAnimationFrame(rafId);
     const paso = () => {
       rafId = requestAnimationFrame(paso);
-      dibujar(anMaster, $("eqMaster"));
-      dibujar(an1, $("eq1"));
-      dibujar(an2, $("eq2"));
+      dibujarBarras(anMaster, $("eqMaster"));
+      dibujarBarras(an1, $("eq1"));
+      dibujarBarras(an2, $("eq2"));
     };
     paso();
   }
 
-  function dibujar(an, canvas) {
+  function dibujarBarras(an, canvas) {
     if (!an || !canvas) return;
     const data = new Uint8Array(an.frequencyBinCount);
     an.getByteFrequencyData(data);
-    const ctx = canvas.getContext("2d");
+    const c2 = canvas.getContext("2d");
     const W = canvas.width, H = canvas.height;
-    ctx.clearRect(0, 0, W, H);
+    c2.clearRect(0, 0, W, H);
     const bars = 24;
     const step = Math.max(1, Math.floor(data.length / bars));
     const bw = W / bars;
     for (let i = 0; i < bars; i++) {
       const v = data[i * step] / 255;
       const h = Math.max(2, v * H);
-      ctx.fillStyle = v > 0.7 ? "#e05252" : "#e3b64f";
-      ctx.fillRect(i * bw + 1, H - h, bw - 2, h);
+      c2.fillStyle = v > 0.7 ? "#e05252" : "#e3b64f";
+      c2.fillRect(i * bw + 1, H - h, bw - 2, h);
     }
   }
 
   // ======================================================
-  // GUARDAR EPISODIO
+  // GUARDAR
   // ======================================================
 
   async function subirAudio(blob, duracionSeg) {
@@ -354,7 +424,7 @@
   }
 
   // ======================================================
-  // PLAYER DE CABINA (selección + loop)
+  // PLAYER DE CABINA
   // ======================================================
 
   function renderSeleccion() {
@@ -374,11 +444,8 @@
   }
 
   function reproducirSeleccion() {
-    const marcados = [...document.querySelectorAll("#listaSeleccion input:checked")]
-      .map(c => c.value);
-    playlist = marcados.length
-      ? audios.filter(a => marcados.includes(a.id))
-      : audios.slice();
+    const marcados = [...document.querySelectorAll("#listaSeleccion input:checked")].map(c => c.value);
+    playlist = marcados.length ? audios.filter(a => marcados.includes(a.id)) : audios.slice();
     if (!playlist.length) { estadoReproduccion("No hay episodios.", true); return; }
     indice = 0;
     reproducirActual();
@@ -431,7 +498,7 @@
   }
 
   // ======================================================
-  // LISTAR / TABLA / EDITAR / BORRAR
+  // TABLA / EDITAR / BORRAR
   // ======================================================
 
   async function cargarAudios() {

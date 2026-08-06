@@ -39,7 +39,6 @@
 
       <div class="locutores-grid">
 
-        <!-- LOCUTOR 1 -->
         <div class="locutor-box">
           <div class="locutor-head">
             <label class="switch">
@@ -54,7 +53,6 @@
           <canvas id="eq1" class="eq-canvas" width="240" height="42"></canvas>
         </div>
 
-        <!-- LOCUTOR 2 -->
         <div class="locutor-box">
           <div class="locutor-head">
             <label class="switch">
@@ -71,22 +69,6 @@
 
       </div>
 
-      <!-- MÚSICA DE FONDO -->
-      <div class="musica-box">
-        <h3>🎵 Música de fondo</h3>
-        <div class="btn-row">
-          <label class="imagen-label">📁 Cargar MP3<input id="musicaFile" type="file" accept="audio/*" /></label>
-          <button id="btnMusica" class="btn btn-ghost" disabled>▶ Música</button>
-          <input type="range" id="musicaVol" min="0" max="1" step="0.05" value="0.5" title="Volumen música" />
-        </div>
-        <span id="musicaNombre" class="small">Sin pista cargada</span>
-        <div class="btn-row">
-          <label class="check-label"><input id="musicaIncluir" type="checkbox" checked /> Incluir en la grabación</label>
-          <label class="check-label"><input id="musicaLoop" type="checkbox" /> Loop de música</label>
-        </div>
-      </div>
-
-      <!-- DATOS DEL EPISODIO -->
       <div class="form-row">
         <input id="titulo" type="text" placeholder="Título del episodio" maxlength="120" />
         <input id="alumno" type="text" placeholder="Alumno o equipo" maxlength="120" />
@@ -106,7 +88,6 @@
       <textarea id="descripcion" rows="2" placeholder="Descripción del episodio"></textarea>
       <label class="check-label"><input id="destacado" type="checkbox" /> ⭐ Destacar episodio</label>
 
-      <!-- CONTROLES -->
       <div class="btn-row controles-grab">
         <button id="btnGrabar" class="btn btn-rec"><span class="dot"></span>Grabar</button>
         <button id="btnPausa" class="btn btn-gold" disabled>⏸ Pausa</button>
@@ -116,6 +97,27 @@
 
       <canvas id="eqMaster" class="eq-master" width="600" height="60"></canvas>
       <p id="estadoGrabacion" class="estado"></p>
+    </section>
+
+    <!-- ============ MÚSICA DE FONDO (arriba del player) ============ -->
+    <section class="card">
+      <div class="card-head">
+        <h2>🎵 Música de fondo</h2>
+        <div class="btn-row">
+          <label class="imagen-label">📁 Cargar MP3<input id="musicaFile" type="file" accept="audio/*" /></label>
+          <button id="btnMusica" class="btn btn-ghost" disabled>▶ Música</button>
+          <input type="range" id="musicaVol" min="0" max="1" step="0.05" value="0.5" title="Volumen música" />
+        </div>
+      </div>
+
+      <!-- ECUALIZADOR RETRO -->
+      <canvas id="eqMusica" class="eq-retro" width="600" height="70"></canvas>
+
+      <span id="musicaNombre" class="small">Sin pista cargada</span>
+      <div class="btn-row">
+        <label class="check-label"><input id="musicaIncluir" type="checkbox" checked /> Incluir en la grabación</label>
+        <label class="check-label"><input id="musicaLoop" type="checkbox" /> Loop de música</label>
+      </div>
     </section>
 
     <!-- ============ PLAYER DE CABINA ============ -->
@@ -159,7 +161,6 @@
 
   </main>
 
-  <!-- MODAL EDITAR -->
   <dialog id="editModal">
     <form id="editForm">
       <h3>Editar episodio</h3>

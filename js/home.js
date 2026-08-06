@@ -16,6 +16,7 @@
   const btnPlay = $("pmPlay");
   const btnNext = $("pmNext");
   const btnMute = $("pmMute");
+  const aviso = $("pmAviso");
 
   let episodios = [];
   let indice = -1;
@@ -64,8 +65,19 @@
     audio.src = ep.url;
     audio.muted = true;
     audio.play()
-      .then(() => { btnPlay.textContent = "⏸"; })
+      .then(() => { btnPlay.textContent = "⏸"; setVibracion(true); })
       .catch(() => { btnPlay.textContent = "▶"; });
+  }
+
+  // ===== Vibración de la bocina =====
+  function setVibracion(activo) {
+    if (activo) {
+      btnMute.classList.add("vibrando");
+      aviso.classList.remove("oculto");
+    } else {
+      btnMute.classList.remove("vibrando");
+      aviso.classList.add("oculto");
+    }
   }
 
   btnPlay.addEventListener("click", () => {
@@ -78,6 +90,7 @@
   btnMute.addEventListener("click", () => {
     audio.muted = !audio.muted;
     btnMute.textContent = audio.muted ? "🔇" : "🔊";
+    setVibracion(audio.muted);
   });
 
   audio.addEventListener("ended", aleatorio);
