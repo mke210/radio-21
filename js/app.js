@@ -352,26 +352,33 @@
     musicAnalyser.connect(ctx.destination);
   }
 
-  function toggleMusica() {
+    function toggleMusica() {
     if (!musicPreview) return;
     if (musicPreview.paused) {
       asegurarCtx();
       construirGraficoMusica();
       musicPreview.play();
       $("btnMusica").textContent = "⏸ Música";
+      activarGif(true);
     } else {
       musicPreview.pause();
       $("btnMusica").textContent = "▶ Música";
+      activarGif(false);
     }
   }
 
-  function iniciarEqMusica() {
-    if (musicRaf) return;
-    const paso = () => {
-      musicRaf = requestAnimationFrame(paso);
-      dibujarRetro(musicAnalyser, $("eqMusica"));
-    };
-    paso();
+  function activarGif(activo) {
+    const gif = $("gifRadio");
+    const ph = $("gifPlaceholder");
+    if (!gif || !ph) return;
+    if (activo) {
+      gif.src = "img/radio-anim.gif"; // reinicia el movimiento desde el inicio
+      gif.classList.remove("oculto");
+      ph.classList.add("oculto");
+    } else {
+      gif.classList.add("oculto");
+      ph.classList.remove("oculto");
+    }
   }
 
   function dibujarRetro(an, canvas) {
