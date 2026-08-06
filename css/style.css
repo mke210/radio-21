@@ -897,3 +897,50 @@ footer p { margin: 4px 0; }
   min-height: 120px;
   font-size: 40px;
 }
+/* ============ REPRODUCTOR DE INICIO INTEGRADO ============ */
+
+.player-home {
+  max-width: 800px;
+  margin: 26px auto 10px;
+  padding: 0 16px;
+}
+
+.player-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.player-card .player-minimal {
+  max-width: none;
+  margin: 12px 0 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+.anim-home {
+  min-height: 120px;
+  margin: 0 auto 4px;
+}
+
+.gif-home { max-width: 208px; }
+
+.gif-home-ph {
+  max-width: 208px;
+  min-height: 120px;
+  font-size: 40px;
+}
+
+/* Botón eliminar dentro de la lista de selección */
+.sel-item .sel-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  cursor: pointer;
+}
+
+.sel-item .btn-mini { flex-shrink: 0; }

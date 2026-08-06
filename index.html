@@ -44,28 +44,30 @@
       </a>
     </div>
 
-    <!-- REPRODUCTOR CON GIF -->
+    <!-- REPRODUCTOR INTEGRADO CON GIF -->
     <section class="player-home">
-      <div class="anim-center anim-home">
-        <img id="pmGif" src="img/radio-anim.gif" alt="Radio animada" class="gif-radio gif-home oculto" />
-        <div id="pmGifPh" class="gif-placeholder gif-home-ph">🎧</div>
-      </div>
+      <div class="player-card">
 
-      <div class="player-minimal">
-        <img id="pmImg" class="pm-img" src="" alt="" style="display:none;" />
-        <div id="pmPh" class="pm-img pm-ph">🎧</div>
-        <div class="pm-info">
-          <strong id="pmTitulo">Cargando episodio…</strong>
-          <span id="pmMeta" class="small"></span>
+        <div class="anim-home">
+          <img id="pmGif" src="img/radio-anim.gif" alt="Radio animada" class="gif-radio gif-home oculto" />
+          <div id="pmGifPh" class="gif-placeholder gif-home-ph">🎧</div>
         </div>
-        <div class="pm-controls">
-          <button id="pmPlay" class="pm-btn" disabled>▶</button>
-          <button id="pmNext" class="pm-btn" disabled>⏭</button>
-          <span class="pm-speaker">
-            <button id="pmMute" class="pm-btn" disabled>🔇</button>
-            <span id="pmAviso" class="pm-aviso oculto">¡Activa el audio! 🔊</span>
-          </span>
+
+        <div class="player-minimal">
+          <div class="pm-info">
+            <strong id="pmTitulo">Cargando contenido…</strong>
+            <span id="pmMeta" class="small"></span>
+          </div>
+          <div class="pm-controls">
+            <button id="pmPlay" class="pm-btn" disabled>▶</button>
+            <button id="pmNext" class="pm-btn" disabled>⏭</button>
+            <span class="pm-speaker">
+              <button id="pmMute" class="pm-btn" disabled>🔇</button>
+              <span id="pmAviso" class="pm-aviso oculto">¡Activa el audio! 🔊</span>
+            </span>
+          </div>
         </div>
+
         <audio id="pmAudio" loop controlslist="nodownload"></audio>
       </div>
     </section>

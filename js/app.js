@@ -57,7 +57,8 @@
   on("btnDetener", "click", () => { if (rec && rec.state !== "inactive") rec.stop(); });
   on("btnMusica", "click", toggleMusica);
   on("musicaFile", "change", cargarMusicaLocal);
-  on("musicaLoop", "change", () => { if (musicPreview) musicPreview.loop = $("musicaLoop").checked; });
+    on("musicaLoop", "change", () => { if (musicPreview) musicPreview.loop = $("musicaLoop").checked; });
+  on("btnQuitarMusica", "click", quitarMusicaLocal);
   on("subirMusica", "change", subirMusicaDB);
   on("btnPlaySel", "click", reproducirSeleccion);
   on("btnLoopToggle", "click", toggleLoop);
@@ -267,8 +268,19 @@
     g1.textContent = "🎵 Música";
     cont.appendChild(g1);
 
-    if (!musicas.length) cont.appendChild(pSmall("Sin música subida. Usa 📤 Subir MP3."));
-    musicas.forEach(m => cont.appendChild(itemSel("m:" + m.id, "🎵 " + m.titulo)));
+        if (!musicas.length) cont.appendChild(pSmall("Sin música subida. Usa 📤 Subir MP3."));
+    musicas.forEach(m => {
+      const fila = document.createElement("div");
+      fila.className = "sel-item";
+      fila.innerHTML = `<label class="sel-label"><input type="checkbox" value="m:${m.id}" /> <span>🎵 ${m.titulo}</span></label>`;
+      const b = document.createElement("button");
+      b.className = "btn btn-mini btn-del";
+      b.textContent = "🗑";
+      b.title = "Eliminar de la biblioteca";
+      b.onclick = () => borrarMusicaDB(m.id);
+      fila.appendChild(b);
+      cont.appendChild(fila);
+    });
 
     const g2 = document.createElement("div");
     g2.className = "grupo-titulo";
@@ -419,10 +431,11 @@
     }
     if (ctx) construirGraficoMusica();
 
-    $("musicaNombre").textContent = "🎵 " + f.name;
+        $("musicaNombre").textContent = "🎵 " + f.name;
     $("btnMusica").disabled = false;
     $("btnMusica").textContent = "▶ Música";
-  }
+    $("btnQuitarMusica").disabled = false;
+   }
 
   function construirGraficoMusica() {
     if (!ctx || !musicPreview || musicSrcNode) return;
@@ -436,7 +449,7 @@
     musicAnalyser.connect(ctx.destination);
   }
 
-  function toggleMusica() {
+    function toggleMusica() {
     if (!musicPreview) return;
     if (musicPreview.paused) {
       asegurarCtx();
@@ -447,6 +460,31 @@
       musicPreview.pause();
       $("btnMusica").textContent = "▶ Música";
     }
+  }
+
+  function quitarMusicaLocal() {
+    if (musicPreview) musicPreview.pause();
+    musicPreview = null;
+    if (musicSrcNode) {
+      try { musicSrcNode.disconnect(); musicGainNode.disconnect(); musicAnalyser.disconnect(); } catch (e) {}
+      musicSrcNode = musicGainNode = musicAnalyser = null;
+    }
+    $("musicaFile").value = "";
+    $("musicaNombre").textContent = "Sin pista cargada";
+    $("btnMusica").disabled = true;
+    $("btnMusica").textContent = "▶ Música";
+    $("btnQuitarMusica").disabled = true;
+  }
+
+  async function borrarMusicaDB(id) {
+    const item = musicas.find(m => m.id === id);
+    if (!item || !confirm(`¿Eliminar "${item.titulo}" de la biblioteca?`)) return;
+    if (item.archivo) await db.storage.from("musica").remove([item.archivo]);
+    await db.from("musica").delete().eq("id", id);
+    await cargarMusicaDB();
+    renderSeleccion();
+    estadoReproduccion("🗑 Pista eliminada de la biblioteca.");
+  }
   }
 
   function dibujarRetro(an, canvas) {

@@ -9,8 +9,6 @@
   const $ = (id) => document.getElementById(id);
 
   const audio = $("pmAudio");
-  const img = $("pmImg");
-  const ph = $("pmPh");
   const titulo = $("pmTitulo");
   const meta = $("pmMeta");
   const btnPlay = $("pmPlay");
@@ -18,24 +16,32 @@
   const btnMute = $("pmMute");
   const aviso = $("pmAviso");
 
-  let episodios = [];
+  let pool = [];
   let indice = -1;
 
   cargar();
 
+  // ===== Carga episodios Y música de la biblioteca =====
   async function cargar() {
-    const { data, error } = await db
-      .from("audios").select("*")
-      .eq("publicado", true)
-      .order("creado_en", { ascending: false });
+    const [rAud, rMus] = await Promise.all([
+      db.from("audios").select("*").eq("publicado", true).order("creado_en", { ascending: false }),
+      db.from("musica").select("*").order("creado_en", { ascending: false })
+    ]);
 
-    if (error || !data || !data.length) {
-      titulo.textContent = "Aún no hay episodios";
-      meta.textContent = "Graba el primero desde la cabina 🎙️";
+    const episodios = rAud.data || [];
+    const musicas = rMus.data || [];
+
+    pool = [
+      ...musicas.map(m => ({ ...m, _tipo: "m" })),
+      ...episodios.map(e => ({ ...e, _tipo: "e" }))
+    ];
+
+    if (!pool.length) {
+      titulo.textContent = "Aún no hay contenido";
+      meta.textContent = "Sube música o graba episodios desde la cabina 🎙️";
       return;
     }
 
-    episodios = data;
     btnPlay.disabled = false;
     btnNext.disabled = false;
     btnMute.disabled = false;
@@ -45,31 +51,24 @@
 
   function aleatorio() {
     let n;
-    do { n = Math.floor(Math.random() * episodios.length); }
-    while (n === indice && episodios.length > 1);
+    do { n = Math.floor(Math.random() * pool.length); }
+    while (n === indice && pool.length > 1);
     indice = n;
 
-    const ep = episodios[indice];
-    titulo.textContent = ep.titulo;
-    meta.textContent = `🎤 ${ep.alumno || "Anónimo"} · ${ep.categoria || "General"}`;
+    const item = pool[indice];
+    titulo.textContent = item.titulo;
+    meta.textContent = item._tipo === "m"
+      ? "🎵 Música · Biblioteca Podcast 21"
+      : `🎤 ${item.alumno || "Anónimo"} · ${item.categoria || "General"}`;
 
-    if (ep.imagen) {
-      img.src = ep.imagen;
-      img.style.display = "block";
-      ph.style.display = "none";
-    } else {
-      img.style.display = "none";
-      ph.style.display = "flex";
-    }
-
-    audio.src = ep.url;
+    audio.src = item.url;
     audio.muted = true;
     audio.play()
       .then(() => { btnPlay.textContent = "⏸"; setVibracion(true); })
       .catch(() => { btnPlay.textContent = "▶"; });
   }
 
-  // ===== GIF: se activa con play, se oculta con pausa =====
+  // ===== GIF: se activa con play =====
   function setGif(activo) {
     const gif = $("pmGif");
     const gifPh = $("pmGifPh");
