@@ -18,11 +18,13 @@
 
   // ===== Estado general =====
   let audios = [];
+  let musicas = [];
   let playlist = [];
   let indice = 0;
   let loopActivo = false;
+  let iniciadoAuto = false;
 
-  // ===== Audio compartido (música + micrófonos + grabación) =====
+  // ===== Audio compartido =====
   let ctx = null;
 
   // ===== Sesión de grabación =====
@@ -37,7 +39,7 @@
   let seg = 0;
   let pausado = false;
 
-  // ===== Música =====
+  // ===== Música local (mezcla) =====
   let musicPreview = null;
   let musicSrcNode = null;
   let musicGainNode = null;
@@ -49,28 +51,239 @@
   on("btnPausa", "click", pausarReanudar);
   on("btnDetener", "click", () => { if (rec && rec.state !== "inactive") rec.stop(); });
   on("btnMusica", "click", toggleMusica);
-  on("musicaFile", "change", cargarMusica);
+  on("musicaFile", "change", cargarMusicaLocal);
   on("musicaLoop", "change", () => { if (musicPreview) musicPreview.loop = $("musicaLoop").checked; });
   on("musicaVol", "input", () => {
     if (musicGainNode) musicGainNode.gain.value = parseFloat($("musicaVol").value);
   });
+  on("subirMusica", "change", subirMusicaDB);
   on("btnPlaySel", "click", reproducirSeleccion);
   on("btnLoopToggle", "click", toggleLoop);
   on("btnStop", "click", detenerReproduccion);
-  on("btnActualizar", "click", cargarAudios);
+  on("btnActivarSonido", "click", activarSonido);
+  on("btnActualizar", "click", () => cargarTodo());
   on("editForm", "submit", guardarEdicion);
   on("btnCancelarEditar", "click", () => $("editModal").close());
   on("reproductor", "ended", alTerminarEpisodio);
 
   cargarMics();
   if (navigator.mediaDevices) navigator.mediaDevices.addEventListener("devicechange", cargarMics);
-  cargarAudios();
   iniciarEqMusica();
+  cargarTodo();
 
   function asegurarCtx() {
     if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
     if (ctx.state === "suspended") ctx.resume();
     return ctx;
+  }
+
+  // ======================================================
+  // CARGA DE DATOS + AUTO-INICIO
+  // ======================================================
+
+  async function cargarTodo() {
+    await Promise.all([cargarAudios(), cargarMusicaDB()]);
+    renderSeleccion();
+    if (!iniciadoAuto) {
+      iniciadoAuto = true;
+      autoInicio();
+    }
+  }
+
+  function autoInicio() {
+    playlist = listaCompleta();
+    if (!playlist.length) {
+      estadoReproduccion("Sin contenido todavía. Sube música o graba episodios.");
+      return;
+    }
+    indice = 0;
+    const r = $("reproductor");
+    r.src = playlist[0].url;
+
+    // Intentar con sonido; si el navegador lo bloquea, silenciado + aviso
+    r.play()
+      .then(() => {
+        $("avisoSonido").classList.add("oculto");
+        estadoReproduccion("🎶 Sonando: " + playlist[0].titulo);
+      })
+      .catch(() => {
+        r.muted = true;
+        r.play()
+          .then(() => {
+            $("avisoSonido").classList.remove("oculto");
+            estadoReproduccion("🎶 Sonando (silenciado): " + playlist[0].titulo);
+          })
+          .catch(() => {});
+      });
+  }
+
+  function activarSonido() {
+    const r = $("reproductor");
+    r.muted = false;
+    $("avisoSonido").classList.add("oculto");
+    estadoReproduccion("🔊 Sonido activado.");
+  }
+
+  // ======================================================
+  // BIBLIOTECA DE MÚSICA (SUPABASE)
+  // ======================================================
+
+  async function cargarMusicaDB() {
+    if (!db) return;
+    const { data, error } = await db.from("musica").select("*").order("creado_en", { ascending: false });
+    if (!error) musicas = data || [];
+  }
+
+  async function subirMusicaDB() {
+    const files = [...$("subirMusica").files];
+    if (!files.length || !db) return;
+
+    estadoReproduccion("📤 Subiendo música a la biblioteca...");
+
+    for (const f of files) {
+      const base = f.name.replace(/\.[^.]+$/, "");
+      const nombre = `${Date.now()}-${slug(base)}.${extDesdeNombre(f.name)}`;
+
+      const { error: errUp } = await db.storage.from("musica").upload(nombre, f, {
+        contentType: f.type || "audio/mpeg",
+        upsert: false
+      });
+      if (errUp) { console.error(errUp); continue; }
+
+      const { data: urlData } = db.storage.from("musica").getPublicUrl(nombre);
+
+      await db.from("musica").insert({
+        titulo: base,
+        archivo: nombre,
+        url: urlData.publicUrl
+      });
+    }
+
+    $("subirMusica").value = "";
+    estadoReproduccion("✅ Música agregada a la biblioteca.");
+    await cargarMusicaDB();
+    renderSeleccion();
+  }
+
+  // ======================================================
+  // SELECCIÓN MIXTA (MÚSICA + EPISODIOS)
+  // ======================================================
+
+  function renderSeleccion() {
+    const cont = $("listaSeleccion");
+    if (!cont) return;
+    cont.innerHTML = "";
+
+    const g1 = document.createElement("div");
+    g1.className = "grupo-titulo";
+    g1.textContent = "🎵 Música";
+    cont.appendChild(g1);
+
+    if (!musicas.length) {
+      cont.appendChild(pSmall("Sin música subida. Usa 📤 Subir MP3."));
+    }
+    musicas.forEach(m => cont.appendChild(itemSel("m:" + m.id, "🎵 " + m.titulo)));
+
+    const g2 = document.createElement("div");
+    g2.className = "grupo-titulo";
+    g2.textContent = "🎙️ Episodios";
+    cont.appendChild(g2);
+
+    if (!audios.length) {
+      cont.appendChild(pSmall("Sin episodios todavía."));
+    }
+    audios.forEach(a => cont.appendChild(itemSel("e:" + a.id, a.titulo)));
+  }
+
+  function itemSel(valor, texto) {
+    const label = document.createElement("label");
+    label.className = "sel-item";
+    label.innerHTML = `<input type="checkbox" value="${valor}" /> <span>${texto}</span>`;
+    return label;
+  }
+
+  function pSmall(t) {
+    const p = document.createElement("p");
+    p.className = "small";
+    p.style.margin = "4px 0";
+    p.textContent = t;
+    return p;
+  }
+
+  function resolverItem(valor) {
+    const tipo = valor.slice(0, 1);
+    const id = valor.slice(2);
+    if (tipo === "m") {
+      const m = musicas.find(x => x.id === id);
+      return m ? { ...m, _tipo: "m" } : null;
+    }
+    const e = audios.find(x => x.id === id);
+    return e ? { ...e, _tipo: "e" } : null;
+  }
+
+  function listaCompleta() {
+    return [
+      ...musicas.map(m => ({ ...m, _tipo: "m" })),
+      ...audios.map(a => ({ ...a, _tipo: "e" }))
+    ];
+  }
+
+  function reproducirSeleccion() {
+    const marcados = [...document.querySelectorAll("#listaSeleccion input:checked")].map(c => c.value);
+    playlist = marcados.length
+      ? marcados.map(resolverItem).filter(Boolean)
+      : listaCompleta();
+
+    if (!playlist.length) { estadoReproduccion("No hay contenido para reproducir.", true); return; }
+
+    indice = 0;
+    reproducirActual();
+  }
+
+  function toggleLoop() {
+    loopActivo = !loopActivo;
+    const btn = $("btnLoopToggle");
+    btn.textContent = loopActivo ? "🔁 Loop: ON" : "🔁 Loop: OFF";
+    btn.classList.toggle("btn-gold", loopActivo);
+    btn.classList.toggle("btn-ghost", !loopActivo);
+  }
+
+  function alTerminarEpisodio() {
+    if (!playlist.length) return;
+    if (loopActivo) {
+      indice = (indice + 1) % playlist.length;
+      reproducirActual();
+    } else if (indice < playlist.length - 1) {
+      indice++;
+      reproducirActual();
+    } else {
+      estadoReproduccion("Fin de la selección.");
+    }
+  }
+
+  function reproducirActual() {
+    const item = playlist[indice];
+    if (!item) return;
+    const r = $("reproductor");
+    r.src = item.url;
+    r.play().catch(() => {});
+    estadoReproduccion(`Sonando: ${item.titulo}`);
+  }
+
+  function reproducirUno(id) {
+    const item = audios.find(a => a.id === id);
+    if (!item) return;
+    playlist = [{ ...item, _tipo: "e" }];
+    indice = 0;
+    reproducirActual();
+  }
+
+  function detenerReproduccion() {
+    const r = $("reproductor");
+    r.pause();
+    r.removeAttribute("src");
+    r.load();
+    estadoReproduccion("Detenido.");
   }
 
   // ======================================================
@@ -104,10 +317,10 @@
   }
 
   // ======================================================
-  // MÚSICA + ECUALIZADOR RETRO
+  // MÚSICA LOCAL + ECUALIZADOR RETRO
   // ======================================================
 
-  function cargarMusica() {
+  function cargarMusicaLocal() {
     const f = $("musicaFile").files[0];
     if (!f) return;
 
@@ -116,7 +329,6 @@
     musicPreview.volume = 1;
     musicPreview.loop = $("musicaLoop").checked;
 
-    // Reiniciar gráfico de audio para el nuevo elemento
     if (musicSrcNode) {
       try { musicSrcNode.disconnect(); musicGainNode.disconnect(); musicAnalyser.disconnect(); } catch (e) {}
       musicSrcNode = musicGainNode = musicAnalyser = null;
@@ -162,7 +374,6 @@
     paso();
   }
 
-  // Ecualizador retro tipo estéreo (segmentos verde/amarillo/rojo)
   function dibujarRetro(an, canvas) {
     if (!canvas) return;
     const c2 = canvas.getContext("2d");
@@ -187,11 +398,9 @@
       const lit = Math.round(v * segs);
       for (let s = 0; s < segs; s++) {
         const y = H - (s + 1) * segH;
-        if (s < lit) {
-          c2.fillStyle = s < 6 ? "#39d353" : s < 9 ? "#ffd300" : "#ff4136";
-        } else {
-          c2.fillStyle = "rgba(255,255,255,0.06)";
-        }
+        c2.fillStyle = s < lit
+          ? (s < 6 ? "#39d353" : s < 9 ? "#ffd300" : "#ff4136")
+          : "rgba(255,255,255,0.06)";
         c2.fillRect(i * bw + 2, y + 1, bw - 4, segH - 2);
       }
     }
@@ -239,7 +448,6 @@
         src.connect(masterNode); src.connect(an2);
       } else an2 = null;
 
-      // Conectar música a la grabación
       musicaConectada = false;
       if ($("musicaIncluir").checked) {
         if (!musicSrcNode && musicPreview) construirGraficoMusica();
@@ -368,7 +576,7 @@
   }
 
   // ======================================================
-  // GUARDAR
+  // GUARDAR EPISODIO
   // ======================================================
 
   async function subirAudio(blob, duracionSeg) {
@@ -416,85 +624,11 @@
       $("imagen").value = "";
       $("destacado").checked = false;
 
-      await cargarAudios();
+      await cargarTodo();
     } catch (error) {
       console.error(error);
       estadoGrabacion("Error al guardar.", true);
     }
-  }
-
-  // ======================================================
-  // PLAYER DE CABINA
-  // ======================================================
-
-  function renderSeleccion() {
-    const cont = $("listaSeleccion");
-    if (!cont) return;
-    cont.innerHTML = "";
-    if (!audios.length) {
-      cont.innerHTML = "<p class='small'>No hay episodios.</p>";
-      return;
-    }
-    audios.forEach(a => {
-      const label = document.createElement("label");
-      label.className = "sel-item";
-      label.innerHTML = `<input type="checkbox" value="${a.id}" /> <span>${a.titulo}</span>`;
-      cont.appendChild(label);
-    });
-  }
-
-  function reproducirSeleccion() {
-    const marcados = [...document.querySelectorAll("#listaSeleccion input:checked")].map(c => c.value);
-    playlist = marcados.length ? audios.filter(a => marcados.includes(a.id)) : audios.slice();
-    if (!playlist.length) { estadoReproduccion("No hay episodios.", true); return; }
-    indice = 0;
-    reproducirActual();
-  }
-
-  function toggleLoop() {
-    loopActivo = !loopActivo;
-    const btn = $("btnLoopToggle");
-    btn.textContent = loopActivo ? "🔁 Loop: ON" : "🔁 Loop: OFF";
-    btn.classList.toggle("btn-gold", loopActivo);
-    btn.classList.toggle("btn-ghost", !loopActivo);
-  }
-
-  function alTerminarEpisodio() {
-    if (!playlist.length) return;
-    if (loopActivo) {
-      indice = (indice + 1) % playlist.length;
-      reproducirActual();
-    } else if (indice < playlist.length - 1) {
-      indice++;
-      reproducirActual();
-    } else {
-      estadoReproduccion("Fin de la selección.");
-    }
-  }
-
-  function reproducirActual() {
-    const item = playlist[indice];
-    if (!item) return;
-    const r = $("reproductor");
-    r.src = item.url;
-    r.play().catch(() => {});
-    estadoReproduccion(`Sonando: ${item.titulo}`);
-  }
-
-  function reproducirUno(id) {
-    const item = audios.find(a => a.id === id);
-    if (!item) return;
-    playlist = [item];
-    indice = 0;
-    reproducirActual();
-  }
-
-  function detenerReproduccion() {
-    const r = $("reproductor");
-    r.pause();
-    r.removeAttribute("src");
-    r.load();
-    estadoReproduccion("Detenido.");
   }
 
   // ======================================================
@@ -506,7 +640,6 @@
     const { data, error } = await db.from("audios").select("*").order("creado_en", { ascending: false });
     if (error) { estadoGrabacion("Error al cargar: " + error.message, true); return; }
     audios = data || [];
-    renderSeleccion();
     renderTabla();
   }
 
@@ -589,14 +722,14 @@
     if (error) { alert("Error: " + error.message); return; }
 
     $("editModal").close();
-    await cargarAudios();
+    await cargarTodo();
   }
 
   async function togglePublicar(id) {
     const item = audios.find(a => a.id === id);
     if (!item) return;
     await db.from("audios").update({ publicado: !(item.publicado !== false) }).eq("id", id);
-    await cargarAudios();
+    await cargarTodo();
   }
 
   async function borrarAudio(id) {
@@ -605,7 +738,7 @@
     if (item.archivo) await db.storage.from("audios").remove([item.archivo]);
     await db.from("audios").delete().eq("id", id);
     detenerReproduccion();
-    await cargarAudios();
+    await cargarTodo();
   }
 
   // ======================================================
@@ -637,5 +770,10 @@
     if (b.type.includes("ogg")) return "ogg";
     if (b.type.includes("mpeg")) return "mp3";
     return "webm";
+  }
+
+  function extDesdeNombre(n) {
+    const m = n.match(/\.([a-z0-9]+)$/i);
+    return m ? m[1].toLowerCase() : "mp3";
   }
 })();

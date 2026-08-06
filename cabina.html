@@ -99,10 +99,10 @@
       <p id="estadoGrabacion" class="estado"></p>
     </section>
 
-    <!-- ============ MÚSICA DE FONDO (arriba del player) ============ -->
+    <!-- ============ MÚSICA DE FONDO ============ -->
     <section class="card">
       <div class="card-head">
-        <h2>🎵 Música de fondo</h2>
+        <h2>🎵 Música de fondo (para mezclar al grabar)</h2>
         <div class="btn-row">
           <label class="imagen-label">📁 Cargar MP3<input id="musicaFile" type="file" accept="audio/*" /></label>
           <button id="btnMusica" class="btn btn-ghost" disabled>▶ Música</button>
@@ -110,7 +110,6 @@
         </div>
       </div>
 
-      <!-- ECUALIZADOR RETRO -->
       <canvas id="eqMusica" class="eq-retro" width="600" height="70"></canvas>
 
       <span id="musicaNombre" class="small">Sin pista cargada</span>
@@ -125,15 +124,23 @@
       <h2>🎧 Player de cabina</h2>
 
       <div class="btn-row">
+        <label class="imagen-label">📤 Subir MP3 a la biblioteca<input id="subirMusica" type="file" accept="audio/*" multiple /></label>
         <button id="btnPlaySel" class="btn btn-blue">▶ Reproducir selección</button>
         <button id="btnLoopToggle" class="btn btn-ghost">🔁 Loop: OFF</button>
         <button id="btnStop" class="btn btn-ghost">⏹</button>
       </div>
 
+      <div id="avisoSonido" class="aviso-sonido oculto">
+        🔇 El navegador bloqueó el sonido automático.
+        <button id="btnActivarSonido" class="btn btn-gold btn-mini">🔊 Activar sonido</button>
+      </div>
+
       <p id="estadoReproduccion" class="estado"></p>
       <audio id="reproductor" controls controlslist="nodownload"></audio>
 
-      <p class="small" style="margin-top:10px;">Marca los capítulos que quieras sonar:</p>
+      <p class="small" style="margin-top:10px;">
+        Marca lo que quieras sonar (música y/o episodios). Si no marcas nada, suena todo.
+      </p>
       <div id="listaSeleccion" class="lista-seleccion"></div>
     </section>
 
