@@ -21,6 +21,7 @@
   let pool = [];
   let indice = -1;
   let historial = [];
+  let desbloqueoActivo = false;
 
   cargar();
 
@@ -50,16 +51,15 @@
     btnNext.disabled = false;
     btnMute.disabled = false;
 
-    // Al abrir la página: reproduciendo SIN sonido,
-    // GIF visible y mensaje "¡Activa el audio!"
+    // AL ABRIR: pista activa y MUTEADA, GIF visible y aviso "¡Activa el audio!"
     audio.muted = true;
     setGif(true);
     setVibracion(true);
-    aleatorio();
+    aleatorio(true);
   }
 
   // ===== Poner una pista =====
-  function cargarPista(n) {
+  function cargarPista(n, reproducir) {
     indice = n;
     const item = pool[indice];
     titulo.textContent = item.titulo;
@@ -68,24 +68,68 @@
       : `🎤 ${item.alumno || "Anónimo"} · ${item.categoria || "General"}`;
 
     audio.src = item.url;
-    audio.play()
-      .then(() => { btnPlay.textContent = "⏸"; })
-      .catch(() => { btnPlay.textContent = "▶"; });
+
+    if (reproducir) {
+      intentarReproduccion();
+    } else {
+      btnPlay.textContent = "▶";
+    }
   }
 
-  // ===== Pista siguiente aleatoria =====
-  function aleatorio() {
+  // ===== Reproducir con reintentos automáticos =====
+  function intentarReproduccion() {
+    const prom = audio.play();
+    if (!prom) return;
+
+    prom
+      .then(() => { btnPlay.textContent = "⏸"; })
+      .catch((err) => {
+        console.warn("Autoplay bloqueado por el navegador:", err && err.name);
+        btnPlay.textContent = "▶";
+        reintentarCuandoListo();
+        prepararDesbloqueo();
+      });
+  }
+
+  function reintentarCuandoListo() {
+    audio.addEventListener("canplay", function h() {
+      audio.removeEventListener("canplay", h);
+      audio.play()
+        .then(() => { btnPlay.textContent = "⏸"; })
+        .catch(() => {});
+    });
+  }
+
+  // Si el navegador bloquea incluso el muteado: cualquier clic o tecla
+  // en la página arranca la reproducción (sigue muteada hasta activar audio)
+  function prepararDesbloqueo() {
+    if (desbloqueoActivo) return;
+    desbloqueoActivo = true;
+    const fn = () => {
+      window.removeEventListener("pointerdown", fn);
+      window.removeEventListener("keydown", fn);
+      desbloqueoActivo = false;
+      audio.play()
+        .then(() => { btnPlay.textContent = "⏸"; })
+        .catch(() => {});
+    };
+    window.addEventListener("pointerdown", fn);
+    window.addEventListener("keydown", fn);
+  }
+
+  // ===== Siguiente aleatoria =====
+  function aleatorio(reproducir) {
     let n;
     do { n = Math.floor(Math.random() * pool.length); }
     while (n === indice && pool.length > 1);
     if (indice >= 0) historial.push(indice);
-    cargarPista(n);
+    cargarPista(n, reproducir);
   }
 
-  // ===== Pista anterior =====
+  // ===== Anterior =====
   function anterior() {
     if (!historial.length) return;
-    cargarPista(historial.pop());
+    cargarPista(historial.pop(), !audio.paused);
   }
 
   // ===== GIF =====
@@ -100,7 +144,7 @@
     }
   }
 
-  // ===== Bocina vibrante + aviso =====
+  // ===== Bocina vibrante + mensaje (visible mientras esté muteado) =====
   function setVibracion(activo) {
     if (activo) {
       btnMute.classList.add("vibrando");
@@ -115,12 +159,19 @@
   btnPrev.addEventListener("click", anterior);
 
   btnPlay.addEventListener("click", () => {
-    if (audio.paused) { audio.play(); btnPlay.textContent = "⏸"; }
-    else { audio.pause(); btnPlay.textContent = "▶"; }
+    if (audio.paused) {
+      audio.play()
+        .then(() => { btnPlay.textContent = "⏸"; })
+        .catch(() => {});
+    } else {
+      audio.pause();
+      btnPlay.textContent = "▶";
+    }
   });
 
-  btnNext.addEventListener("click", aleatorio);
+  btnNext.addEventListener("click", () => aleatorio(!audio.paused));
 
+  // LA BOCINA: un clic activa el sonido (sin tocar el play)
   btnMute.addEventListener("click", () => {
     audio.muted = !audio.muted;
     btnMute.textContent = audio.muted ? "🔇" : "🔊";
@@ -129,5 +180,5 @@
 
   audio.addEventListener("play", () => { btnPlay.textContent = "⏸"; setGif(true); });
   audio.addEventListener("pause", () => { btnPlay.textContent = "▶"; });
-  audio.addEventListener("ended", aleatorio);
+  audio.addEventListener("ended", () => aleatorio(true));
 })();
