@@ -991,3 +991,21 @@ git push
   flex: 1;
   justify-content: flex-end;
 }
+/* ============ LOGO PODCAST 21 EN EL HEADER ============ */
+
+.logo-img {
+  height: 46px;
+  width: auto;
+  max-width: 160px;
+  object-fit: contain;
+  border-radius: 8px;
+  display: block;
+  margin: 0 auto;
+  filter: drop-shadow(0 0 8px rgba(109, 177, 232, 0.45));
+}
+
+@media (max-width: 600px) {
+  .logo-img {
+    height: 36px;
+  }
+}

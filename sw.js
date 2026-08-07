@@ -18,7 +18,8 @@ const CORE = [
   "js/pwa.js",
     "img/escudo.png",
     "img/icono-app.png",
-  "img/cabina-icon.png",
+    "img/cabina-icon.png",
+  "img/logo-podcast21.png",
   "img/podcast-icon.png",
   "img/radio-anim.gif"
 ];
