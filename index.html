@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PODCAST 21 - Secundaria 21 de Noviembre</title>
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0d2c54" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <link rel="apple-touch-icon" href="img/escudo.png" />
 </head>
 <body>
 
@@ -21,6 +26,7 @@
     </div>
     <div class="topbar-der">
       <button id="btnNotificaciones" class="btn-bell" title="Activar notificaciones">🔔</button>
+      <button id="btnInstalar" class="btn-bell oculto" title="Instalar aplicación">📲</button>
       <span class="profe">powered by elprofechan</span>
     </div>
   </header>
@@ -69,7 +75,7 @@
           </div>
 
         </div>
-                <audio id="pmAudio" loop muted autoplay controlslist="nodownload"></audio>
+        <audio id="pmAudio" loop muted autoplay controlslist="nodownload"></audio>
       </div>
     </section>
 
@@ -84,6 +90,7 @@
   <script src="js/config.js"></script>
   <script src="js/home.js"></script>
   <script src="js/notificaciones.js"></script>
+  <script src="js/pwa.js"></script>
 
 </body>
 </html>

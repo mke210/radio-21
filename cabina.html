@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Cabina - PODCAST 21</title>
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0d2c54" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <link rel="apple-touch-icon" href="img/escudo.png" />
 </head>
 <body>
 
@@ -99,13 +104,13 @@
       <p id="estadoGrabacion" class="estado"></p>
     </section>
 
-    <!-- ============ MÚSICA DE FONDO (con ecualizador retro) ============ -->
+    <!-- ============ MÚSICA DE FONDO ============ -->
     <section class="card">
       <div class="card-head">
         <h2>🎵 Música de fondo (para mezclar al grabar)</h2>
         <div class="btn-row">
           <label class="imagen-label">📁 Cargar MP3<input id="musicaFile" type="file" accept="audio/*" /></label>
-                    <button id="btnMusica" class="btn btn-ghost" disabled>▶ Música</button>
+          <button id="btnMusica" class="btn btn-ghost" disabled>▶ Música</button>
           <button id="btnQuitarMusica" class="btn btn-del" disabled>🗑 Quitar pista</button>
           <input type="range" id="musicaVol" min="0" max="1" step="0.05" value="0.5" title="Volumen música" />
         </div>
@@ -203,6 +208,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/pwa.js"></script>
 
 </body>
 </html>
