@@ -17,7 +17,8 @@ const CORE = [
   "js/notificaciones.js",
   "js/pwa.js",
     "img/escudo.png",
-  "img/icono-app.png",
+    "img/icono-app.png",
+  "img/cabina-icon.png",
   "img/podcast-icon.png",
   "img/radio-anim.gif"
 ];
