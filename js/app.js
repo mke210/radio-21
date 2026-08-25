@@ -124,7 +124,7 @@
     } catch (e) { return []; }
   }
 
-    function guardarSeleccionLocal() {
+  function guardarSeleccionLocal() {
     const marcados = [...document.querySelectorAll("#listaSeleccion input:checked")].map(c => c.value);
     localStorage.setItem(LS.sel, JSON.stringify(marcados));
   }
@@ -244,7 +244,6 @@
   }
 
   function autoInicio() {
-    // Restaurar estado del loop
     if (localStorage.getItem(LS.loop) === "1") {
       loopActivo = true;
       const btn = $("btnLoopToggle");
@@ -255,7 +254,6 @@
       }
     }
 
-    // Restaurar selección guardada como playlist
     const selGuardada = leerSeleccionGuardada();
     playlist = selGuardada.length
       ? selGuardada.map(resolverItem).filter(Boolean)
@@ -266,7 +264,6 @@
       return;
     }
 
-    // Restaurar última pista que sonaba
     const ultimo = localStorage.getItem(LS.last);
     const idx = playlist.findIndex(p => (p._tipo + ":" + p.id) === ultimo);
     indice = idx >= 0 ? idx : 0;
@@ -432,12 +429,18 @@
 
     indice = 0;
     reproducirActual();
+    guardarConfigRemota();
   }
 
-    function toggleLoop() {
+  function toggleLoop() {
     loopActivo = !loopActivo;
     localStorage.setItem(LS.loop, loopActivo ? "1" : "0");
     guardarConfigRemota();
+    const btn = $("btnLoopToggle");
+    btn.textContent = loopActivo ? "🔁 Loop: ON" : "🔁 Loop: OFF";
+    btn.classList.toggle("btn-gold", loopActivo);
+    btn.classList.toggle("btn-ghost", !loopActivo);
+  }
 
   function alTerminarEpisodio() {
     if (!playlist.length) return;
@@ -452,7 +455,7 @@
     }
   }
 
-    function reproducirActual() {
+  function reproducirActual() {
     const item = playlist[indice];
     if (!item) return;
     localStorage.setItem(LS.last, item._tipo + ":" + item.id);
