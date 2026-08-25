@@ -1,10 +1,8 @@
 (function () {
   "use strict";
 
-  const config = { url: window.SUPABASE_URL, key: window.SUPABASE_ANON_KEY };
-  if (!window.supabase || !config.url || config.url.includes("PEGAR")) return;
-
-  const db = window.P21_DB || window.supabase.createClient(config.url, config.key);
+  const db = window.P21_DB;
+  if (!db) return;
 
   const $ = (id) => document.getElementById(id);
 
@@ -18,73 +16,92 @@
   const aviso = $("pmAviso");
   const gif = $("pmGif");
 
-  let pool = [];
-  let indice = -1;
-  let historial = [];
+  let todas = [];
+  let playlist = [];
+  let indice = 0;
+  let loopActivo = false;
   let desbloqueoActivo = false;
 
   cargar();
 
-  // ===== Carga episodios Y música =====
+  // ===== Carga contenido + programación de la cabina =====
   async function cargar() {
-    const [rAud, rMus] = await Promise.all([
-      db.from("audios").select("*").eq("publicado", true).order("creado_en", { ascending: false }),
-      db.from("musica").select("*").order("creado_en", { ascending: false })
-    ]);
+    try {
+      const [rAud, rMus, rCfg] = await Promise.all([
+        db.from("audios").select("*").eq("publicado", true).order("creado_en", { ascending: false }),
+        db.from("musica").select("*").order("creado_en", { ascending: false }),
+        db.from("config").select("*").eq("id", "player").maybeSingle()
+      ]);
 
-    const episodios = rAud.data || [];
-    const musicas = rMus.data || [];
+      const episodios = rAud.data || [];
+      const musicas = rMus.data || [];
 
-    pool = [
-      ...musicas.map(m => ({ ...m, _tipo: "m" })),
-      ...episodios.map(e => ({ ...e, _tipo: "e" }))
-    ];
+      todas = [
+        ...musicas.map(m => ({ ...m, _tipo: "m" })),
+        ...episodios.map(e => ({ ...e, _tipo: "e" }))
+      ];
 
-    if (!pool.length) {
-      titulo.textContent = "Aún no hay contenido";
-      meta.textContent = "Sube música o graba episodios desde la cabina 🎙️";
-      return;
+      const cfg = rCfg.data;
+
+      // Playlist = selección de cabina; si no hay, todo el contenido
+      playlist = (cfg && Array.isArray(cfg.sel) && cfg.sel.length)
+        ? cfg.sel.map(resolver).filter(Boolean)
+        : todas.slice();
+
+      if (!playlist.length) {
+        titulo.textContent = "Aún no hay contenido";
+        meta.textContent = "Sube música o graba episodios desde la cabina 🎙️";
+        return;
+      }
+
+      loopActivo = !!(cfg && cfg.loop);
+
+      // Arranca en la pista que la cabina dejó sonando
+      const idx = playlist.findIndex(p => (p._tipo + ":" + p.id) === (cfg && cfg.last));
+      indice = idx >= 0 ? idx : 0;
+
+      btnPrev.disabled = false;
+      btnPlay.disabled = false;
+      btnNext.disabled = false;
+      btnMute.disabled = false;
+
+      audio.muted = true;
+      setGif(true);
+      setVibracion(true);
+      cargarPista(indice, true);
+    } catch (e) {
+      console.error(e);
+      titulo.textContent = "Error al cargar";
+      meta.textContent = e.message;
     }
-
-    btnPrev.disabled = false;
-    btnPlay.disabled = false;
-    btnNext.disabled = false;
-    btnMute.disabled = false;
-
-    // AL ABRIR: pista activa y MUTEADA, GIF visible y aviso "¡Activa el audio!"
-    audio.muted = true;
-    setGif(true);
-    setVibracion(true);
-    aleatorio(true);
   }
 
-  // ===== Poner una pista =====
+  function resolver(valor) {
+    const tipo = valor.slice(0, 1);
+    const id = valor.slice(2);
+    return todas.find(x => x._tipo === tipo && x.id === id) || null;
+  }
+
   function cargarPista(n, reproducir) {
     indice = n;
-    const item = pool[indice];
+    const item = playlist[indice];
+    if (!item) return;
     titulo.textContent = item.titulo;
     meta.textContent = item._tipo === "m"
       ? "🎵 Música · Biblioteca Podcast 21"
       : `🎤 ${item.alumno || "Anónimo"} · ${item.categoria || "General"}`;
 
     audio.src = item.url;
-
-    if (reproducir) {
-      intentarReproduccion();
-    } else {
-      btnPlay.textContent = "▶";
-    }
+    if (reproducir) intentarReproduccion();
+    else btnPlay.textContent = "▶";
   }
 
-  // ===== Reproducir con reintentos automáticos =====
   function intentarReproduccion() {
     const prom = audio.play();
     if (!prom) return;
-
     prom
       .then(() => { btnPlay.textContent = "⏸"; })
-      .catch((err) => {
-        console.warn("Autoplay bloqueado por el navegador:", err && err.name);
+      .catch(() => {
         btnPlay.textContent = "▶";
         reintentarCuandoListo();
         prepararDesbloqueo();
@@ -94,14 +111,10 @@
   function reintentarCuandoListo() {
     audio.addEventListener("canplay", function h() {
       audio.removeEventListener("canplay", h);
-      audio.play()
-        .then(() => { btnPlay.textContent = "⏸"; })
-        .catch(() => {});
+      audio.play().then(() => { btnPlay.textContent = "⏸"; }).catch(() => {});
     });
   }
 
-  // Si el navegador bloquea incluso el muteado: cualquier clic o tecla
-  // en la página arranca la reproducción (sigue muteada hasta activar audio)
   function prepararDesbloqueo() {
     if (desbloqueoActivo) return;
     desbloqueoActivo = true;
@@ -109,69 +122,54 @@
       window.removeEventListener("pointerdown", fn);
       window.removeEventListener("keydown", fn);
       desbloqueoActivo = false;
-      audio.play()
-        .then(() => { btnPlay.textContent = "⏸"; })
-        .catch(() => {});
+      audio.play().then(() => { btnPlay.textContent = "⏸"; }).catch(() => {});
     };
     window.addEventListener("pointerdown", fn);
     window.addEventListener("keydown", fn);
   }
 
-  // ===== Siguiente aleatoria =====
-  function aleatorio(reproducir) {
-    let n;
-    do { n = Math.floor(Math.random() * pool.length); }
-    while (n === indice && pool.length > 1);
-    if (indice >= 0) historial.push(indice);
-    cargarPista(n, reproducir);
+  // ===== Avanza en el orden programado (ya no al azar) =====
+  function siguiente() {
+    if (!playlist.length) return;
+    if (loopActivo) {
+      indice = (indice + 1) % playlist.length;
+      cargarPista(indice, true);
+    } else if (indice < playlist.length - 1) {
+      indice++;
+      cargarPista(indice, true);
+    } else {
+      btnPlay.textContent = "▶";
+    }
   }
 
-  // ===== Anterior =====
   function anterior() {
-    if (!historial.length) return;
-    cargarPista(historial.pop(), !audio.paused);
+    if (!playlist.length) return;
+    if (indice > 0) {
+      indice--;
+      cargarPista(indice, !audio.paused);
+    }
   }
 
-  // ===== GIF =====
   function setGif(activo) {
     if (!gif) return;
-    if (activo) {
-      gif.src = "img/radio-anim.gif";
-      gif.classList.remove("oculto");
-    } else {
-      gif.classList.add("oculto");
-      gif.src = "";
-    }
+    if (activo) { gif.src = "img/radio-anim.gif"; gif.classList.remove("oculto"); }
+    else { gif.classList.add("oculto"); gif.src = ""; }
   }
 
-  // ===== Bocina vibrante + mensaje (visible mientras esté muteado) =====
   function setVibracion(activo) {
-    if (activo) {
-      btnMute.classList.add("vibrando");
-      aviso.classList.remove("oculto");
-    } else {
-      btnMute.classList.remove("vibrando");
-      aviso.classList.add("oculto");
-    }
+    if (activo) { btnMute.classList.add("vibrando"); aviso.classList.remove("oculto"); }
+    else { btnMute.classList.remove("vibrando"); aviso.classList.add("oculto"); }
   }
 
-  // ===== Controles =====
   btnPrev.addEventListener("click", anterior);
 
   btnPlay.addEventListener("click", () => {
-    if (audio.paused) {
-      audio.play()
-        .then(() => { btnPlay.textContent = "⏸"; })
-        .catch(() => {});
-    } else {
-      audio.pause();
-      btnPlay.textContent = "▶";
-    }
+    if (audio.paused) audio.play().then(() => { btnPlay.textContent = "⏸"; }).catch(() => {});
+    else { audio.pause(); btnPlay.textContent = "▶"; }
   });
 
-  btnNext.addEventListener("click", () => aleatorio(!audio.paused));
+  btnNext.addEventListener("click", siguiente);
 
-  // LA BOCINA: un clic activa el sonido (sin tocar el play)
   btnMute.addEventListener("click", () => {
     audio.muted = !audio.muted;
     btnMute.textContent = audio.muted ? "🔇" : "🔊";
@@ -180,5 +178,5 @@
 
   audio.addEventListener("play", () => { btnPlay.textContent = "⏸"; setGif(true); });
   audio.addEventListener("pause", () => { btnPlay.textContent = "▶"; });
-  audio.addEventListener("ended", () => aleatorio(true));
+  audio.addEventListener("ended", siguiente);
 })();
