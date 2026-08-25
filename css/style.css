@@ -1009,3 +1009,45 @@ git push
     height: 36px;
   }
 }
+/* ============ PUERTA DE ACCESO (LOGIN CABINA) ============ */
+
+.login-gate {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  z-index: 200;
+  padding: 20px;
+}
+
+.login-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  width: min(92vw, 360px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+
+.login-card h2 {
+  color: var(--gold);
+  margin: 4px 0 0;
+  font-size: 18px;
+}
+
+.login-escudo {
+  width: 72px;
+  height: 72px;
+  background: #fff;
+  border-radius: 50%;
+  padding: 5px;
+  margin: 0 auto;
+}
+
+.login-card input { width: 100%; }
