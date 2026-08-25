@@ -83,7 +83,7 @@
   on("btnStop", "click", detenerReproduccion);
   on("btnActivarSonido", "click", activarSonido);
   on("btnActualizar", "click", () => cargarTodo());
-  on("listaSeleccion", "change", guardarSeleccionLocal);
+  on("listaSeleccion", "change", () => { guardarSeleccionLocal(); guardarConfigRemota(); });
 
   on("editForm", "submit", guardarEdicion);
   on("btnCancelarEditar", "click", () => $("editModal").close());
@@ -124,9 +124,28 @@
     } catch (e) { return []; }
   }
 
-  function guardarSeleccionLocal() {
+    function guardarSeleccionLocal() {
     const marcados = [...document.querySelectorAll("#listaSeleccion input:checked")].map(c => c.value);
     localStorage.setItem(LS.sel, JSON.stringify(marcados));
+  }
+
+  // Publica la programación de la cabina para que el inicio
+  // (y cualquier dispositivo) suene con tu misma selección y pista.
+  async function guardarConfigRemota() {
+    if (!db) return;
+    const sel = [...document.querySelectorAll("#listaSeleccion input:checked")].map(c => c.value);
+    const actual = playlist[indice];
+    try {
+      await db.from("config").upsert({
+        id: "player",
+        sel: sel,
+        last: actual ? actual._tipo + ":" + actual.id : null,
+        loop: loopActivo,
+        actualizado_en: new Date().toISOString()
+      });
+    } catch (e) {
+      console.error("No se pudo publicar la configuración:", e);
+    }
   }
 
   function restaurarChecks() {
@@ -415,14 +434,10 @@
     reproducirActual();
   }
 
-  function toggleLoop() {
+    function toggleLoop() {
     loopActivo = !loopActivo;
     localStorage.setItem(LS.loop, loopActivo ? "1" : "0");
-    const btn = $("btnLoopToggle");
-    btn.textContent = loopActivo ? "🔁 Loop: ON" : "🔁 Loop: OFF";
-    btn.classList.toggle("btn-gold", loopActivo);
-    btn.classList.toggle("btn-ghost", !loopActivo);
-  }
+    guardarConfigRemota();
 
   function alTerminarEpisodio() {
     if (!playlist.length) return;
@@ -437,10 +452,11 @@
     }
   }
 
-  function reproducirActual() {
+    function reproducirActual() {
     const item = playlist[indice];
     if (!item) return;
     localStorage.setItem(LS.last, item._tipo + ":" + item.id);
+    guardarConfigRemota();
     const r = $("reproductor");
     r.src = item.url;
     r.play().catch(() => {});
