@@ -46,14 +46,20 @@
       if (e1) throw new Error(e1.message);
       const urlAudio = bucketAudios.getPublicUrl(archivo).data.publicUrl;
 
-      // 2) Subir la portada (si hay)
+      // 2) Subir la portada (ahora con aviso si falla)
       let urlImagen = "";
+      let avisoImg = "";
       const img = $("imagen").files[0];
       if (img) {
         const nombreImg = `${Date.now()}-${slug(titulo)}.jpg`;
         const bucketImg = db.storage.from("imagenes");
         const { error: e2 } = await bucketImg.upload(nombreImg, img, { contentType: img.type });
-        if (!e2) urlImagen = bucketImg.getPublicUrl(nombreImg).data.publicUrl;
+        if (e2) {
+          avisoImg = " ⚠️ Portada no subida: " + e2.message;
+          console.error("Error de portada:", e2);
+        } else {
+          urlImagen = bucketImg.getPublicUrl(nombreImg).data.publicUrl;
+        }
       }
 
       // 3) Publicar el episodio
@@ -72,13 +78,13 @@
       });
       if (e3) throw new Error(e3.message);
 
-      if (estado) estado.textContent = "✅ Episodio publicado. Recargando...";
+      if (estado) estado.textContent = "✅ Episodio publicado." + avisoImg + " Recargando...";
       ["titulo", "alumno", "descripcion"].forEach(id => { const el = $(id); if (el) el.value = ""; });
       $("imagen").value = "";
       inputAudio.value = "";
       $("destacado").checked = false;
 
-      setTimeout(() => location.reload(), 1200);
+      setTimeout(() => location.reload(), 1500);
     } catch (e) {
       console.error(e);
       if (estado) { estado.textContent = "❌ Error al subir: " + e.message; estado.classList.add("error"); }
