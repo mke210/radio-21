@@ -1104,3 +1104,53 @@ git push
 .episodio-destacado .episodio-titulo {
   font-size: 18px;
 }
+/* ============ PRIORIDAD TOTAL A LA PORTADA ============ */
+
+/* La imagen se muestra COMPLETA (sin recortes) y más grande */
+.episodio-cover,
+.episodio-cover-placeholder {
+  height: 150px;
+  object-fit: contain;
+  background: #0b1017;
+}
+
+/* Textos al mínimo para que la imagen domine */
+.episodio-body {
+  padding: 8px;
+}
+
+.episodio-titulo {
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.episodio-meta {
+  font-size: 9.5px;
+  gap: 4px;
+}
+
+.episodio-desc {
+  font-size: 10px;
+  max-height: 30px;
+  overflow: hidden;
+}
+
+.episodio-audio {
+  height: 30px;
+  margin-top: 6px;
+}
+
+.episodio-acciones .btn-like {
+  font-size: 10px;
+  padding: 3px 8px;
+}
+
+/* El destacado conserva portada grande */
+.episodio-destacado .episodio-cover,
+.episodio-destacado .episodio-cover-placeholder {
+  height: 220px;
+}
+
+.episodio-destacado .episodio-titulo {
+  font-size: 16px;
+}
