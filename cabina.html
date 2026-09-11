@@ -53,7 +53,7 @@
       <option value="Especiales"></option>
     </datalist>
 
-    <!-- ============ SESIÓN DE GRABACIÓN ============ -->
+    <!-- ============ SESIÓN DE GRABACIÓN / SUBIDA ============ -->
     <section class="card">
       <h2>🎙️ Sesión de grabación</h2>
 
@@ -104,7 +104,9 @@
           <option value="Ciencia">Ciencia</option>
         </select>
         <label class="imagen-label">📷 Portada<input id="imagen" type="file" accept="image/*" /></label>
+        <label class="imagen-label">🎧 Audio MP3<input id="audioFile" type="file" accept="audio/*" /></label>
       </div>
+      <span id="audioNombre" class="small">Sin audio elegido (para subir episodio)</span>
       <textarea id="descripcion" rows="2" placeholder="Descripción del episodio"></textarea>
       <label class="check-label"><input id="destacado" type="checkbox" /> ⭐ Destacar episodio</label>
 
@@ -112,6 +114,7 @@
         <button id="btnGrabar" class="btn btn-rec"><span class="dot"></span>Grabar</button>
         <button id="btnPausa" class="btn btn-gold" disabled>⏸ Pausa</button>
         <button id="btnDetener" class="btn" disabled>⏹ Detener y guardar</button>
+        <button id="btnSubirEpisodio" class="btn btn-gold">📤 Subir MP3 como episodio</button>
         <span id="timer" class="timer">00:00</span>
       </div>
 
@@ -223,6 +226,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/subir-mp3.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/pwa.js"></script>
 
