@@ -16,6 +16,14 @@
   else if (!configOk) console.error("Falta configurar js/config.js");
   else db = window.P21_DB || window.supabase.createClient(config.url, config.key);
 
+  // ===== Claves de configuración persistente =====
+  const LS = {
+    loop: "p21_loop",
+    sel: "p21_sel",
+    last: "p21_last",
+    vol: "p21_musicvol"
+  };
+
   // ===== Estado general =====
   let audios = [];
   let musicas = [];
@@ -26,7 +34,7 @@
 
   let ctx = null;
 
-  // ===== Locutores (micrófono vivo con switch) =====
+  // ===== Locutores =====
   const loc = {
     1: { stream: null, src: null, an: null },
     2: { stream: null, src: null, an: null }
@@ -42,13 +50,13 @@
   let seg = 0;
   let pausado = false;
 
-  // ===== Música local (para mezclar al grabar) =====
+  // ===== Música local =====
   let musicPreview = null;
   let musicSrcNode = null;
   let musicGainNode = null;
   let musicAnalyser = null;
 
-  // ===== Ducking (la voz baja la música) =====
+  // ===== Ducking =====
   let ultimaVoz = 0;
 
   // ======================================================
@@ -64,7 +72,9 @@
   on("musicaFile", "change", cargarMusicaLocal);
   on("musicaLoop", "change", () => { if (musicPreview) musicPreview.loop = $("musicaLoop").checked; });
   on("musicaVol", "input", () => {
-    if (musicGainNode) musicGainNode.gain.value = parseFloat($("musicaVol").value);
+    const v = parseFloat($("musicaVol").value);
+    if (musicGainNode) musicGainNode.gain.value = v;
+    localStorage.setItem(LS.vol, String(v));
   });
 
   on("subirMusica", "change", subirMusicaDB);
@@ -73,6 +83,7 @@
   on("btnStop", "click", detenerReproduccion);
   on("btnActivarSonido", "click", activarSonido);
   on("btnActualizar", "click", () => cargarTodo());
+  on("listaSeleccion", "change", () => { guardarSeleccionLocal(); guardarConfigRemota(); });
 
   on("editForm", "submit", guardarEdicion);
   on("btnCancelarEditar", "click", () => $("editModal").close());
@@ -87,6 +98,10 @@
     if ($("loc2Activo").checked) { detenerLocutor(2); await asegurarLocutor(2); }
   });
 
+  // Restaurar volumen de música guardado
+  const volGuardado = localStorage.getItem(LS.vol);
+  if (volGuardado && $("musicaVol")) $("musicaVol").value = volGuardado;
+
   cargarMics();
   if (navigator.mediaDevices) navigator.mediaDevices.addEventListener("devicechange", cargarMics);
   iniciarLoopSiempre();
@@ -99,7 +114,49 @@
   }
 
   // ======================================================
-  // LOCUTORES: micrófono vivo al activar el switch
+  // PERSISTENCIA DEL PLAYER
+  // ======================================================
+
+  function leerSeleccionGuardada() {
+    try {
+      const arr = JSON.parse(localStorage.getItem(LS.sel));
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) { return []; }
+  }
+
+  function guardarSeleccionLocal() {
+    const marcados = [...document.querySelectorAll("#listaSeleccion input:checked")].map(c => c.value);
+    localStorage.setItem(LS.sel, JSON.stringify(marcados));
+  }
+
+  // Publica la programación de la cabina para que el inicio
+  // (y cualquier dispositivo) suene con tu misma selección y pista.
+  async function guardarConfigRemota() {
+    if (!db) return;
+    const sel = [...document.querySelectorAll("#listaSeleccion input:checked")].map(c => c.value);
+    const actual = playlist[indice];
+    try {
+      await db.from("config").upsert({
+        id: "player",
+        sel: sel,
+        last: actual ? actual._tipo + ":" + actual.id : null,
+        loop: loopActivo,
+        actualizado_en: new Date().toISOString()
+      });
+    } catch (e) {
+      console.error("No se pudo publicar la configuración:", e);
+    }
+  }
+
+  function restaurarChecks() {
+    const guardada = leerSeleccionGuardada();
+    document.querySelectorAll("#listaSeleccion input").forEach(inp => {
+      inp.checked = guardada.includes(inp.value);
+    });
+  }
+
+  // ======================================================
+  // LOCUTORES
   // ======================================================
 
   async function toggleLocutor(num) {
@@ -115,7 +172,7 @@
       const src = ctx.createMediaStreamSource(stream);
       const an = ctx.createAnalyser();
       an.fftSize = 512;
-      src.connect(an); // solo análisis, no se escucha (sin feedback)
+      src.connect(an);
       loc[num] = { stream, src, an };
       cargarMics();
     } catch (e) {
@@ -133,7 +190,7 @@
   }
 
   // ======================================================
-  // DUCKING: al hablar, la música baja al 50%
+  // DUCKING
   // ======================================================
 
   function nivelVoz(an) {
@@ -158,10 +215,6 @@
     musicGainNode.gain.setTargetAtTime(objetivo, ctx.currentTime, 0.2);
   }
 
-  // ======================================================
-  // BUCLE SIEMPRE ACTIVO: ecualizadores + ducking
-  // ======================================================
-
   function iniciarLoopSiempre() {
     const paso = () => {
       requestAnimationFrame(paso);
@@ -177,12 +230,13 @@
   }
 
   // ======================================================
-  // CARGA DE DATOS + AUTO-INICIO DEL PLAYER
+  // CARGA + AUTO-INICIO (con configuración restaurada)
   // ======================================================
 
   async function cargarTodo() {
     await Promise.all([cargarAudios(), cargarMusicaDB()]);
     renderSeleccion();
+    restaurarChecks();
     if (!iniciadoAuto) {
       iniciadoAuto = true;
       autoInicio();
@@ -190,26 +244,44 @@
   }
 
   function autoInicio() {
-    playlist = listaCompleta();
+    if (localStorage.getItem(LS.loop) === "1") {
+      loopActivo = true;
+      const btn = $("btnLoopToggle");
+      if (btn) {
+        btn.textContent = "🔁 Loop: ON";
+        btn.classList.add("btn-gold");
+        btn.classList.remove("btn-ghost");
+      }
+    }
+
+    const selGuardada = leerSeleccionGuardada();
+    playlist = selGuardada.length
+      ? selGuardada.map(resolverItem).filter(Boolean)
+      : listaCompleta();
+
     if (!playlist.length) {
       estadoReproduccion("Sin contenido todavía. Sube música o graba episodios.");
       return;
     }
-    indice = 0;
+
+    const ultimo = localStorage.getItem(LS.last);
+    const idx = playlist.findIndex(p => (p._tipo + ":" + p.id) === ultimo);
+    indice = idx >= 0 ? idx : 0;
+
     const r = $("reproductor");
-    r.src = playlist[0].url;
+    r.src = playlist[indice].url;
 
     r.play()
       .then(() => {
         $("avisoSonido").classList.add("oculto");
-        estadoReproduccion("🎶 Sonando: " + playlist[0].titulo);
+        estadoReproduccion("🎶 Sonando: " + playlist[indice].titulo);
       })
       .catch(() => {
         r.muted = true;
         r.play()
           .then(() => {
             $("avisoSonido").classList.remove("oculto");
-            estadoReproduccion("🎶 Sonando (silenciado): " + playlist[0].titulo);
+            estadoReproduccion("🎶 Sonando (silenciado): " + playlist[indice].titulo);
           })
           .catch(() => {});
       });
@@ -223,7 +295,7 @@
   }
 
   // ======================================================
-  // BIBLIOTECA DE MÚSICA (PERSISTENTE EN SUPABASE)
+  // BIBLIOTECA DE MÚSICA
   // ======================================================
 
   async function cargarMusicaDB() {
@@ -261,6 +333,7 @@
     estadoReproduccion("✅ Música guardada. Ya no se pierde al recargar.");
     await cargarMusicaDB();
     renderSeleccion();
+    restaurarChecks();
   }
 
   async function borrarMusicaDB(id) {
@@ -270,11 +343,12 @@
     await db.from("musica").delete().eq("id", id);
     await cargarMusicaDB();
     renderSeleccion();
+    restaurarChecks();
     estadoReproduccion("🗑 Pista eliminada de la biblioteca.");
   }
 
   // ======================================================
-  // SELECCIÓN MIXTA (MÚSICA + EPISODIOS)
+  // SELECCIÓN MIXTA
   // ======================================================
 
   function renderSeleccion() {
@@ -345,6 +419,8 @@
 
   function reproducirSeleccion() {
     const marcados = [...document.querySelectorAll("#listaSeleccion input:checked")].map(c => c.value);
+    localStorage.setItem(LS.sel, JSON.stringify(marcados));
+
     playlist = marcados.length
       ? marcados.map(resolverItem).filter(Boolean)
       : listaCompleta();
@@ -353,10 +429,13 @@
 
     indice = 0;
     reproducirActual();
+    guardarConfigRemota();
   }
 
   function toggleLoop() {
     loopActivo = !loopActivo;
+    localStorage.setItem(LS.loop, loopActivo ? "1" : "0");
+    guardarConfigRemota();
     const btn = $("btnLoopToggle");
     btn.textContent = loopActivo ? "🔁 Loop: ON" : "🔁 Loop: OFF";
     btn.classList.toggle("btn-gold", loopActivo);
@@ -379,6 +458,8 @@
   function reproducirActual() {
     const item = playlist[indice];
     if (!item) return;
+    localStorage.setItem(LS.last, item._tipo + ":" + item.id);
+    guardarConfigRemota();
     const r = $("reproductor");
     r.src = item.url;
     r.play().catch(() => {});
@@ -402,7 +483,7 @@
   }
 
   // ======================================================
-  // MICRÓFONOS (lista de dispositivos)
+  // MICRÓFONOS
   // ======================================================
 
   async function cargarMics() {
@@ -432,7 +513,7 @@
   }
 
   // ======================================================
-  // MÚSICA LOCAL + ECUALIZADOR RETRO + QUITAR PISTA
+  // MÚSICA LOCAL
   // ======================================================
 
   function cargarMusicaLocal() {
@@ -496,7 +577,7 @@
   }
 
   // ======================================================
-  // DIBUJO DE ECUALIZADORES
+  // ECUALIZADORES
   // ======================================================
 
   function dibujarRetro(an, canvas) {
@@ -504,20 +585,14 @@
     const c2 = canvas.getContext("2d");
     const W = canvas.width, H = canvas.height;
     c2.clearRect(0, 0, W, H);
-
-    const bars = 20;
-    const segs = 12;
-    const bw = W / bars;
-    const segH = H / segs;
-
+    const bars = 20, segs = 12;
+    const bw = W / bars, segH = H / segs;
     let data = null;
     if (an) {
       data = new Uint8Array(an.frequencyBinCount);
       an.getByteFrequencyData(data);
     }
-
     const step = data ? Math.max(1, Math.floor(data.length / bars)) : 1;
-
     for (let i = 0; i < bars; i++) {
       const v = data ? data[i * step] / 255 : 0;
       const lit = Math.round(v * segs);
@@ -550,7 +625,7 @@
   }
 
   // ======================================================
-  // GRABACIÓN DE LA SESIÓN
+  // GRABACIÓN
   // ======================================================
 
   async function iniciarGrabacion() {
@@ -633,7 +708,6 @@
   }
 
   function limpiarSesion() {
-    // Desconecta del master, pero mantiene los micrófonos vivos para el ducking
     try { if (loc[1].src && masterNode) loc[1].src.disconnect(masterNode); } catch (e) {}
     try { if (loc[2].src && masterNode) loc[2].src.disconnect(masterNode); } catch (e) {}
     try { if (musicaConectada && musicGainNode && masterNode) musicGainNode.disconnect(masterNode); } catch (e) {}
@@ -728,7 +802,7 @@
   }
 
   // ======================================================
-  // TABLA / EDITAR / PUBLICAR / BORRAR
+  // TABLA / EDITAR / BORRAR
   // ======================================================
 
   async function cargarAudios() {
