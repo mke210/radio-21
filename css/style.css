@@ -1051,3 +1051,56 @@ git push
 }
 
 .login-card input { width: 100%; }
+/* ============ TARJETAS DE EPISODIOS 50% MÁS COMPACTAS ============ */
+
+.episodios-grid {
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.episodio-card {
+  border-radius: 10px;
+}
+
+.episodio-cover,
+.episodio-cover-placeholder {
+  height: 110px;
+}
+
+.episodio-body {
+  padding: 10px;
+}
+
+.episodio-titulo {
+  font-size: 14px;
+}
+
+.episodio-meta {
+  font-size: 10.5px;
+  gap: 6px;
+}
+
+.episodio-desc {
+  font-size: 11px;
+  max-height: 42px;
+}
+
+.episodio-audio {
+  height: 32px;
+  margin-top: 8px;
+}
+
+.episodio-acciones .btn-like {
+  font-size: 11px;
+  padding: 4px 10px;
+}
+
+/* El episodio destacado conserva un tamaño mayor */
+.episodio-destacado .episodio-cover,
+.episodio-destacado .episodio-cover-placeholder {
+  height: 180px;
+}
+
+.episodio-destacado .episodio-titulo {
+  font-size: 18px;
+}
