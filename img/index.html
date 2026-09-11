@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escuela Secundaria General 21 de Noviembre — Esquipulas, Xoxocotlán, Oaxaca</title>
+<meta name="description" content="Escuela Secundaria General 21 de Noviembre, Esquipulas, Xoxocotlán, Oaxaca. Ciencia y Virtud.">
+<link rel="icon" href="img/escudo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,500&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0B2D57;
+    --navy-deep:#071433;
+    --navy-mid:#123A6B;
+    --sky:#4FA6E0;
+    --sky-pale:#EAF4FC;
+    --sky-pale-2:#DCEEFB;
+    --gold:#E7AA3B;
+    --gold-bright:#FFD873;
+    --gold-deep:#B9852A;
+    --white:#FFFFFF;
+    --paper:#F5F9FF;
+    --ink:#131F33;
+    --ink-soft:#4C5C78;
+    --radius:14px;
+    --maxw:1180px;
+    --ease:cubic-bezier(.22,1,.36,1);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;font-family:'Inter',system-ui,sans-serif;color:var(--ink);
+    background:var(--white);line-height:1.55;overflow-x:hidden;
+  }
+  h1,h2,h3,h4{font-family:'Fraunces',Georgia,serif;color:var(--navy);margin:0 0 .4em;line-height:1.12;font-weight:600;}
+  p{margin:0 0 1em;color:var(--ink-soft);}
+  a{color:inherit;}
+  img{max-width:100%;display:block;}
+  ul{margin:0;padding:0;list-style:none;}
+  button{font-family:inherit;cursor:pointer;}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 28px;}
+  section{padding:100px 0;position:relative;}
+  .section-head{max-width:620px;margin-bottom:50px;}
+  .section-head h2{font-size:clamp(1.8rem,3.4vw,2.6rem);}
+  .section-head p{font-size:1.06rem;}
+  .kicker-line{display:flex;align-items:center;gap:10px;color:var(--gold-deep);font-weight:600;font-size:.86rem;margin-bottom:.7em;}
+  .kicker-line svg{width:18px;height:18px;flex:none;}
+  :focus-visible{outline:3px solid var(--gold);outline-offset:3px;}
+
+  /* reduced motion kill-switch */
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;scroll-behavior:auto !important;}
+  }
+
+  /* ============ reveal-on-load (hero, one orchestrated sequence) ============ */
+  @keyframes riseIn{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:translateY(0);}}
+  .rise{opacity:0;animation:riseIn .8s var(--ease) forwards;}
+  .rise-1{animation-delay:.05s;} .rise-2{animation-delay:.18s;} .rise-3{animation-delay:.30s;}
+  .rise-4{animation-delay:.42s;} .rise-5{animation-delay:.54s;} .rise-6{animation-delay:.66s;}
+
+  @keyframes drift1{0%,100%{transform:translate(0,0);}50%{transform:translate(40px,-30px);}}
+  @keyframes drift2{0%,100%{transform:translate(0,0);}50%{transform:translate(-30px,40px);}}
+  @keyframes floatY{0%,100%{transform:translateY(0) rotate(-1.5deg);}50%{transform:translateY(-14px) rotate(1.5deg);}}
+  @keyframes sway{0%,100%{transform:rotate(-4deg);}50%{transform:rotate(4deg);}}
+  @keyframes shimmer{0%{background-position:-200% 0;}100%{background-position:200% 0;}}
+  @keyframes bob{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+  @keyframes pulseRing{0%{transform:scale(.9);opacity:.6;}100%{transform:scale(1.6);opacity:0;}}
+
+  /* ============ header ============ */
+  header{
+    position:sticky;top:0;z-index:200;background:rgba(11,45,87,.92);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border-bottom:1px solid rgba(231,170,59,.35);
+    transition:padding .25s var(--ease), box-shadow .25s var(--ease);
+  }
+  header.scrolled{box-shadow:0 8px 24px rgba(2,12,28,.28);}
+  .nav-inner{max-width:var(--maxw);margin:0 auto;padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:78px;transition:height .25s var(--ease);}
+  header.scrolled .nav-inner{height:62px;}
+  .brand{display:flex;align-items:center;gap:12px;color:var(--white);text-decoration:none;}
+  .brand img{height:44px;width:44px;object-fit:contain;transition:height .25s var(--ease),width .25s var(--ease);}
+  header.scrolled .brand img{height:36px;width:36px;}
+  .brand-text{display:flex;flex-direction:column;line-height:1.15;}
+  .brand-text strong{font-family:'Fraunces',serif;font-size:1.02rem;font-weight:600;}
+  .brand-text span{font-size:.7rem;color:var(--gold-bright);letter-spacing:.02em;}
+  nav.primary-nav{display:flex;align-items:center;gap:26px;}
+  nav.primary-nav a{
+    position:relative;color:#D7E6F7;text-decoration:none;font-size:.92rem;font-weight:500;padding:8px 1px;
+  }
+  nav.primary-nav a::after{
+    content:"";position:absolute;left:0;right:0;bottom:2px;height:2px;background:var(--gold);
+    transform:scaleX(0);transform-origin:left;transition:transform .3s var(--ease);
+  }
+  nav.primary-nav a:hover{color:var(--white);}
+  nav.primary-nav a:hover::after{transform:scaleX(1);}
+  nav.primary-nav a.active{color:var(--white);}
+  nav.primary-nav a.active::after{transform:scaleX(1);}
+  .fb-link{
+    display:inline-flex;align-items:center;gap:8px;background:var(--gold);color:var(--navy-deep);
+    padding:9px 16px;border-radius:999px;font-weight:700;font-size:.86rem;text-decoration:none;
+    transition:background .2s ease, transform .2s var(--ease);
+  }
+  .fb-link:hover{background:var(--gold-bright);transform:translateY(-1px);}
+  .fb-link svg{width:15px;height:15px;}
+  .menu-toggle{display:none;background:none;border:0;color:var(--white);padding:8px;}
+  .menu-toggle svg{width:26px;height:26px;}
+  nav.primary-nav.open{display:flex;}
+
+  @media (max-width:900px){
+    nav.primary-nav{
+      position:absolute;top:100%;left:0;right:0;background:var(--navy-deep);
+      flex-direction:column;align-items:flex-start;gap:0;padding:0 28px;
+      border-bottom:1px solid rgba(231,170,59,.35);
+      max-height:0;overflow:hidden;transition:max-height .35s var(--ease),padding .35s var(--ease);
+    }
+    nav.primary-nav.open{max-height:520px;padding:10px 28px 24px;}
+    nav.primary-nav a{width:100%;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.08);}
+    nav.primary-nav a::after{display:none;}
+    .fb-link{margin-top:12px;}
+    .menu-toggle{display:inline-flex;}
+  }
+
+  /* ============ hero ============ */
+  .hero{
+    position:relative;overflow:hidden;background:linear-gradient(165deg,var(--navy-deep),var(--navy) 68%);
+    color:var(--white);padding:84px 0 0;
+  }
+  .hero .blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.35;pointer-events:none;}
+  .hero .blob-1{width:520px;height:520px;background:radial-gradient(circle,var(--sky),transparent 70%);top:-160px;right:-120px;animation:drift1 16s ease-in-out infinite;}
+  .hero .blob-2{width:420px;height:420px;background:radial-gradient(circle,var(--gold),transparent 70%);bottom:-160px;left:-100px;animation:drift2 20s ease-in-out infinite;}
+  .hero-inner{max-width:var(--maxw);margin:0 auto;padding:0 28px;position:relative;display:grid;grid-template-columns:1.15fr .85fr;gap:40px;align-items:center;}
+  .hero-eyebrow{
+    display:inline-flex;align-items:center;gap:10px;background:rgba(231,170,59,.15);
+    border:1px solid rgba(231,170,59,.4);color:var(--gold-bright);padding:7px 15px;border-radius:999px;
+    font-size:.82rem;font-weight:600;margin-bottom:22px;
+  }
+  .hero h1{color:var(--white);font-size:clamp(2.3rem,4.6vw,3.4rem);max-width:11.5ch;letter-spacing:-.01em;}
+  .hero .location{color:#C9DCF0;font-size:1.05rem;margin-bottom:22px;display:flex;gap:8px;align-items:center;}
+  .hero .location svg{width:18px;height:18px;flex:none;color:var(--gold-bright);}
+  .hero-lede{color:#C9DCF0;font-size:1.08rem;max-width:46ch;}
+  .motto-badge{display:inline-flex;align-items:baseline;gap:10px;margin:8px 0 30px;}
+  .motto-badge .word{font-family:'Fraunces',serif;font-style:italic;font-weight:500;font-size:1.35rem;color:var(--gold-bright);}
+  .motto-badge .rule{width:34px;height:1px;background:rgba(255,255,255,.35);}
+  .cta-row{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:64px;}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:14px 24px;border-radius:9px;font-weight:600;font-size:.96rem;text-decoration:none;border:2px solid transparent;transition:transform .2s var(--ease),box-shadow .2s var(--ease),background .2s ease;}
+  .btn-gold{background:var(--gold);color:var(--navy-deep);}
+  .btn-gold:hover{background:var(--gold-bright);transform:translateY(-2px);box-shadow:0 10px 26px rgba(231,170,59,.35);}
+  .btn-outline{border-color:rgba(255,255,255,.5);color:var(--white);}
+  .btn-outline:hover{border-color:var(--white);background:rgba(255,255,255,.08);transform:translateY(-2px);}
+  .btn-navy{background:var(--navy);color:var(--white);}
+  .btn-navy:hover{background:var(--navy-deep);transform:translateY(-2px);}
+
+  .hero-shield{position:relative;display:flex;justify-content:center;align-items:center;}
+  .shield-ring{position:absolute;width:280px;height:280px;border-radius:50%;border:1px solid rgba(231,170,59,.4);animation:pulseRing 3.6s ease-out infinite;}
+  .shield-ring.r2{animation-delay:1.8s;}
+  .hero-shield img{width:min(320px,78%);animation:bob 6s ease-in-out infinite;filter:drop-shadow(0 26px 40px rgba(0,0,0,.5));position:relative;}
+
+  .ribbon{width:100%;height:78px;position:relative;overflow:hidden;transform:scaleX(0);transform-origin:center;transition:transform .9s var(--ease);}
+  .ribbon.in-view{transform:scaleX(1);}
+  .ribbon svg{width:100%;height:100%;display:block;}
+
+  /* ============ ambient laurel strip ============ */
+  .laurel-strip{display:flex;justify-content:center;align-items:center;gap:20px;padding:6px 0 0;color:var(--gold);background:var(--sky-pale);}
+  .laurel-strip .leaf{width:30px;height:30px;transform-origin:bottom center;animation:sway 4.5s ease-in-out infinite;}
+  .laurel-strip .leaf:nth-child(2){animation-delay:.3s;} .laurel-strip .leaf:nth-child(4){animation-delay:.6s;}
+  .laurel-strip .star{width:44px;height:44px;color:var(--gold-deep);}
+  .laurel-strip .stem{width:52px;height:1px;background:var(--gold);opacity:.5;}
+
+  /* ============ mission/vision/philosophy ============ */
+  .mvp{background:var(--sky-pale);}
+  .mvp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;}
+  .mvp-card{background:var(--white);border-radius:var(--radius);padding:32px 26px;box-shadow:0 1px 0 rgba(11,45,87,.05);position:relative;overflow:hidden;transition:transform .3s var(--ease),box-shadow .3s var(--ease);}
+  .mvp-card::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--gold),var(--gold-bright),var(--gold));background-size:200% 100%;animation:shimmer 5s linear infinite;}
+  .mvp-card:hover{transform:translateY(-6px);box-shadow:0 18px 34px rgba(11,45,87,.14);}
+  .mvp-card svg{width:30px;height:30px;color:var(--sky);margin-bottom:14px;}
+  .mvp-card h3{font-size:1.25rem;}
+  .values-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;}
+  .values-list span{background:var(--sky-pale-2);color:var(--navy);border-radius:999px;padding:5px 12px;font-size:.82rem;font-weight:600;}
+
+  /* ============ quienes somos ============ */
+  .historia{display:grid;grid-template-columns:1.1fr .9fr;gap:52px;align-items:start;}
+  .historia-art{background:linear-gradient(160deg,var(--navy),var(--navy-deep));border-radius:var(--radius);padding:34px;color:var(--white);position:sticky;top:100px;}
+  .historia-art h4{color:var(--gold-bright);font-size:1rem;margin-bottom:18px;font-family:'Inter';font-weight:700;}
+  .stat-row{display:flex;flex-direction:column;gap:20px;}
+  .stat-row .stat{display:flex;align-items:baseline;gap:10px;border-bottom:1px solid rgba(255,255,255,.12);padding-bottom:16px;}
+  .stat-row .stat b{font-family:'Fraunces',serif;font-size:2rem;color:var(--gold-bright);font-variant-numeric:tabular-nums;}
+  .stat-row .stat span{color:#C9DCF0;font-size:.9rem;}
+
+  .team-grid{margin-top:56px;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:22px;}
+  .team-card{border:1px solid #E1E9F4;border-radius:var(--radius);padding:22px;transition:border-color .2s ease,transform .25s var(--ease);}
+  .team-card:hover{border-color:var(--gold);transform:translateY(-4px);}
+  .team-card .avatar{width:52px;height:52px;border-radius:50%;background:var(--sky-pale-2);color:var(--navy);display:flex;align-items:center;justify-content:center;margin-bottom:14px;}
+  .team-card .avatar svg{width:26px;height:26px;}
+  .team-card h4{font-size:1.02rem;font-family:'Inter';font-weight:700;color:var(--navy);margin-bottom:2px;}
+  .team-card .role{color:var(--gold-deep);font-weight:600;font-size:.82rem;margin-bottom:10px;display:block;}
+  .team-card p{font-size:.92rem;margin:0;}
+
+  /* ============ testimonios carousel ============ */
+  .testimonios{margin-top:30px;background:
+      radial-gradient(700px 300px at 85% -10%, rgba(79,166,224,.18), transparent 65%),
+      linear-gradient(160deg,var(--navy),var(--navy-deep));
+    border-radius:14px;padding:24px 22px 20px;color:var(--white);position:relative;overflow:hidden;
+    border:1px solid rgba(231,170,59,.25);
+  }
+  .testimonios::before{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background-image:radial-gradient(rgba(231,170,59,.35) 1px, transparent 1.4px);
+    background-size:26px 26px;opacity:.12;
+  }
+  .testimonios-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:15px;position:relative;flex-wrap:wrap;}
+  .testimonios-head h3{color:var(--white);margin:0;font-size:1.15rem;}
+  .testi-counter{font-size:.72rem;color:var(--gold-bright);font-weight:600;letter-spacing:.02em;font-variant-numeric:tabular-nums;}
+  .carousel{position:relative;}
+  .carousel-track{display:flex;transition:transform .55s var(--ease);}
+  .testi-slide{flex:0 0 100%;padding:0 3px;}
+  .testi-card{
+    position:relative;display:flex;gap:14px;align-items:flex-start;
+    background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.15);
+    border-radius:12px;padding:19px 20px 16px;max-width:400px;overflow:hidden;
+    backdrop-filter:blur(2px);
+  }
+  .testi-mark{
+    position:absolute;top:-11px;left:10px;font-family:'Fraunces',serif;font-weight:700;
+    font-size:3.1rem;color:rgba(231,170,59,.22);line-height:1;pointer-events:none;user-select:none;
+  }
+  .testi-avatar{
+    position:relative;flex:none;width:32px;height:32px;border-radius:50%;
+    background:linear-gradient(155deg,var(--gold-bright),var(--gold-deep));
+    display:flex;align-items:center;justify-content:center;color:var(--navy-deep);
+    box-shadow:0 4px 10px rgba(0,0,0,.3);
+  }
+  .testi-avatar svg{width:15px;height:15px;}
+  .testi-content{position:relative;min-width:0;}
+  .testi-content p{font-family:'Fraunces',serif;font-style:italic;font-weight:400;color:#EEF4FC;font-size:.92rem;line-height:1.48;margin:0 0 10px;}
+  .testi-content footer{font-style:normal;display:flex;align-items:center;gap:8px;}
+  .testi-content footer .rule{width:16px;height:2px;background:var(--gold);flex:none;}
+  .testi-content footer strong{color:var(--gold-bright);font-size:.76rem;font-weight:700;}
+  .carousel-controls{display:flex;align-items:center;gap:12px;margin-top:14px;position:relative;}
+  .car-btn{width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:transparent;color:var(--white);display:flex;align-items:center;justify-content:center;transition:background .2s ease,transform .2s var(--ease);flex:none;}
+  .car-btn:hover{background:rgba(255,255,255,.12);transform:scale(1.06);}
+  .car-btn svg{width:14px;height:14px;}
+  .dots{display:flex;gap:7px;}
+  .dots button{width:7px;height:7px;border-radius:50%;border:0;background:rgba(255,255,255,.3);padding:0;transition:background .2s ease,transform .2s ease;}
+  .dots button.active{background:var(--gold-bright);transform:scale(1.25);}
+  @media (max-width:600px){
+    .testi-card{flex-direction:column;padding:17px 16px 14px;gap:10px;}
+    .testimonios{padding:18px 14px 16px;}
+  }
+
+  /* ============ talleres carousel ============ */
+  .talleres{background:var(--white);}
+  .h-carousel{display:flex;align-items:flex-start;gap:22px;overflow-x:auto;scroll-snap-type:x mandatory;padding:6px 4px 18px;-webkit-overflow-scrolling:touch;scrollbar-width:none;cursor:grab;}
+  .h-carousel::-webkit-scrollbar{display:none;}
+  .h-carousel.grabbing{cursor:grabbing;user-select:none;}
+  .taller-card{scroll-snap-align:start;flex:0 0 clamp(240px,26vw,300px);border-radius:var(--radius);padding:30px 24px;background:var(--paper);border:1px solid #E1E9F4;transition:border-color .2s ease,transform .3s var(--ease),box-shadow .3s var(--ease);}
+  .taller-card:hover{border-color:var(--gold);transform:translateY(-6px);box-shadow:0 16px 30px rgba(11,45,87,.1);}
+  .taller-card .icon-wrap{width:52px;height:52px;border-radius:13px;background:var(--navy);color:var(--gold-bright);display:flex;align-items:center;justify-content:center;margin-bottom:20px;}
+  .taller-card .icon-wrap svg{width:26px;height:26px;}
+  .taller-card h3{font-size:1.14rem;}
+  .taller-card p{font-size:.92rem;margin:0;}
+  .carousel-nav-row{display:flex;justify-content:flex-end;gap:12px;margin-top:6px;}
+
+  /* ============ vida estudiantil ============ */
+  .vida{background:var(--navy-deep);color:var(--white);position:relative;overflow:hidden;}
+  .vida .blob{position:absolute;width:460px;height:460px;border-radius:50%;background:radial-gradient(circle,var(--sky),transparent 70%);filter:blur(90px);opacity:.22;top:-140px;right:-100px;animation:drift1 18s ease-in-out infinite;}
+  .vida .section-head h2{color:var(--white);}
+  .vida .section-head p{color:#C9DCF0;}
+  .vida-layout{display:grid;grid-template-columns:1fr 1.3fr;gap:26px;position:relative;}
+  .banda-card{background:linear-gradient(160deg,var(--navy),var(--navy-deep));border:1px solid rgba(231,170,59,.35);border-radius:var(--radius);padding:32px;display:flex;flex-direction:column;justify-content:center;}
+  .banda-card .icon-wrap{width:56px;height:56px;border-radius:13px;background:var(--gold);color:var(--navy-deep);display:flex;align-items:center;justify-content:center;margin-bottom:18px;animation:bob 5s ease-in-out infinite;}
+  .banda-card .icon-wrap svg{width:28px;height:28px;}
+  .banda-card h3{color:var(--white);font-size:1.32rem;}
+  .banda-card p{color:#C9DCF0;}
+  .deportes-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  .deporte-card{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.13);border-radius:var(--radius);padding:24px;transition:transform .3s var(--ease),border-color .2s ease;}
+  .deporte-card:hover{transform:translateY(-6px);border-color:var(--gold);}
+  .deporte-card .icon-wrap{width:46px;height:46px;border-radius:50%;background:var(--sky);color:var(--navy-deep);display:flex;align-items:center;justify-content:center;margin-bottom:14px;animation:floatY 5s ease-in-out infinite;}
+  .deporte-card:nth-child(2) .icon-wrap{animation-delay:.6s;}
+  .deporte-card:nth-child(3) .icon-wrap{animation-delay:1.2s;}
+  .deporte-card .icon-wrap svg{width:24px;height:24px;}
+  .deporte-card h4{color:var(--white);font-family:'Inter';font-weight:700;font-size:1rem;margin-bottom:6px;}
+  .deporte-card p{color:#B9CCE5;font-size:.88rem;margin:0;}
+  .zona-note{grid-column:1 / -1;display:flex;align-items:center;gap:12px;color:var(--gold-bright);font-size:.9rem;font-weight:600;margin-top:4px;}
+  .zona-note svg{width:20px;height:20px;flex:none;}
+
+  /* ============ tarjeta Podcast 21 (contenedor del widget) ============ */
+  .podcast-embed-card{margin-top:26px;background:linear-gradient(160deg,var(--navy),var(--navy-deep));border:1px solid rgba(231,170,59,.35);border-radius:var(--radius);padding:28px 30px;}
+  .podcast-embed-head{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:6px;}
+  .podcast-embed-head .icon-wrap{width:52px;height:52px;border-radius:13px;background:var(--gold);color:var(--navy-deep);display:flex;align-items:center;justify-content:center;flex:none;}
+  .podcast-embed-head .icon-wrap svg{width:26px;height:26px;}
+  .podcast-embed-text{flex:1;min-width:220px;}
+  .podcast-embed-text h3{color:var(--white);font-size:1.22rem;margin:0 0 .2em;}
+  .podcast-embed-text p{color:#C9DCF0;margin:0;font-size:.94rem;}
+  .podcast-embed-card .btn{flex:none;}
+
+  /* ============ widget Podcast 21 (estilos propios, con sus propias variables — no tocan la paleta del sitio) ============ */
+  .podcast21-widget{
+    --bg:#0b1017; --surface:#121a24; --surface-2:#182230; --border:#223041;
+    --text:#e8eef5; --muted:#93a4b8; --gold:#e3b64f; --blue:#4f8fe3; --red:#e05252; --green:#4fb878;
+    margin-top:18px;
+  }
+  .podcast21-widget .player-home{max-width:800px;margin:0 auto;padding:0;}
+  .podcast21-widget .player-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;}
+  .podcast21-widget .player-minimal{max-width:none;margin:0;display:flex;align-items:center;gap:12px;background:transparent;border:none;border-radius:0;padding:0;}
+  .podcast21-widget .player-minimal audio{display:none;}
+  .podcast21-widget .pm-info{flex:1;min-width:0;display:flex;flex-direction:column;}
+  .podcast21-widget .pm-info strong{font-family:'Inter',sans-serif;font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .podcast21-widget .pm-info .small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .podcast21-widget .pm-center{width:80px;height:56px;display:flex;align-items:center;justify-content:center;flex:none;}
+  .podcast21-widget .pm-center .gif-home{width:80px;height:56px;max-width:none;object-fit:cover;border-radius:10px;box-shadow:0 0 14px rgba(227,182,79,.35);}
+  .podcast21-widget .pm-controls{display:flex;gap:6px;flex:none;}
+  .podcast21-widget .pm-btn{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--surface-2);color:var(--text);cursor:pointer;font-size:13px;}
+  .podcast21-widget .pm-btn:hover:not(:disabled){border-color:var(--gold);}
+  .podcast21-widget .pm-btn:disabled{opacity:.4;cursor:not-allowed;}
+  .podcast21-widget #pmPlay{background:var(--gold);color:#141414;border-color:var(--gold);}
+  .podcast21-widget .pm-speaker{position:relative;display:inline-block;}
+  .podcast21-widget .pm-btn.vibrando{animation:p21vibrar .5s infinite;box-shadow:0 0 12px rgba(227,182,79,.8);border-color:var(--gold);}
+  .podcast21-widget .pm-aviso{position:absolute;bottom:calc(100% + 10px);right:-14px;background:linear-gradient(90deg,var(--gold),#ff9d00,#ff4136,var(--gold));background-size:300% 100%;animation:p21brillo 1.5s linear infinite,p21flotar 1s ease-in-out infinite;color:#141414;font-size:11px;font-weight:bold;padding:6px 12px;border-radius:999px;white-space:nowrap;box-shadow:0 4px 16px rgba(227,182,79,.6);pointer-events:none;z-index:5;}
+  .podcast21-widget .pm-aviso::after{content:"";position:absolute;top:100%;right:24px;border:6px solid transparent;border-top-color:var(--gold);}
+  .podcast21-widget .oculto{display:none;}
+  @keyframes p21vibrar{0%,100%{transform:rotate(0deg);}25%{transform:rotate(-12deg);}75%{transform:rotate(12deg);}}
+  @keyframes p21brillo{0%{background-position:0% 0;}100%{background-position:300% 0;}}
+  @keyframes p21flotar{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
+  @media (max-width:600px){
+    .podcast21-widget .player-minimal{flex-wrap:wrap;justify-content:center;}
+    .podcast21-widget .pm-info{width:100%;order:3;text-align:center;}
+    .podcast-embed-card{padding:24px 20px;}
+  }
+
+  /* ============ info practica ============ */
+  .info-practica{background:var(--white);}
+  .info-tabs-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-bottom:56px;}
+  .turnos-row{display:flex;gap:10px;margin-bottom:16px;}
+  .turno-chip{background:var(--navy);color:var(--gold-bright);font-weight:700;font-size:.78rem;padding:6px 14px;border-radius:999px;}
+  table.horario{width:100%;border-collapse:collapse;font-size:.92rem;}
+  table.horario caption{text-align:left;font-weight:700;color:var(--navy);margin-bottom:10px;font-family:'Fraunces',serif;font-size:1.1rem;}
+  table.horario th,table.horario td{text-align:left;padding:11px 12px;border-bottom:1px solid #E1E9F4;}
+  table.horario th{color:var(--navy);background:var(--sky-pale);font-weight:700;}
+  .req-box h3{font-size:1.1rem;}
+  .req-list{margin-top:12px;}
+  .req-list li{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #EEF2F8;font-size:.94rem;color:var(--ink-soft);}
+  .req-list li svg{width:18px;height:18px;color:var(--gold);flex:none;margin-top:2px;}
+  .cuota-note{background:var(--sky-pale);border-left:4px solid var(--sky);border-radius:6px;padding:14px 16px;font-size:.88rem;color:var(--ink-soft);margin-top:18px;}
+  .docs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+  .doc-card{display:flex;align-items:center;gap:14px;border:1px solid #E1E9F4;border-radius:var(--radius);padding:16px 18px;text-decoration:none;transition:border-color .2s ease,transform .2s var(--ease);}
+  .doc-card:hover{border-color:var(--gold);transform:translateY(-3px);}
+  .icon-wrap img{width:68%;height:68%;object-fit:contain;}
+  .momento-media img.icon-img{width:64px;height:64px;object-fit:contain;}
+  .momento-media video{width:100%;height:100%;object-fit:cover;display:block;}
+  .momento-media.photo-pair{gap:2px;padding:0;}
+  .momento-media.photo-pair img{width:50%;height:100%;object-fit:cover;flex:none;}
+  .momento-media.photo-pair video{width:50%;height:100%;object-fit:cover;flex:none;background:#000;}
+  .video-grid{height:300px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:3px;background:var(--navy-deep);}
+  .video-grid-3{height:300px;display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr;gap:3px;background:var(--navy-deep);}
+  .video-slot{position:relative;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center;}
+  .video-slot video{width:100%;height:100%;object-fit:contain;background:#000;}
+  .video-grid-3 .video-slot video{object-fit:cover;}
+  .video-slot.placeholder{background:linear-gradient(150deg,var(--navy),var(--navy-deep));color:var(--gold-bright);flex-direction:column;gap:6px;text-align:center;padding:6px;}
+  .video-slot.placeholder svg{width:22px;height:22px;opacity:.85;}
+  .video-slot.placeholder span{font-size:.68rem;font-weight:600;color:#B9CCE5;}
+  .doc-card .icon-wrap{width:38px;height:38px;border-radius:8px;background:var(--sky-pale-2);color:var(--navy);display:flex;align-items:center;justify-content:center;flex:none;}
+  .doc-card .icon-wrap svg{width:20px;height:20px;}
+  .doc-card strong{display:block;font-size:.92rem;color:var(--navy);}
+  .doc-card span{font-size:.78rem;color:var(--ink-soft);}
+
+  /* ============ momentos (noticias + galeria) carousel ============ */
+  .recursos{background:var(--sky-pale);}
+  .momento-card{scroll-snap-align:start;flex:0 0 clamp(230px,24vw,270px);border-radius:var(--radius);overflow:hidden;background:var(--white);border:1px solid #E1E9F4;transition:transform .3s var(--ease);}
+  .momento-card:hover{transform:translateY(-6px);}
+  .momento-media{height:170px;background:linear-gradient(140deg,var(--navy),var(--sky));display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.9);overflow:hidden;}
+  .momento-media svg{width:34px;height:34px;}
+  .momento-media img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s var(--ease);}
+  .momento-card:hover .momento-media img{transform:scale(1.06);}
+  .momento-body{padding:20px;}
+  .momento-tag{color:var(--gold-deep);font-weight:700;font-size:.76rem;margin-bottom:8px;display:block;}
+  .momento-body h4{font-family:'Inter';font-weight:700;font-size:1rem;color:var(--navy);margin-bottom:6px;}
+  .momento-body p{font-size:.87rem;margin:0;}
+
+  /* ============ contacto ============ */
+  .contacto{background:var(--white);}
+  .contacto-grid{display:grid;grid-template-columns:.95fr 1.05fr;gap:44px;align-items:start;}
+  .contacto-info h3{font-size:1.2rem;}
+  .info-line{display:flex;gap:14px;align-items:flex-start;padding:14px 0;border-bottom:1px solid #EEF2F8;}
+  .info-line svg{width:20px;height:20px;color:var(--sky);flex:none;margin-top:2px;}
+  .info-line strong{display:block;color:var(--navy);font-size:.92rem;}
+  .info-line span{font-size:.88rem;color:var(--ink-soft);}
+  .map-frame{border-radius:var(--radius);overflow:hidden;border:1px solid #E1E9F4;margin-top:24px;}
+  .map-frame iframe{width:100%;height:230px;border:0;display:block;}
+  form.contact-form{display:grid;gap:16px;}
+  form.contact-form .row2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  form.contact-form label{font-size:.84rem;font-weight:600;color:var(--navy);display:block;margin-bottom:6px;}
+  form.contact-form input, form.contact-form textarea, form.contact-form select{
+    width:100%;padding:11px 13px;border:1px solid #D6E0EE;border-radius:9px;font-family:'Inter';font-size:.92rem;
+    background:var(--sky-pale);color:var(--ink);transition:border-color .2s ease,box-shadow .2s ease;
+  }
+  form.contact-form input:focus, form.contact-form textarea:focus{outline:none;border-color:var(--sky);box-shadow:0 0 0 3px rgba(79,166,224,.25);}
+  form.contact-form textarea{resize:vertical;min-height:110px;}
+  form.contact-form .form-note{font-size:.8rem;color:var(--ink-soft);margin:0;}
+
+  /* ============ footer ============ */
+  footer{background:var(--navy-deep);color:#B9CCE5;padding:56px 0 26px;}
+  .footer-grid{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:36px;margin-bottom:40px;}
+  .footer-brand{display:flex;gap:14px;align-items:flex-start;}
+  .footer-brand img{width:56px;height:56px;}
+  .footer-brand h4{color:var(--white);font-size:1.02rem;margin-bottom:4px;}
+  .footer-brand p{font-size:.86rem;color:#93A9C9;margin:0;}
+  footer h5{color:var(--white);font-size:.86rem;margin-bottom:14px;font-family:'Inter';font-weight:700;letter-spacing:.02em;}
+  footer ul{display:flex;flex-direction:column;gap:10px;}
+  footer a{color:#B9CCE5;text-decoration:none;font-size:.88rem;transition:color .2s ease;}
+  footer a:hover{color:var(--gold-bright);}
+  .footer-bottom{border-top:1px solid rgba(255,255,255,.1);padding-top:22px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;font-size:.8rem;color:#7C93B5;}
+
+  /* ============ back to top ============ */
+  .to-top{
+    position:fixed;right:22px;bottom:22px;width:48px;height:48px;border-radius:50%;background:var(--gold);
+    color:var(--navy-deep);border:0;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px rgba(11,45,87,.3);
+    opacity:0;pointer-events:none;transform:translateY(12px);transition:opacity .3s var(--ease),transform .3s var(--ease);z-index:150;
+  }
+  .to-top.show{opacity:1;pointer-events:auto;transform:translateY(0);}
+  .to-top:hover{background:var(--gold-bright);}
+  .to-top svg{width:20px;height:20px;}
+
+  /* ============ responsive ============ */
+  @media (max-width:980px){
+    .hero-inner{grid-template-columns:1fr;text-align:left;}
+    .hero-shield{order:-1;margin-bottom:10px;}
+    .hero-shield img{width:180px;}
+    .shield-ring{width:200px;height:200px;}
+    .mvp-grid,.docs-grid{grid-template-columns:repeat(2,1fr);}
+    .historia,.vida-layout,.info-tabs-grid,.contacto-grid{grid-template-columns:1fr;}
+    .historia-art{position:static;}
+    .footer-grid{grid-template-columns:1fr 1fr;}
+  }
+  @media (max-width:600px){
+    section{padding:72px 0;}
+    .mvp-grid,.docs-grid,.footer-grid{grid-template-columns:1fr;}
+    form.contact-form .row2{grid-template-columns:1fr;}
+    .testimonios{padding:32px 22px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= HEADER ================= -->
+<header id="siteHeader">
+  <div class="nav-inner">
+    <a class="brand" href="#inicio">
+      <img src="img/escudo.png" alt="Escudo de la Escuela Secundaria General 21 de Noviembre">
+      <span class="brand-text">
+        <strong>Secundaria General 21 de Noviembre</strong>
+        <span>Esquipulas, Xoxocotlán · Oaxaca</span>
+      </span>
+    </a>
+    <button class="menu-toggle" id="menuToggle" aria-label="Abrir menú" aria-expanded="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <nav class="primary-nav" id="primaryNav">
+      <a href="#inicio">Inicio</a>
+      <a href="#quienes-somos">Quiénes somos</a>
+      <a href="#talleres">Talleres</a>
+      <a href="#vida-estudiantil">Vida estudiantil</a>
+      <a href="#info-practica">Información práctica</a>
+      <a href="#noticias">Recursos y noticias</a>
+      <a href="#contacto">Contacto</a>
+      <a class="fb-link" href="https://www.facebook.com/profile.php?id=61572067992651&locale=es_LA" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.4h-1.2c-1.2 0-1.6.8-1.6 1.6V12h2.8l-.4 2.9h-2.4v7A10 10 0 0 0 22 12Z"/></svg>
+        Facebook
+      </a>
+    </nav>
+  </div>
+</header>
+
+<!-- ================= HERO / INICIO ================= -->
+<section class="hero" id="inicio" style="padding-bottom:0;">
+  <span class="blob blob-1" aria-hidden="true"></span>
+  <span class="blob blob-2" aria-hidden="true"></span>
+  <div class="hero-inner">
+    <div>
+      <span class="hero-eyebrow rise rise-1">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 6v6c0 5 3.5 8.7 8 10 4.5-1.3 8-5 8-10V6l-8-4Z"/></svg>
+        Escuela Secundaria General
+      </span>
+      <h1 class="rise rise-2">21 de Noviembre</h1>
+      <p class="location rise rise-3">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s7-6.6 7-12a7 7 0 1 0-14 0c0 5.4 7 12 7 12Z"/><circle cx="12" cy="10" r="2.4"/></svg>
+        Esquipulas, Xoxocotlán, Oaxaca
+      </p>
+      <div class="motto-badge rise rise-4">
+        <span class="word">Ciencia</span><span class="rule"></span><span class="word">y</span><span class="rule"></span><span class="word">Virtud</span>
+      </div>
+      <p class="hero-lede rise rise-5">Formamos adolescentes con pensamiento crítico, habilidades técnicas y valores firmes, para que lleguen preparados al bachillerato y a la vida en comunidad.</p>
+      <div class="cta-row rise rise-6">
+        <a class="btn btn-gold" href="#inscripcion">Inscripciones y requisitos</a>
+        <a class="btn btn-outline" href="#horarios">Calendario y horarios</a>
+      </div>
+    </div>
+    <div class="hero-shield rise rise-3">
+      <span class="shield-ring" aria-hidden="true"></span>
+      <span class="shield-ring r2" aria-hidden="true"></span>
+      <img src="img/escudo.png" alt="Escudo institucional E.S.G. 21 de Noviembre, Esquipulas — Ciencia y Virtud">
+    </div>
+  </div>
+
+  <div class="ribbon" id="ribbon1" aria-hidden="true">
+    <svg viewBox="0 0 1200 80" preserveAspectRatio="none">
+      <polygon points="0,80 0,30 60,55 120,28 180,55 240,28 300,55 360,28 420,55 480,28 540,55 600,28 660,55 720,28 780,55 840,28 900,55 960,28 1020,55 1080,28 1140,55 1200,38 1200,80" fill="#EAF4FC"/>
+    </svg>
+  </div>
+</section>
+
+<div class="laurel-strip" aria-hidden="true">
+  <div class="stem"></div>
+  <svg class="leaf" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c-4 3-7 8-7 13a7 7 0 0 0 14 0c0-5-3-10-7-13Zm0 3.4L14.6 9l-2.6 2.6L9.4 9 12 5.4Z"/></svg>
+  <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1 14.5 8.5 22 12l-7.5 3.5L12 23l-2.5-7.5L2 12l7.5-3.5Z"/></svg>
+  <svg class="leaf" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c-4 3-7 8-7 13a7 7 0 0 0 14 0c0-5-3-10-7-13Zm0 3.4L14.6 9l-2.6 2.6L9.4 9 12 5.4Z"/></svg>
+  <div class="stem"></div>
+</div>
+
+<!-- ================= MISIÓN / VISIÓN / FILOSOFÍA ================= -->
+<section class="mvp" id="mision">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="kicker-line">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>
+        Lo que nos guía
+      </div>
+      <h2>Misión, visión y filosofía institucional</h2>
+      <p>Tres ideas sostienen el trabajo diario de la comunidad escolar 21 de Noviembre.</p>
+    </div>
+    <div class="mvp-grid">
+      <div class="mvp-card">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7Z"/></svg>
+        <h3>Misión</h3>
+        <p>Brindar a las y los adolescentes de Esquipulas y sus comunidades vecinas una educación secundaria integral, que fortalezca el conocimiento científico, las habilidades técnicas de nuestros talleres y los valores humanos, formando personas responsables, capaces de continuar su trayecto académico y de contribuir a su comunidad.</p>
+      </div>
+      <div class="mvp-card">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+        <h3>Visión</h3>
+        <p>Ser una escuela secundaria general reconocida en la región de Xoxocotlán por la calidad de su formación académica y humana: un espacio seguro e incluyente donde la ciencia y la virtud preparan a cada estudiante para enfrentar con éxito el bachillerato y los retos de la vida.</p>
+      </div>
+      <div class="mvp-card">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="5"/><path d="M8.5 12.5 6 22l6-3 6 3-2.5-9.5"/></svg>
+        <h3>Filosofía institucional</h3>
+        <p>Nuestro lema, Ciencia y Virtud, resume la convicción de que el rigor académico solo tiene sentido cuando va acompañado de integridad y compromiso con los demás.</p>
+        <div class="values-list">
+          <span>Respeto</span><span>Responsabilidad</span><span>Honestidad</span>
+          <span>Trabajo en equipo</span><span>Compromiso comunitario</span><span>Superación constante</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= QUIÉNES SOMOS ================= -->
+<section id="quienes-somos">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="kicker-line">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4.5 5-6 8-6s6.5 1.5 8 6"/></svg>
+        Comunidad 21 de Noviembre
+      </div>
+      <h2>Quiénes somos</h2>
+      <p>Una escuela secundaria general pública que atiende a las familias de Esquipulas y la zona de Xoxocotlán, con un modelo formativo centrado en la ciencia y la virtud.</p>
+    </div>
+
+    <div class="historia">
+      <div>
+        <h3>Nuestra historia</h3>
+        <p>La Escuela Secundaria General 21 de Noviembre nació del interés de las familias de Esquipulas, Xoxocotlán, por contar con un espacio propio de educación secundaria, cercano a casa y con un modelo de talleres orientado al trabajo. Desde entonces, la comunidad escolar —docentes, madres y padres de familia, y estudiantes— ha sostenido un proyecto educativo basado en el estudio riguroso y en la formación de carácter, tal como lo expresa el lema del escudo: Ciencia y Virtud.</p>
+        <p>Con el paso de los años, la escuela ha ampliado su oferta de talleres técnicos y ha fortalecido su vida extraescolar, integrando actividades cívicas y deportivas que llevan el nombre de la institución a los eventos de la zona escolar.</p>
+        <h3 style="margin-top:34px;">Logros y reconocimientos</h3>
+        <ul class="req-list">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Participación constante en los eventos deportivos de la zona escolar, en basquetbol, futbol 7 y voleibol.</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Banda de Guerra representativa, presente en los desfiles y actos cívicos de la comunidad.</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Talleres técnicos que preparan a las y los estudiantes con habilidades aplicables desde la secundaria.</li>
+        </ul>
+      </div>
+      <div class="historia-art">
+        <h4>La escuela en números</h4>
+        <div class="stat-row">
+          <div class="stat"><b data-count-to="4">0</b><span>talleres técnicos: informática, ofimática, circuitos eléctricos y turismo</span></div>
+          <div class="stat"><b data-count-to="3">0</b><span>disciplinas deportivas de zona: basquetbol, futbol 7 y voleibol</span></div>
+          <div class="stat"><b data-count-to="1">0</b><span>Banda de Guerra representativa de la institución</span></div>
+          <div class="stat"><b data-count-to="21">0</b><span>de noviembre, la fecha que da nombre a nuestra escuela</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="team-grid">
+      <div class="team-card">
+        <div class="avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4.5 5-6 8-6s6.5 1.5 8 6"/></svg></div>
+        <h4>Dirección</h4>
+        <span class="role">Dirección escolar</span>
+        <p>Conduce el proyecto educativo de la institución y representa a la escuela ante la comunidad y las autoridades.</p>
+      </div>
+      <div class="team-card">
+        <div class="avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg></div>
+        <h4>Subdirección académica</h4>
+        <span class="role">Coordinación pedagógica</span>
+        <p>Da seguimiento al trabajo docente, a la evaluación y al desempeño académico de los tres grados.</p>
+      </div>
+      <div class="team-card">
+        <div class="avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg></div>
+        <h4>Coordinación de talleres</h4>
+        <span class="role">Educación tecnológica</span>
+        <p>Organiza informática, ofimática, circuitos eléctricos y turismo, y su vínculo con el trabajo por proyectos.</p>
+      </div>
+      <div class="team-card">
+        <div class="avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 6v6c0 5 3.5 8.7 8 10 4.5-1.3 8-5 8-10V6l-8-4Z"/></svg></div>
+        <h4>Actividades cívicas y deportivas</h4>
+        <span class="role">Banda de Guerra y deportes</span>
+        <p>Coordina los ensayos de la Banda de Guerra y la preparación de los equipos que representan a la escuela en la zona escolar.</p>
+      </div>
+    </div>
+
+    <div class="testimonios">
+      <div class="testimonios-head">
+        <h3>Lo que dice nuestra comunidad</h3>
+        <span class="testi-counter" id="testiCounter">01 / 13</span>
+      </div>
+      <div class="carousel" id="testiCarousel">
+        <div class="carousel-track" id="testiTrack">
+          <div class="testi-slide">
+            <div class="testi-card">
+              <span class="testi-mark" aria-hidden="true">&ldquo;</span>
+              <div class="testi-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4.5 5-6 8-6s6.5 1.5 8 6"/></svg></div>
+              <div class="testi-content">
+                <p>Mi hijo entró al taller de circuitos eléctricos sin saber nada y ahora arma sus propios proyectos en casa. Se nota el interés de los maestros.</p>
+                <footer><span class="rule"></span><strong>Madre de familia, 2° grado</strong></footer>
+              </div>
+            </div>
+          </div>
+          <div class="testi-slide">
+            <div class="testi-card">
+              <span class="testi-mark" aria-hidden="true">&ldquo;</span>
+              <div class="testi-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v4H4z"/><path d="M4 4v16M20 4v16M8 20V8M12 20V8M16 20V8"/></svg></div>
+              <div class="testi-content">
+                <p>Estar en la Banda de Guerra me enseñó disciplina y trabajo en equipo. Salir a representar a la escuela en los desfiles es algo que no olvido.</p>
+                <footer><span class="rule"></span><strong>Egresado, generación reciente</strong></footer>
+              </div>
+            </div>
+          </div>
+          <div class="testi-slide">
+            <div class="testi-card">
+              <span class="testi-mark" aria-hidden="true">&ldquo;</span>
+              <div class="testi-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M4 9c4 3 12 3 16 0M4 15c4-3 12-3 16 0"/></svg></div>
+              <div class="testi-content">
+                <p>Me gusta que aquí los profesores exigen, pero también apoyan. En el equipo de voleibol aprendí a organizarme entre la escuela y los entrenamientos.</p>
+                <footer><span class="rule"></span><strong>Alumna, 3er grado</strong></footer>
+              </div>
+            </div>
+          </div>
+          <div class="testi-slide">
+            <div class="testi-card">
+              <span class="testi-mark" aria-hidden="true">&ldquo;</span>
+              <div class="testi-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4.5 5-6 8-6s6.5 1.5 8 6"/></svg></div>
+              <div class="testi-content">
+                <p>Mi'jo egresó hace tres años y hasta la fecha me sigue platicando de lo que aprendió en el taller de circuitos. La neta, salió bien preparado para la prepa.</p>
+                <footer><span class="rule"></span><strong>Mamá de un egresado, generación 2022</strong></footer>
+              </div>
+            </div>
+          </div>
+          <div class="testi-slide">
+            <div class="testi-card">
+              <span class="testi-mark" aria-hidden="true">&ldquo;</span>
+              <div class="testi-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4.5 5-6 8-6s6.5 1.5 8 6"/></svg></div>
+              <div class="testi-content">
+                <p>A mi hija le costaba trabajo hablar en público y aquí, entre los actos cívicos y la Banda de Guerra, le agarró el modo. Hoy ya no se me achica para nada.</p>
+                <footer><span class="rule"></span><strong>Papá de una egresada, generación 2021</strong></footer>
+              </div>
+            </div>
+          </div>
+          <div class="testi-slide">
+            <div class="testi-card">
+              <span class="testi-mark" aria-hidden="true">&ldquo;</span>
+              <div class="testi-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4.5 5-6 8-6s6.5 1.5 8 6"/></svg></div>
+              <div class="testi-content">
+                <p>Le doy gracias a la escuela porque a mi hijo lo trataron como persona, no nada más como número de lista. Eso se agradece un buen.</p>
+                <footer><span class="rule"></span><strong>Madre de familia, hijo egresado 2020</strong></footer>
+              </div>
+            </div>
+          </div>
+          <div class="testi-slide">
+            <div class="testi-card">
+              <span class="testi-mark" aria-hidden="true">&ldquo;</span>
+              <div class="testi-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4.5 5-6 8-6s6.5 1.5 8 6"/></svg></div>
+              <div class="testi-content">
+                <p>Mis dos hijos salieron de esta secundaria y a los dos les fue bien en la prepa porque aquí sí les exigen parejo. Se nota que los maestros están al pendiente.</p>
+                <footer><span class="rule"></span><strong>Madre de familia, dos hijos egresados</strong></footer>
+              </div>
+            </div>
+          </div>
+          <div class="testi-slide">
+            <div class="testi-card">
+              <span class="testi-mark" aria-hidden="true">&ldquo;</span>
+              <div class="testi-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4.5 5-6 8-6s6.5 1.5 8 6"/></svg></div>
+              <div class="testi-content">
+                <p>Cuando mi hija entró al equipo de voleibol pensé que iba a descuidar la escuela, pero al contrario, se organizó mejor. Terminó la secu con puro 9 y 10.</p>
+                <footer><span class="rule"></span><strong>Papá de familia, generación 2023</strong></footer>
+              </div>
+            </div>
+          </div>
+          <div class="testi-slide">
+            <div class="testi-card">
+              <span class="testi-mark" aria-hidden="true">&ldquo;</span>
+              <div class="testi-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4.5 5-6 8-6s6.5 1.5 8 6"/></svg></div>
+              <div class="testi-content">
+                <p>Yo estudié en otra secundaria y la verdad envidio que mi hijo haya tenido talleres técnicos desde los doce años. Eso allá no se veía.</p>
+                <footer><span class="rule"></span><strong>Padre de familia, hijo egresado 2019</strong></footer>
+              </div>
+            </div>
+          </div>
+          <div class="testi-slide">
+            <div class="testi-card">
+              <span class="testi-mark" aria-hidden="true">&ldquo;</span>
+              <div class="testi-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4.5 5-6 8-6s6.5 1.5 8 6"/></svg></div>
+              <div class="testi-content">
+                <p>Mi hija se graduó llorando porque no se quería ir de la escuela, así de a gusto estuvo ahí los tres años. Eso ya dice mucho.</p>
+                <footer><span class="rule"></span><strong>Mamá de una egresada, generación 2022</strong></footer>
+              </div>
+            </div>
+          </div>
+          <div class="testi-slide">
+            <div class="testi-card">
+              <span class="testi-mark" aria-hidden="true">&ldquo;</span>
+              <div class="testi-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4.5 5-6 8-6s6.5 1.5 8 6"/></svg></div>
+              <div class="testi-content">
+                <p>Con la Banda de Guerra mi hijo aprendió a ser puntual y responsable, cosa que en la casa a veces cuesta trabajo enseñar. Se lo agradezco a sus instructores.</p>
+                <footer><span class="rule"></span><strong>Madre de familia, hijo egresado 2021</strong></footer>
+              </div>
+            </div>
+          </div>
+          <div class="testi-slide">
+            <div class="testi-card">
+              <span class="testi-mark" aria-hidden="true">&ldquo;</span>
+              <div class="testi-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4.5 5-6 8-6s6.5 1.5 8 6"/></svg></div>
+              <div class="testi-content">
+                <p>Nunca tuve que batallar para que mi hija fuera a la escuela, siempre salía contenta. Ahora que está en la prepa la extraña un montón.</p>
+                <footer><span class="rule"></span><strong>Papá de familia, generación 2020</strong></footer>
+              </div>
+            </div>
+          </div>
+          <div class="testi-slide">
+            <div class="testi-card">
+              <span class="testi-mark" aria-hidden="true">&ldquo;</span>
+              <div class="testi-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4.5 5-6 8-6s6.5 1.5 8 6"/></svg></div>
+              <div class="testi-content">
+                <p>Lo que más me gustó fue que siempre hubo comunicación con nosotros los papás, nunca nos enteramos de nada a la mala. Eso da mucha confianza.</p>
+                <footer><span class="rule"></span><strong>Madre de familia, hija egresada 2023</strong></footer>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="carousel-controls">
+        <button class="car-btn" id="testiPrev" aria-label="Testimonio anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18 9 12l6-6"/></svg></button>
+        <div class="dots" id="testiDots"></div>
+        <button class="car-btn" id="testiNext" aria-label="Siguiente testimonio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= TALLERES ================= -->
+<section class="talleres" id="talleres">
+  <div class="wrap">
+    <div class="section-head" style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;">
+      <div>
+        <div class="kicker-line">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
+          Educación tecnológica
+        </div>
+        <h2>Talleres</h2>
+        <p>Desde el primer grado, cada estudiante cursa uno de nuestros cuatro talleres técnicos, pensados para desarrollar habilidades prácticas junto con la formación académica.</p>
+      </div>
+    </div>
+    <div class="h-carousel" id="talleresCarousel">
+      <div class="taller-card">
+        <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></div>
+        <h3>Informática</h3>
+        <p>Uso de equipo de cómputo, fundamentos de programación y herramientas digitales aplicadas a proyectos escolares.</p>
+      </div>
+      <div class="taller-card">
+        <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg></div>
+        <h3>Ofimática</h3>
+        <p>Manejo de procesadores de texto, hojas de cálculo y presentaciones para el trabajo escolar y administrativo.</p>
+      </div>
+      <div class="taller-card">
+        <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></svg></div>
+        <h3>Circuitos eléctricos</h3>
+        <p>Principios de electricidad, armado de circuitos y prácticas de seguridad en instalaciones básicas.</p>
+      </div>
+      <div class="taller-card">
+        <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m15 9-2 6-6 2 2-6 6-2Z"/></svg></div>
+        <h3>Turismo</h3>
+        <p>Conocimiento del patrimonio cultural y natural de Oaxaca, y nociones de atención a visitantes.</p>
+      </div>
+    </div>
+    <div class="carousel-nav-row">
+      <button class="car-btn" data-scroll-target="talleresCarousel" data-dir="-1" aria-label="Anterior" style="border-color:#D6E0EE;color:var(--navy);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18 9 12l6-6"/></svg></button>
+      <button class="car-btn" data-scroll-target="talleresCarousel" data-dir="1" aria-label="Siguiente" style="border-color:#D6E0EE;color:var(--navy);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></button>
+    </div>
+  </div>
+</section>
+
+<!-- ================= VIDA ESTUDIANTIL ================= -->
+<section class="vida" id="vida-estudiantil">
+  <span class="blob" aria-hidden="true"></span>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="kicker-line">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 6v6c0 5 3.5 8.7 8 10 4.5-1.3 8-5 8-10V6l-8-4Z"/></svg>
+        Fuera del salón de clases
+      </div>
+      <h2>Vida estudiantil y actividades extraescolares</h2>
+      <p>La formación en la 21 de Noviembre continúa después de clases, con disciplina, trabajo en equipo y orgullo por representar a la escuela.</p>
+    </div>
+    <div class="vida-layout">
+      <div class="banda-card">
+        <div class="icon-wrap">
+          <img src="img/tambor.png" alt="Tambor de la Banda de Guerra">
+        </div>
+        <h3>Banda de Guerra</h3>
+        <p>Nuestra Banda de Guerra representa a la escuela en desfiles y actos cívicos, y es un espacio donde las y los estudiantes desarrollan disciplina, orden y trabajo en equipo.</p>
+      </div>
+      <div class="deportes-grid">
+        <div class="deporte-card">
+          <div class="icon-wrap"><img src="img/baloncesto.png" alt="Jugador de baloncesto"></div>
+          <h4>Basquetbol</h4>
+          <p>Equipo escolar que compite en los torneos de la zona.</p>
+        </div>
+        <div class="deporte-card">
+          <div class="icon-wrap"><img src="img/jugador-de-futbol.png" alt="Jugador de futbol"></div>
+          <h4>Futbol 7</h4>
+          <p>Entrenamientos y participación en el calendario deportivo escolar.</p>
+        </div>
+        <div class="deporte-card">
+          <div class="icon-wrap"><img src="img/jugador-de-voleibol.png" alt="Jugadora de voleibol"></div>
+          <h4>Voleibol</h4>
+          <p>Selección femenil y varonil que representa a la institución.</p>
+        </div>
+        <div class="zona-note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 6v6c0 5 3.5 8.7 8 10 4.5-1.3 8-5 8-10V6l-8-4Z"/></svg>
+          Nuestros equipos participan en los eventos deportivos de zona escolar en las tres disciplinas.
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ PODCAST 21 (reproductor en vivo) ============ -->
+    <div class="podcast-embed-card">
+      <div class="podcast-embed-head">
+        <div class="icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>
+        </div>
+        <div class="podcast-embed-text">
+          <h3>🎙️ Podcast 21</h3>
+          <p>Nuestros alumnos también tienen voz: escucha aquí lo último transmitido desde la cabina del Podcast 21.</p>
+        </div>
+        <a class="btn btn-gold" href="https://mke210.github.io/radio-21/" target="_blank" rel="noopener">🎧 Ver todos los episodios</a>
+      </div>
+
+      <div class="podcast21-widget">
+        <section class="player-home">
+          <div class="player-card">
+            <div class="player-minimal">
+              <div class="pm-info">
+                <strong id="pmTitulo">Cargando contenido…</strong>
+                <span id="pmMeta" class="small"></span>
+              </div>
+              <div class="pm-center">
+                <img id="pmGif" src="" alt="Radio animada" class="gif-home oculto" />
+              </div>
+              <div class="pm-controls">
+                <button id="pmPrev" class="pm-btn" disabled>⏮</button>
+                <button id="pmPlay" class="pm-btn" disabled>▶</button>
+                <button id="pmNext" class="pm-btn" disabled>⏭</button>
+                <span class="pm-speaker">
+                  <button id="pmMute" class="pm-btn" disabled>🔇</button>
+                  <span id="pmAviso" class="pm-aviso oculto">¡Activa el audio! 🔊</span>
+                </span>
+              </div>
+            </div>
+            <audio id="pmAudio" loop muted autoplay controlslist="nodownload"></audio>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= INFORMACIÓN PRÁCTICA ================= -->
+<section class="info-practica" id="info-practica">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="kicker-line">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
+        Para madres, padres y estudiantes
+      </div>
+      <h2>Información práctica</h2>
+      <p>Horarios, requisitos de inscripción y documentos que necesitas para el ciclo escolar.</p>
+    </div>
+
+    <div class="info-tabs-grid">
+      <div id="horarios">
+        <div class="turnos-row">
+          <span class="turno-chip">Turno Matutino</span>
+          <span class="turno-chip">Turno Mixto</span>
+        </div>
+        <table class="horario">
+          <caption>Horario general — clases de 50 minutos</caption>
+          <thead><tr><th>Actividad</th><th>Turno Matutino</th><th>Turno Mixto</th></tr></thead>
+          <tbody>
+            <tr><td>Entrada</td><td>7:00 a.m.</td><td>8:40 a.m.</td></tr>
+            <tr><td>Receso</td><td colspan="2">10:20 a.m. – 10:50 a.m. (ambos turnos)</td></tr>
+            <tr><td>Salida</td><td>1:20 p.m.</td><td>3:00 p.m.</td></tr>
+            <tr><td>Ensayos Banda de Guerra / deportes</td><td colspan="2">Según calendario, en horario extraclase</td></tr>
+          </tbody>
+        </table>
+        <div class="cuota-note">La educación en esta escuela pública es gratuita. La Sociedad de Padres de Familia define, cada ciclo escolar, una cuota de cooperación voluntaria para el mantenimiento de las instalaciones.</div>
+      </div>
+
+      <div class="req-box" id="inscripcion">
+        <h3>Requisitos de inscripción</h3>
+        <ul class="req-list">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Acta de nacimiento original y copia</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>CURP actualizada</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Certificado de educación primaria</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Comprobante de domicilio reciente</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Cuatro fotografías tamaño infantil</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Certificado médico vigente</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 style="margin-bottom:18px;">Documentos descargables</h3>
+    <div class="docs-grid">
+      <a class="doc-card" href="#">
+        <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5"/></svg></div>
+        <div><strong>Acuerdos de convivencia</strong><span>PDF · próximamente</span></div>
+      </a>
+      <a class="doc-card" href="#">
+        <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5"/></svg></div>
+        <div><strong>Calendario escolar</strong><span>PDF · próximamente</span></div>
+      </a>
+      <a class="doc-card" href="#">
+        <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5"/></svg></div>
+        <div><strong>Lista de útiles y material de talleres</strong><span>PDF · próximamente</span></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ================= RECURSOS Y NOTICIAS (carrusel) ================= -->
+<section class="recursos" id="noticias">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="kicker-line">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>
+        Al día
+      </div>
+      <h2>Recursos y noticias</h2>
+      <p>Avisos, eventos y un adelanto de nuestras instalaciones. Para el detalle completo de cada evento, seguimos publicando en nuestra página de Facebook.</p>
+    </div>
+
+    <div class="h-carousel" id="momentosCarousel">
+      <div class="momento-card">
+        <div class="momento-media"><img src="img/celebraciones_4.jpg" alt="Manualidades navideñas - Navidad"></div>
+        <div class="momento-body"><span class="momento-tag">Navidad</span><h4>Manualidades navideñas</h4><p>Adornos y velas elaborados por los estudiantes para las fiestas decembrinas.</p></div>
+      </div>
+      <div class="momento-card">
+        <div class="momento-media"><img src="img/celebraciones_5.jpg" alt="Comparsa prehispánica - Día de Muertos"></div>
+        <div class="momento-body"><span class="momento-tag">Día de Muertos</span><h4>Comparsa prehispánica</h4><p>Alumnos caracterizados con temática prehispánica en la celebración de Día de Muertos.</p></div>
+      </div>
+      <div class="momento-card">
+        <div class="momento-media"><img src="img/celebraciones_6.jpg" alt="Disfraces y catrinas - Día de Muertos"></div>
+        <div class="momento-body"><span class="momento-tag">Día de Muertos</span><h4>Disfraces y catrinas</h4><p>Estudiantes y familias participando con catrinas y disfraces.</p></div>
+      </div>
+      <div class="momento-card">
+        <div class="momento-media"><img src="img/celebraciones_7.jpg" alt="Mojiganga por las calles - Día de Muertos"></div>
+        <div class="momento-body"><span class="momento-tag">Día de Muertos</span><h4>Mojiganga por las calles</h4><p>La comunidad escolar salió con una mojiganga por las calles de Esquipulas.</p></div>
+      </div>
+      <div class="momento-card">
+        <div class="momento-media"><img src="img/celebraciones.jpg" alt="Cartas navideñas - Navidad"></div>
+        <div class="momento-body"><span class="momento-tag">Navidad</span><h4>Cartas navideñas</h4><p>Mensajes y tarjetas de Navidad elaborados por nuestros alumnos.</p></div>
+      </div>
+      <div class="momento-card">
+        <div class="momento-media"><img src="img/celebraciones2.jpg" alt="Adornos navideños - Navidad"></div>
+        <div class="momento-body"><span class="momento-tag">Navidad</span><h4>Adornos navideños</h4><p>Coronas y decoraciones hechas en clase para la temporada navideña.</p></div>
+      </div>
+      <div class="momento-card">
+        <div class="momento-media"><img src="img/celebraciones_3.jpg" alt="Coronas navideñas - Navidad"></div>
+        <div class="momento-body"><span class="momento-tag">Navidad</span><h4>Coronas navideñas</h4><p>Más adornos elaborados por los alumnos para decorar la escuela.</p></div>
+      </div>
+      <div class="momento-card">
+        <div class="momento-media"><img src="img/club_de_danza_2.jpg" alt="Ensayo de danza folklórica - Club de Danza"></div>
+        <div class="momento-body"><span class="momento-tag">Club de Danza</span><h4>Ensayo de danza folklórica</h4><p>El Club de Danza durante una presentación en el patio escolar.</p></div>
+      </div>
+      <div class="momento-card">
+        <div class="momento-media"><img src="img/Club_de_danza.jpg" alt="Presentación de danza folklórica - Club de Danza"></div>
+        <div class="momento-body"><span class="momento-tag">Club de Danza</span><h4>Presentación de danza folklórica</h4><p>Nuestros bailarines representando trajes típicos de distintas regiones.</p></div>
+      </div>
+      <div class="momento-card">
+        <div class="momento-media"><img src="img/festivales.jpg" alt="Festival escolar - Festivales"></div>
+        <div class="momento-body"><span class="momento-tag">Festivales</span><h4>Festival escolar</h4><p>Baile y convivencia durante uno de nuestros festivales.</p></div>
+      </div>
+      <div class="momento-card">
+        <div class="momento-media"><img src="img/artes_2.jpg" alt="Exposición de Artes - Artes"></div>
+        <div class="momento-body"><span class="momento-tag">Artes</span><h4>Exposición de Artes</h4><p>Retratos y pinturas elaborados por los estudiantes del taller de Artes.</p></div>
+      </div>
+      <div class="momento-card">
+        <div class="momento-media"><img src="img/artes_3.jpg" alt="Exposición de Artes - Artes"></div>
+        <div class="momento-body"><span class="momento-tag">Artes</span><h4>Exposición de Artes</h4><p>Pinturas y trabajos de investigación histórica de nuestros alumnos.</p></div>
+      </div>
+      <div class="momento-card">
+        <div class="momento-media"><img src="img/artes_4.jpg" alt="Exposición de Artes - Artes"></div>
+        <div class="momento-body"><span class="momento-tag">Artes</span><h4>Exposición de Artes</h4><p>Autorretratos y pinturas realizados en la clase de Artes.</p></div>
+      </div>
+      <div class="momento-card">
+        <div class="momento-media"><img src="img/artes.jpg" alt="Exposición de Artes - Artes"></div>
+        <div class="momento-body"><span class="momento-tag">Artes</span><h4>Exposición de Artes</h4><p>Retratos e ilustraciones creados por los estudiantes.</p></div>
+      </div>
+      <div class="momento-card">
+        <div class="momento-media"><img src="img/actos_civicos.jpg" alt="Escolta y banda de guerra durante un acto cívico en la escuela"></div>
+        <div class="momento-body"><span class="momento-tag">Actos cívicos</span><h4>Escolta y Banda de Guerra</h4><p>Nuestra escolta y Banda de Guerra en un acto cívico dentro del plantel.</p></div>
+      </div>
+      <div class="momento-card">
+        <div class="momento-media"><img src="img/honores_a_la_bandera.jpg" alt="Ceremonia de Honores a la Bandera con estudiantes formados"></div>
+        <div class="momento-body"><span class="momento-tag">Actos cívicos</span><h4>Honores a la Bandera</h4><p>La comunidad escolar reunida en la ceremonia semanal de Honores a la Bandera.</p></div>
+      </div>
+      <div class="momento-card">
+        <div class="momento-media"><img src="img/capacitaciones_2.jpg" alt="Capacitación a estudiantes sobre el uso responsable de dispositivos"></div>
+        <div class="momento-body"><span class="momento-tag">Capacitaciones</span><h4>Uso responsable de la tecnología</h4><p>Plática formativa sobre cómo el uso de dispositivos afecta la vida diaria.</p></div>
+      </div>
+      <div class="momento-card">
+        <div class="momento-media"><img src="img/capacitaciones_3.jpg" alt="Capacitación sobre emociones y salud mental con estudiantes"></div>
+        <div class="momento-body"><span class="momento-tag">Capacitaciones</span><h4>Las emociones y la mente</h4><p>Taller sobre inteligencia emocional impartido a nuestros estudiantes.</p></div>
+      </div>
+      <div class="momento-card">
+        <div class="momento-media"><img src="img/capacitaciones_4.jpg" alt="Asamblea general con autoridades educativas de Oaxaca"></div>
+        <div class="momento-body"><span class="momento-tag">Capacitaciones</span><h4>Visita de la Casa Rodante IEEPO</h4><p>Asamblea general con autoridades educativas del estado de Oaxaca.</p></div>
+      </div>
+      <div class="momento-card">
+        <div class="momento-media"><img src="img/capacitaciones.jpg" alt="Dinámica grupal de convivencia entre estudiantes"></div>
+        <div class="momento-body"><span class="momento-tag">Capacitaciones</span><h4>Dinámicas de convivencia</h4><p>Actividad grupal como parte de nuestras jornadas formativas.</p></div>
+      </div>
+    </div>
+<div class="momento-card">
+        <div class="momento-media"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="4.5" r="1.8"/><path d="M12 6.3v5.2l-3.5 6M12 11.5l4 4.3M8 10l-2.6 2.6M16 10l2.8 1"/></svg></div>
+        <div class="momento-body"><span class="momento-tag">Club de Danza</span><h4>Ensayos del Club de Danza</h4><p>El Club de Danza folklórica ensaya coreografías para los eventos y festivales de la escuela.</p></div>
+      </div>
+      <div class="momento-card">
+        <div class="momento-media photo-pair">
+          <img src="img/banda-guerra-1.jpg" alt="La Banda de Guerra en formación durante una presentación escolar">
+          <video src="img/banda-guerra-tambores.mp4" autoplay muted loop playsinline preload="metadata" aria-label="Estudiantes tocando los tambores de la Banda de Guerra"></video>
+        </div>
+        <div class="momento-body"><span class="momento-tag">Banda de Guerra</span><h4>Convocatoria a nuevos integrantes</h4><p>Abre inscripción para estudiantes interesados en participar.</p></div>
+      </div>
+      <div class="momento-card">
+        <div class="momento-media video-grid-3">
+          <div class="video-slot">
+            <video src="img/basquet.mp4" autoplay muted loop playsinline preload="metadata" aria-label="Video de un partido de basquetbol en la zona escolar"></video>
+          </div>
+          <div class="video-slot">
+            <video src="img/fut.mp4" autoplay muted loop playsinline preload="metadata" aria-label="Video de un partido de futbol 7 en la zona escolar"></video>
+          </div>
+          <div class="video-slot">
+            <video src="img/voley.mp4" autoplay muted loop playsinline preload="metadata" aria-label="Video de un partido de voleibol en la zona escolar"></video>
+          </div>
+        </div>
+        <div class="momento-body"><span class="momento-tag">Deportes</span><h4>Calendario de eventos de zona</h4><p>Fechas de basquetbol, futbol 7 y voleibol.</p></div>
+      </div>
+      <div class="momento-card">
+        <div class="momento-media video-grid">
+          <div class="video-slot">
+            <video src="img/ajedrez.mp4" autoplay muted loop playsinline preload="metadata" aria-label="Video del proyecto de Ajedrez de la Academia de Matemáticas"></video>
+          </div>
+          <div class="video-slot placeholder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7Z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+            <span>Video próximamente</span>
+          </div>
+          <div class="video-slot placeholder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7Z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+            <span>Video próximamente</span>
+          </div>
+          <div class="video-slot placeholder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7Z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+            <span>Video próximamente</span>
+          </div>
+        </div>
+        <div class="momento-body"><span class="momento-tag">Academia de Matemáticas</span><h4>Nuevo proyecto de Ajedrez</h4><p>La Academia de Matemáticas impulsa el ajedrez como herramienta de pensamiento lógico.</p></div>
+      </div>
+          <div class="carousel-nav-row">
+      <button class="car-btn" data-scroll-target="momentosCarousel" data-dir="-1" aria-label="Anterior" style="border-color:#C9DCEE;color:var(--navy);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18 9 12l6-6"/></svg></button>
+      <button class="car-btn" data-scroll-target="momentosCarousel" data-dir="1" aria-label="Siguiente" style="border-color:#C9DCEE;color:var(--navy);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></button>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CONTACTO Y UBICACIÓN ================= -->
+<section class="contacto" id="contacto">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="kicker-line">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s7-6.6 7-12a7 7 0 1 0-14 0c0 5.4 7 12 7 12Z"/><circle cx="12" cy="10" r="2.4"/></svg>
+        Estamos cerca
+      </div>
+      <h2>Contacto y ubicación</h2>
+      <p>Escríbenos por Facebook o completa el formulario y te responderemos a la brevedad.</p>
+    </div>
+    <div class="contacto-grid">
+      <div class="contacto-info">
+        <h3>Datos de contacto</h3>
+        <div class="info-line">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s7-6.6 7-12a7 7 0 1 0-14 0c0 5.4 7 12 7 12Z"/><circle cx="12" cy="10" r="2.4"/></svg>
+          <div><strong>Ubicación</strong><span>Esquipulas, Xoxocotlán, Oaxaca, México</span></div>
+        </div>
+        <div class="info-line">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5M16 4v5"/></svg>
+          <div><strong>Turno</strong><span>Matutino, de lunes a viernes</span></div>
+        </div>
+        <div class="info-line">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.4h-1.2c-1.2 0-1.6.8-1.6 1.6V12h2.8l-.4 2.9h-2.4v7A10 10 0 0 0 22 12Z"/></svg>
+          <div><strong>Facebook</strong><span><a href="https://www.facebook.com/profile.php?id=61572067992651&locale=es_LA" target="_blank" rel="noopener">Escuela Secundaria General 21 de Noviembre</a></span></div>
+        </div>
+        <div class="map-frame">
+          <iframe src="https://www.google.com/maps?q=Esquipulas,+Xoxocotl%C3%A1n,+Oaxaca&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Mapa de Esquipulas, Xoxocotlán, Oaxaca"></iframe>
+        </div>
+      </div>
+
+      <form class="contact-form" onsubmit="event.preventDefault(); alert('Gracias por escribirnos. Este formulario es una demostración; conéctalo a tu correo o a Facebook Messenger para recibir mensajes reales.');">
+        <div class="row2">
+          <div><label for="nombre">Nombre completo</label><input id="nombre" type="text" required placeholder="Tu nombre"></div>
+          <div>
+            <label for="parentesco">Eres</label>
+            <select id="parentesco">
+              <option>Madre / padre de familia</option>
+              <option>Estudiante</option>
+              <option>Egresado</option>
+              <option>Otro</option>
+            </select>
+          </div>
+        </div>
+        <div class="row2">
+          <div><label for="correo">Correo electrónico</label><input id="correo" type="email" required placeholder="tucorreo@ejemplo.com"></div>
+          <div><label for="telefono">Teléfono (opcional)</label><input id="telefono" type="tel" placeholder="951 000 0000"></div>
+        </div>
+        <div><label for="mensaje">Mensaje</label><textarea id="mensaje" required placeholder="Cuéntanos en qué podemos ayudarte"></textarea></div>
+        <button class="btn btn-navy" type="submit" style="justify-self:start;">Enviar mensaje</button>
+        <p class="form-note">Formulario de demostración: los mensajes no se envían todavía. Puede conectarse a un correo real o a un servicio de formularios cuando la escuela lo indique.</p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer>
+  <div class="wrap">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <img src="img/escudo.png" alt="Escudo E.S.G. 21 de Noviembre">
+        <div>
+          <h4>Escuela Secundaria General 21 de Noviembre</h4>
+          <p>Esquipulas, Xoxocotlán, Oaxaca · Ciencia y Virtud</p>
+        </div>
+      </div>
+      <div>
+        <h5>Sitio</h5>
+        <ul>
+          <li><a href="#quienes-somos">Quiénes somos</a></li>
+          <li><a href="#talleres">Talleres</a></li>
+          <li><a href="#vida-estudiantil">Vida estudiantil</a></li>
+          <li><a href="#info-practica">Información práctica</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Comunidad</h5>
+        <ul>
+          <li><a href="#noticias">Noticias</a></li>
+          <li><a href="#inscripcion">Inscripciones</a></li>
+          <li><a href="#horarios">Horarios</a></li>
+          <li><a href="#contacto">Contacto</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Síguenos</h5>
+        <ul><li><a href="https://www.facebook.com/profile.php?id=61572067992651&locale=es_LA" target="_blank" rel="noopener">Facebook</a></li></ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Escuela Secundaria General 21 de Noviembre — Esquipulas, Xoxocotlán, Oaxaca.</span>
+      <span>Sitio institucional no oficial de la SEP.</span>
+    </div>
+  </div>
+</footer>
+
+<button class="to-top" id="toTop" aria-label="Volver arriba">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+</button>
+
+<script>
+(function(){
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* mobile menu */
+  var toggle = document.getElementById('menuToggle');
+  var nav = document.getElementById('primaryNav');
+  toggle.addEventListener('click', function(){
+    var open = nav.classList.toggle('open');
+    toggle.setAttribute('aria-expanded', open);
+  });
+  nav.querySelectorAll('a').forEach(function(a){
+    a.addEventListener('click', function(){ nav.classList.remove('open'); toggle.setAttribute('aria-expanded','false'); });
+  });
+
+  /* header shadow + back-to-top on scroll */
+  var header = document.getElementById('siteHeader');
+  var toTop = document.getElementById('toTop');
+  window.addEventListener('scroll', function(){
+    var y = window.scrollY;
+    header.classList.toggle('scrolled', y > 12);
+    toTop.classList.toggle('show', y > 700);
+  }, { passive:true });
+  toTop.addEventListener('click', function(){ window.scrollTo({top:0, behavior: reduceMotion ? 'auto' : 'smooth'}); });
+
+  /* ribbon unfurl on view */
+  var ribbon = document.getElementById('ribbon1');
+  var ribbonObs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ if (e.isIntersecting){ ribbon.classList.add('in-view'); ribbonObs.unobserve(e.target); } });
+  }, { threshold:.4 });
+  ribbonObs.observe(ribbon);
+
+  /* scroll-spy active nav link */
+  var sections = ['inicio','mision','quienes-somos','talleres','vida-estudiantil','info-practica','noticias','contacto']
+    .map(function(id){ return document.getElementById(id); }).filter(Boolean);
+  var links = Array.prototype.slice.call(nav.querySelectorAll('a[href^="#"]'));
+  var spy = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if (entry.isIntersecting){
+        var id = entry.target.id;
+        links.forEach(function(l){ l.classList.toggle('active', l.getAttribute('href') === '#'+id); });
+      }
+    });
+  }, { rootMargin:'-45% 0px -50% 0px', threshold:0 });
+  sections.forEach(function(s){ spy.observe(s); });
+
+  /* count-up stats */
+  var counters = document.querySelectorAll('[data-count-to]');
+  var countObs = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if (!entry.isIntersecting) return;
+      var el = entry.target;
+      var target = parseInt(el.getAttribute('data-count-to'), 10);
+      countObs.unobserve(el);
+      if (reduceMotion){ el.textContent = target; return; }
+      var start = null, duration = 1100;
+      function step(ts){
+        if (!start) start = ts;
+        var progress = Math.min((ts - start) / duration, 1);
+        var eased = 1 - Math.pow(1 - progress, 3);
+        el.textContent = Math.round(eased * target);
+        if (progress < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    });
+  }, { threshold:.6 });
+  counters.forEach(function(c){ countObs.observe(c); });
+
+  /* testimonios carousel */
+  var track = document.getElementById('testiTrack');
+  var slides = track.children.length;
+  var dotsWrap = document.getElementById('testiDots');
+  var idx = 0, timer;
+  for (var i=0;i<slides;i++){
+    var d = document.createElement('button');
+    if (i===0) d.className='active';
+    d.setAttribute('aria-label','Ir al testimonio '+(i+1));
+    d.addEventListener('click', function(n){ return function(){ goTo(n); resetTimer(); }; }(i));
+    dotsWrap.appendChild(d);
+  }
+  var testiCounter = document.getElementById('testiCounter');
+  function render(){
+    track.style.transform = 'translateX(-' + (idx*100) + '%)';
+    Array.prototype.forEach.call(dotsWrap.children, function(d,i){ d.classList.toggle('active', i===idx); });
+    if (testiCounter) testiCounter.textContent = String(idx+1).padStart(2,'0') + ' / ' + String(slides).padStart(2,'0');
+  }
+  function goTo(n){ idx = (n+slides)%slides; render(); }
+  function next(){ goTo(idx+1); }
+  function prev(){ goTo(idx-1); }
+  document.getElementById('testiNext').addEventListener('click', function(){ next(); resetTimer(); });
+  document.getElementById('testiPrev').addEventListener('click', function(){ prev(); resetTimer(); });
+  function resetTimer(){ clearInterval(timer); if(!reduceMotion) timer = setInterval(next, 6000); }
+  var testiWrap = document.getElementById('testiCarousel');
+  testiWrap.addEventListener('mouseenter', function(){ clearInterval(timer); });
+  testiWrap.addEventListener('mouseleave', resetTimer);
+  testiWrap.addEventListener('focusin', function(){ clearInterval(timer); });
+  testiWrap.addEventListener('focusout', resetTimer);
+  render();
+  resetTimer();
+
+  /* horizontal drag-scroll carousels (talleres, momentos) + arrow buttons */
+  function makeDraggable(el){
+    var isDown=false, startX, scrollLeft;
+    el.addEventListener('mousedown', function(e){
+      isDown=true; el.classList.add('grabbing'); startX=e.pageX-el.offsetLeft; scrollLeft=el.scrollLeft;
+    });
+    ['mouseleave','mouseup'].forEach(function(evt){ el.addEventListener(evt, function(){ isDown=false; el.classList.remove('grabbing'); }); });
+    el.addEventListener('mousemove', function(e){
+      if(!isDown) return; e.preventDefault();
+      var x = e.pageX - el.offsetLeft; var walk = (x-startX)*1.2;
+      el.scrollLeft = scrollLeft - walk;
+    });
+  }
+  ['talleresCarousel','momentosCarousel'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) makeDraggable(el);
+  });
+  document.querySelectorAll('[data-scroll-target]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var el = document.getElementById(btn.getAttribute('data-scroll-target'));
+      var card = el.querySelector('.taller-card, .momento-card');
+      var amount = card ? (card.getBoundingClientRect().width + 22) : 260;
+      el.scrollBy({ left: amount * parseInt(btn.getAttribute('data-dir'),10), behavior: reduceMotion ? 'auto' : 'smooth' });
+      restartMomentosAutoplay();
+    });
+  });
+
+  /* autoplay for "Recursos y noticias" carousel */
+  var momentosEl = document.getElementById('momentosCarousel');
+  var momentosTimer;
+  function momentosStep(){
+    if (!momentosEl) return;
+    var card = momentosEl.querySelector('.momento-card');
+    var amount = card ? (card.getBoundingClientRect().width + 22) : 260;
+    var atEnd = momentosEl.scrollLeft + momentosEl.clientWidth >= momentosEl.scrollWidth - 6;
+    if (atEnd){
+      momentosEl.scrollTo({ left: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
+    } else {
+      momentosEl.scrollBy({ left: amount, behavior: reduceMotion ? 'auto' : 'smooth' });
+    }
+  }
+  function startMomentosAutoplay(){
+    if (reduceMotion || !momentosEl) return;
+    clearInterval(momentosTimer);
+    momentosTimer = setInterval(momentosStep, 3800);
+  }
+  function restartMomentosAutoplay(){
+    clearInterval(momentosTimer);
+    startMomentosAutoplay();
+  }
+  if (momentosEl){
+    momentosEl.addEventListener('mouseenter', function(){ clearInterval(momentosTimer); });
+    momentosEl.addEventListener('mouseleave', startMomentosAutoplay);
+    momentosEl.addEventListener('touchstart', function(){ clearInterval(momentosTimer); }, { passive:true });
+    momentosEl.addEventListener('touchend', function(){ setTimeout(startMomentosAutoplay, 2500); });
+    momentosEl.addEventListener('mousedown', function(){ clearInterval(momentosTimer); });
+    startMomentosAutoplay();
+  }
+})();
+</script>
+
+<!-- ================= WIDGET PODCAST 21 (reproductor en vivo, mismo backend que el sitio del podcast) ================= -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function () {
+  "use strict";
+
+  // Config Supabase del proyecto Podcast 21 (clave pública "anon", segura para exponer en el cliente)
+  var SUPABASE_URL = "https://kcynhfufhrkbuleapfro.supabase.co";
+  var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjeW5oZnVmaHJrYnVsZWFwZnJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU5NzA3MjEsImV4cCI6MjEwMTU0NjcyMX0.49_qsBBjorhYMqovo2OBTRZ9BB_Wl-OdFS-MEjBJSOs";
+
+  if (!window.supabase) return;
+  var db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  var $ = function (id) { return document.getElementById(id); };
+  var audio = $("pmAudio");
+  if (!audio) return; // el widget no está en esta página
+
+  var titulo = $("pmTitulo");
+  var meta = $("pmMeta");
+  var btnPrev = $("pmPrev");
+  var btnPlay = $("pmPlay");
+  var btnNext = $("pmNext");
+  var btnMute = $("pmMute");
+  var aviso = $("pmAviso");
+  var gif = $("pmGif");
+
+  var todas = [];
+  var playlist = [];
+  var indice = 0;
+  var loopActivo = false;
+  var desbloqueoActivo = false;
+
+  cargar();
+
+  async function cargar() {
+    try {
+      var res = await Promise.all([
+        db.from("audios").select("*").eq("publicado", true).order("creado_en", { ascending: false }),
+        db.from("musica").select("*").order("creado_en", { ascending: false }),
+        db.from("config").select("*").eq("id", "player").maybeSingle()
+      ]);
+      var rAud = res[0], rMus = res[1], rCfg = res[2];
+
+      var episodios = rAud.data || [];
+      var musicas = rMus.data || [];
+
+      todas = musicas.map(function (m) { return Object.assign({}, m, { _tipo: "m" }); })
+        .concat(episodios.map(function (e) { return Object.assign({}, e, { _tipo: "e" }); }));
+
+      var cfg = rCfg.data;
+
+      playlist = (cfg && Array.isArray(cfg.sel) && cfg.sel.length)
+        ? cfg.sel.map(resolver).filter(Boolean)
+        : todas.slice();
+
+      if (!playlist.length) {
+        titulo.textContent = "Aún no hay contenido";
+        meta.textContent = "Muy pronto habrá episodios del Podcast 21 🎙️";
+        return;
+      }
+
+      loopActivo = !!(cfg && cfg.loop);
+
+      var idx = playlist.findIndex(function (p) { return (p._tipo + ":" + p.id) === (cfg && cfg.last); });
+      indice = idx >= 0 ? idx : 0;
+
+      btnPrev.disabled = false;
+      btnPlay.disabled = false;
+      btnNext.disabled = false;
+      btnMute.disabled = false;
+
+      audio.muted = true;
+      setGif(true);
+      setVibracion(true);
+      cargarPista(indice, true);
+    } catch (e) {
+      console.error(e);
+      titulo.textContent = "Error al cargar";
+      meta.textContent = e.message;
+    }
+  }
+
+  function resolver(valor) {
+    var tipo = valor.slice(0, 1);
+    var id = valor.slice(2);
+    return todas.find(function (x) { return x._tipo === tipo && x.id === id; }) || null;
+  }
+
+  function cargarPista(n, reproducir) {
+    indice = n;
+    var item = playlist[indice];
+    if (!item) return;
+    titulo.textContent = item.titulo;
+    meta.textContent = item._tipo === "m"
+      ? "🎵 Música · Biblioteca Podcast 21"
+      : "🎤 " + (item.alumno || "Anónimo") + " · " + (item.categoria || "General");
+
+    audio.src = item.url;
+    if (reproducir) intentarReproduccion();
+    else btnPlay.textContent = "▶";
+  }
+
+  function intentarReproduccion() {
+    var prom = audio.play();
+    if (!prom) return;
+    prom
+      .then(function () { btnPlay.textContent = "⏸"; })
+      .catch(function () {
+        btnPlay.textContent = "▶";
+        reintentarCuandoListo();
+        prepararDesbloqueo();
+      });
+  }
+
+  function reintentarCuandoListo() {
+    audio.addEventListener("canplay", function h() {
+      audio.removeEventListener("canplay", h);
+      audio.play().then(function () { btnPlay.textContent = "⏸"; }).catch(function () {});
+    });
+  }
+
+  function prepararDesbloqueo() {
+    if (desbloqueoActivo) return;
+    desbloqueoActivo = true;
+    var fn = function () {
+      window.removeEventListener("pointerdown", fn);
+      window.removeEventListener("keydown", fn);
+      desbloqueoActivo = false;
+      audio.play().then(function () { btnPlay.textContent = "⏸"; }).catch(function () {});
+    };
+    window.addEventListener("pointerdown", fn);
+    window.addEventListener("keydown", fn);
+  }
+
+  function siguiente() {
+    if (!playlist.length) return;
+    if (loopActivo) {
+      indice = (indice + 1) % playlist.length;
+      cargarPista(indice, true);
+    } else if (indice < playlist.length - 1) {
+      indice++;
+      cargarPista(indice, true);
+    } else {
+      btnPlay.textContent = "▶";
+    }
+  }
+
+  function anterior() {
+    if (!playlist.length) return;
+    if (indice > 0) {
+      indice--;
+      cargarPista(indice, !audio.paused);
+    }
+  }
+
+  function setGif(activo) {
+    if (!gif) return;
+    if (activo) { gif.src = "https://mke210.github.io/radio-21/img/radio-anim.webp"; gif.classList.remove("oculto"); }
+    else { gif.classList.add("oculto"); gif.src = ""; }
+  }
+
+  function setVibracion(activo) {
+    if (activo) { btnMute.classList.add("vibrando"); aviso.classList.remove("oculto"); }
+    else { btnMute.classList.remove("vibrando"); aviso.classList.add("oculto"); }
+  }
+
+  btnPrev.addEventListener("click", anterior);
+
+  btnPlay.addEventListener("click", function () {
+    if (audio.paused) audio.play().then(function () { btnPlay.textContent = "⏸"; }).catch(function () {});
+    else { audio.pause(); btnPlay.textContent = "▶"; }
+  });
+
+  btnNext.addEventListener("click", siguiente);
+
+  btnMute.addEventListener("click", function () {
+    audio.muted = !audio.muted;
+    btnMute.textContent = audio.muted ? "🔇" : "🔊";
+    setVibracion(audio.muted);
+  });
+
+  audio.addEventListener("play", function () { btnPlay.textContent = "⏸"; setGif(true); });
+  audio.addEventListener("pause", function () { btnPlay.textContent = "▶"; });
+  audio.addEventListener("ended", siguiente);
+})();
+</script>
+</body>
+</html>
