@@ -9,6 +9,10 @@ window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXB
 
 window.JITSI_ROOM = "Cabina21NovProfechan";
 
+// URL del Worker de Cloudflare que sube archivos a Backblaze B2.
+// La obtienes al correr "wrangler deploy" en cloudflare-worker/
+window.B2_WORKER_URL = "https://podcast21-uploads.elprofechan.workers.dev";
+
 // ======================================================
 // CONEXIÓN ÚNICA COMPARTIDA
 // Crea UNA sola instancia de Supabase para toda la página.

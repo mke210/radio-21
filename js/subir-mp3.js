@@ -21,6 +21,32 @@
 
   btnSubir.addEventListener("click", subirEpisodioMP3);
 
+  // Sube un archivo al Worker (que a su vez lo guarda en Backblaze B2)
+  // y devuelve su URL pública. folder: "audios" o "portadas"
+  async function subirArchivo(file, folder) {
+    const { data: sesion } = await db.auth.getSession();
+    const token = sesion && sesion.session && sesion.session.access_token;
+    if (!token) throw new Error("Debes iniciar sesión para subir archivos.");
+
+    const resp = await fetch(`${window.B2_WORKER_URL}/upload`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": file.type || "application/octet-stream",
+        "X-Filename": file.name,
+        "X-Folder": folder,
+      },
+      body: file,
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.error || `Error al subir archivo (${resp.status})`);
+    }
+    const { url } = await resp.json();
+    return url;
+  }
+
   async function subirEpisodioMP3() {
     const f = inputAudio.files[0];
     const titulo = $("titulo").value.trim();
@@ -34,35 +60,24 @@
 
     try {
       const dur = await duracionDeArchivo(f);
-      const ext = extensionDesdeNombre(f.name);
-      const archivo = `${Date.now()}-${slug(titulo)}.${ext}`;
 
-      // 1) Subir el audio
-      const bucketAudios = db.storage.from("audios");
-      const { error: e1 } = await bucketAudios.upload(archivo, f, {
-        contentType: f.type || "audio/mpeg",
-        upsert: false
-      });
-      if (e1) throw new Error(e1.message);
-      const urlAudio = bucketAudios.getPublicUrl(archivo).data.publicUrl;
+      // 1) Subir el audio (a B2, vía el Worker)
+      const urlAudio = await subirArchivo(f, "audios");
 
-      // 2) Subir la portada (ahora con aviso si falla)
+      // 2) Subir la portada (opcional, también a B2)
       let urlImagen = "";
       let avisoImg = "";
       const img = $("imagen").files[0];
       if (img) {
-        const nombreImg = `${Date.now()}-${slug(titulo)}.jpg`;
-        const bucketImg = db.storage.from("imagenes");
-        const { error: e2 } = await bucketImg.upload(nombreImg, img, { contentType: img.type });
-        if (e2) {
+        try {
+          urlImagen = await subirArchivo(img, "portadas");
+        } catch (e2) {
           avisoImg = " ⚠️ Portada no subida: " + e2.message;
           console.error("Error de portada:", e2);
-        } else {
-          urlImagen = bucketImg.getPublicUrl(nombreImg).data.publicUrl;
         }
       }
 
-      // 3) Publicar el episodio
+      // 3) Publicar el episodio (igual que antes, solo cambian las URLs)
       const { error: e3 } = await db.from("audios").insert({
         titulo: titulo,
         alumno: $("alumno").value.trim() || "Anónimo",
@@ -70,7 +85,7 @@
         categoria: $("categoria").value || "General",
         temporada: $("temporada").value.trim() || "Temporada 1 - 2026",
         destacado: $("destacado").checked,
-        archivo: archivo,
+        archivo: f.name,
         url: urlAudio,
         imagen: urlImagen,
         publicado: true,
@@ -98,15 +113,5 @@
       a.addEventListener("loadedmetadata", () => resolve(Math.round(a.duration) || 0));
       a.addEventListener("error", () => resolve(0));
     });
-  }
-
-  function extensionDesdeNombre(n) {
-    const m = n.match(/\.([a-z0-9]+)$/i);
-    return m ? m[1].toLowerCase() : "mp3";
-  }
-
-  function slug(t) {
-    return t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "audio";
   }
 })();
