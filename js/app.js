@@ -16,6 +16,50 @@
   else if (!configOk) console.error("Falta configurar js/config.js");
   else db = window.P21_DB || window.supabase.createClient(config.url, config.key);
 
+  // ======================================================
+  // SUBIDA Y BORRADO DE ARCHIVOS VÍA EL WORKER (BACKBLAZE B2)
+  // ======================================================
+  // nombreArchivo se pasa aparte porque los Blobs de grabación
+  // (a diferencia de los File de un <input>) no tienen .name
+  async function subirArchivoB2(blobOArchivo, nombreArchivo, folder) {
+    if (!db) throw new Error("Falta configurar Supabase.");
+    const { data: sesion } = await db.auth.getSession();
+    const token = sesion && sesion.session && sesion.session.access_token;
+    if (!token) throw new Error("Debes iniciar sesión para subir archivos.");
+
+    const resp = await fetch(`${window.B2_WORKER_URL}/upload`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": blobOArchivo.type || "application/octet-stream",
+        "X-Filename": nombreArchivo,
+        "X-Folder": folder,
+      },
+      body: blobOArchivo,
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.error || `Error al subir archivo (${resp.status})`);
+    }
+    const { url } = await resp.json();
+    return url;
+  }
+
+  async function borrarArchivoB2(publicUrl) {
+    if (!publicUrl || !window.B2_WORKER_URL || !publicUrl.startsWith(window.B2_WORKER_URL)) return;
+    if (!db) return;
+    const { data: sesion } = await db.auth.getSession();
+    const token = sesion && sesion.session && sesion.session.access_token;
+    if (!token) return;
+    const key = publicUrl.split("/file/")[1];
+    if (!key) return;
+    await fetch(`${window.B2_WORKER_URL}/file/${key}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    }).catch(() => {});
+  }
+
   // ===== Claves de configuración persistente =====
   const LS = {
     loop: "p21_loop",
@@ -161,7 +205,7 @@
   }
 
   // ======================================================
-  // LOCUTORES (con amplificación y constraints profesionales)
+  // LOCUTORES (con amplificación manual y constraints de estudio)
   // ======================================================
 
   async function toggleLocutor(num) {
@@ -176,7 +220,10 @@
       const stream = await pedirMic($(`mic${num}`).value);
       const src = ctx.createMediaStreamSource(stream);
 
-      // Amplificación de la voz (x2.5) para que no quede baja
+      // Amplificación de la voz (x2.5) para que no quede baja.
+      // El navegador ya NO aplica su propio autoGainControl (ver pedirMic),
+      // así toda la ganancia depende de este único valor, consistente
+      // entre los dos locutores.
       const gain = ctx.createGain();
       gain.gain.value = 2.5;
 
@@ -188,8 +235,9 @@
 
       loc[num] = { stream, src, gain, an };
 
-      const label = stream.getAudioTracks()[0] && stream.getAudioTracks()[0].label;
-      console.log(`Locutor ${num} conectado a:`, label || "micrófono");
+      const track = stream.getAudioTracks()[0];
+      const settings = track ? track.getSettings() : {};
+      console.log(`Locutor ${num} conectado a:`, track && track.label, "deviceId:", settings.deviceId);
       cargarMics();
     } catch (e) {
       console.error(e);
@@ -334,18 +382,18 @@
       const base = f.name.replace(/\.[^.]+$/, "");
       const nombre = `${Date.now()}-${slug(base)}.${extDesdeNombre(f.name)}`;
 
-      const { error: errUp } = await db.storage.from("musica").upload(nombre, f, {
-        contentType: f.type || "audio/mpeg",
-        upsert: false
-      });
-      if (errUp) { console.error(errUp); continue; }
-
-      const { data: urlData } = db.storage.from("musica").getPublicUrl(nombre);
+      let urlMusica;
+      try {
+        urlMusica = await subirArchivoB2(f, nombre, "musica");
+      } catch (errUp) {
+        console.error(errUp);
+        continue;
+      }
 
       await db.from("musica").insert({
         titulo: base,
         archivo: nombre,
-        url: urlData.publicUrl
+        url: urlMusica
       });
     }
 
@@ -359,7 +407,14 @@
   async function borrarMusicaDB(id) {
     const item = musicas.find(m => m.id === id);
     if (!item || !confirm(`¿Eliminar "${item.titulo}" de la biblioteca?`)) return;
-    if (item.archivo) await db.storage.from("musica").remove([item.archivo]);
+
+    if (item.url && window.B2_WORKER_URL && item.url.startsWith(window.B2_WORKER_URL)) {
+      await borrarArchivoB2(item.url);
+    } else if (item.archivo) {
+      // Archivo viejo, subido antes de la migración a B2
+      await db.storage.from("musica").remove([item.archivo]);
+    }
+
     await db.from("musica").delete().eq("id", id);
     await cargarMusicaDB();
     renderSeleccion();
@@ -522,13 +577,15 @@
     } catch (e) { console.error(e); }
   }
 
-  // Constraints de estudio: sin supresión de ruido ni eco (recortan la voz),
-  // con control automático de ganancia para nivelar el volumen.
+  // Constraints de estudio: sin supresión de ruido, eco NI autoGainControl
+  // (recortan la voz o compiten con la ganancia manual que ya aplicamos
+  // más abajo con gain.gain.value). Toda la ganancia queda en un solo
+  // lugar, así los dos locutores se comportan igual entre sí.
   async function pedirMic(deviceId) {
     const base = {
       echoCancellation: false,
       noiseSuppression: false,
-      autoGainControl: true
+      autoGainControl: false
     };
     try {
       if (deviceId) {
@@ -831,7 +888,7 @@
   }
 
   // ======================================================
-  // GUARDAR EPISODIO
+  // GUARDAR EPISODIO (subida vía B2, no Supabase Storage)
   // ======================================================
 
   async function subirAudio(blob, duracionSeg) {
@@ -847,28 +904,27 @@
       const extension = extensionDesdeBlob(blob);
       const archivo = `${Date.now()}-${slug(titulo)}.${extension}`;
 
-      const { error: err1 } = await db.storage.from("audios").upload(archivo, blob, {
-        contentType: blob.type || "audio/webm", upsert: false
-      });
-      if (err1) { estadoGrabacion("Error al subir audio.", true); return; }
-
-      const { data: urlData } = db.storage.from("audios").getPublicUrl(archivo);
+      let urlAudio;
+      try {
+        urlAudio = await subirArchivoB2(blob, archivo, "audios");
+      } catch (e1) {
+        estadoGrabacion("Error al subir audio: " + e1.message, true);
+        return;
+      }
 
       let urlImagen = "";
       if (archivoImg) {
         const nombreImg = `${Date.now()}-${slug(titulo)}.jpg`;
-        const { error: errImg } = await db.storage.from("imagenes").upload(nombreImg, archivoImg, {
-          contentType: archivoImg.type, upsert: false
-        });
-        if (!errImg) {
-          const { data: imgData } = db.storage.from("imagenes").getPublicUrl(nombreImg);
-          urlImagen = imgData.publicUrl;
+        try {
+          urlImagen = await subirArchivoB2(archivoImg, nombreImg, "portadas");
+        } catch (eImg) {
+          console.error("Error de portada:", eImg);
         }
       }
 
       const { error: err2 } = await db.from("audios").insert({
         titulo, alumno, descripcion, categoria, temporada, destacado,
-        archivo, url: urlData.publicUrl, imagen: urlImagen,
+        archivo, url: urlAudio, imagen: urlImagen,
         publicado: true, duracion: duracionSeg || 0
       });
 
@@ -963,10 +1019,10 @@
     let urlImagen = undefined;
     if (archivoImg) {
       const nombreImg = `${Date.now()}-edit.jpg`;
-      const { error } = await db.storage.from("imagenes").upload(nombreImg, archivoImg);
-      if (!error) {
-        const { data } = db.storage.from("imagenes").getPublicUrl(nombreImg);
-        urlImagen = data.publicUrl;
+      try {
+        urlImagen = await subirArchivoB2(archivoImg, nombreImg, "portadas");
+      } catch (e) {
+        console.error(e);
       }
     }
 
@@ -990,7 +1046,14 @@
   async function borrarAudio(id) {
     const item = audios.find(a => a.id === id);
     if (!item || !confirm(`¿Borrar "${item.titulo}"?`)) return;
-    if (item.archivo) await db.storage.from("audios").remove([item.archivo]);
+
+    if (item.url && window.B2_WORKER_URL && item.url.startsWith(window.B2_WORKER_URL)) {
+      await borrarArchivoB2(item.url);
+    } else if (item.archivo) {
+      // Archivo viejo, subido antes de la migración a B2
+      await db.storage.from("audios").remove([item.archivo]);
+    }
+
     await db.from("audios").delete().eq("id", id);
     detenerReproduccion();
     await cargarTodo();
