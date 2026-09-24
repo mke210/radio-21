@@ -34,10 +34,10 @@
 
   let ctx = null;
 
-  // ===== Locutores =====
+  // ===== Locutores (stream + fuente + ganancia + analizador) =====
   const loc = {
-    1: { stream: null, src: null, an: null },
-    2: { stream: null, src: null, an: null }
+    1: { stream: null, src: null, gain: null, an: null },
+    2: { stream: null, src: null, gain: null, an: null }
   };
 
   // ===== Grabación =====
@@ -49,6 +49,10 @@
   let timerInt = null;
   let seg = 0;
   let pausado = false;
+
+  // ===== Revisión previa =====
+  let pendingBlob = null;
+  let pendingDur = 0;
 
   // ===== Música local =====
   let musicPreview = null;
@@ -66,6 +70,9 @@
   on("btnGrabar", "click", iniciarGrabacion);
   on("btnPausa", "click", pausarReanudar);
   on("btnDetener", "click", () => { if (rec && rec.state !== "inactive") rec.stop(); });
+
+  on("btnGuardarPreview", "click", guardarPreview);
+  on("btnDescartarPreview", "click", descartarPreview);
 
   on("btnMusica", "click", toggleMusica);
   on("btnQuitarMusica", "click", quitarMusicaLocal);
@@ -129,8 +136,6 @@
     localStorage.setItem(LS.sel, JSON.stringify(marcados));
   }
 
-  // Publica la programación de la cabina para que el inicio
-  // (y cualquier dispositivo) suene con tu misma selección y pista.
   async function guardarConfigRemota() {
     if (!db) return;
     const sel = [...document.querySelectorAll("#listaSeleccion input:checked")].map(c => c.value);
@@ -156,7 +161,7 @@
   }
 
   // ======================================================
-  // LOCUTORES
+  // LOCUTORES (con amplificación y constraints profesionales)
   // ======================================================
 
   async function toggleLocutor(num) {
@@ -170,10 +175,21 @@
       asegurarCtx();
       const stream = await pedirMic($(`mic${num}`).value);
       const src = ctx.createMediaStreamSource(stream);
+
+      // Amplificación de la voz (x2.5) para que no quede baja
+      const gain = ctx.createGain();
+      gain.gain.value = 2.5;
+
       const an = ctx.createAnalyser();
       an.fftSize = 512;
-      src.connect(an);
-      loc[num] = { stream, src, an };
+
+      src.connect(gain);
+      gain.connect(an);
+
+      loc[num] = { stream, src, gain, an };
+
+      const label = stream.getAudioTracks()[0] && stream.getAudioTracks()[0].label;
+      console.log(`Locutor ${num} conectado a:`, label || "micrófono");
       cargarMics();
     } catch (e) {
       console.error(e);
@@ -185,8 +201,12 @@
   function detenerLocutor(num) {
     const L = loc[num];
     if (L.stream) L.stream.getTracks().forEach(t => t.stop());
-    try { if (L.src) L.src.disconnect(); if (L.an) L.an.disconnect(); } catch (e) {}
-    loc[num] = { stream: null, src: null, an: null };
+    try {
+      if (L.src) L.src.disconnect();
+      if (L.gain) L.gain.disconnect();
+      if (L.an) L.an.disconnect();
+    } catch (e) {}
+    loc[num] = { stream: null, src: null, gain: null, an: null };
   }
 
   // ======================================================
@@ -230,7 +250,7 @@
   }
 
   // ======================================================
-  // CARGA + AUTO-INICIO (con configuración restaurada)
+  // CARGA + AUTO-INICIO
   // ======================================================
 
   async function cargarTodo() {
@@ -502,12 +522,23 @@
     } catch (e) { console.error(e); }
   }
 
+  // Constraints de estudio: sin supresión de ruido ni eco (recortan la voz),
+  // con control automático de ganancia para nivelar el volumen.
   async function pedirMic(deviceId) {
+    const base = {
+      echoCancellation: false,
+      noiseSuppression: false,
+      autoGainControl: true
+    };
     try {
-      return await navigator.mediaDevices.getUserMedia({
-        audio: deviceId ? { deviceId: { exact: deviceId } } : true
-      });
+      if (deviceId) {
+        return await navigator.mediaDevices.getUserMedia({
+          audio: Object.assign({ deviceId: { exact: deviceId } }, base)
+        });
+      }
+      return await navigator.mediaDevices.getUserMedia({ audio: base });
     } catch (e) {
+      console.warn("Constraints completas fallaron, reintentando simple:", e && e.name);
       return await navigator.mediaDevices.getUserMedia({ audio: true });
     }
   }
@@ -645,14 +676,26 @@
       if (loc1) await asegurarLocutor(1);
       if (loc2) await asegurarLocutor(2);
 
+      // Aviso si ambos locutores quedaron en el mismo micrófono
+      if (loc1 && loc2 && loc[1].stream && loc[2].stream) {
+        const t1 = loc[1].stream.getAudioTracks()[0];
+        const t2 = loc[2].stream.getAudioTracks()[0];
+        const id1 = t1 && t1.getSettings().deviceId;
+        const id2 = t2 && t2.getSettings().deviceId;
+        if (id1 && id1 === id2) {
+          estadoGrabacion("⚠️ Ojo: los dos locutores están usando el mismo micrófono.");
+        }
+      }
+
       masterNode = ctx.createGain();
       anMaster = ctx.createAnalyser(); anMaster.fftSize = 64;
       const dest = ctx.createMediaStreamDestination();
       masterNode.connect(anMaster);
       masterNode.connect(dest);
 
-      if (loc1 && loc[1].src) loc[1].src.connect(masterNode);
-      if (loc2 && loc[2].src) loc[2].src.connect(masterNode);
+      // Conectamos la SALIDA AMPLIFICADA de cada locutor
+      if (loc1 && loc[1].gain) loc[1].gain.connect(masterNode);
+      if (loc2 && loc[2].gain) loc[2].gain.connect(masterNode);
 
       musicaConectada = false;
       if ($("musicaIncluir").checked) {
@@ -666,13 +709,13 @@
       chunks = [];
       rec = new MediaRecorder(dest.stream);
       rec.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
-      rec.onstop = async () => {
+      rec.onstop = () => {
         const blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
         const dur = seg;
         limpiarSesion();
-        estadoGrabacion("Subiendo y guardando episodio...");
-        await subirAudio(blob, dur);
         setUIGrabacion("idle");
+        mostrarPreview(blob, dur);
+        estadoGrabacion("🎧 Escucha tu grabación y decide si publicarla.");
       };
 
       rec.start();
@@ -707,9 +750,51 @@
     }
   }
 
+  // ======================================================
+  // REVISIÓN PREVIA ANTES DE PUBLICAR
+  // ======================================================
+
+  function mostrarPreview(blob, dur) {
+    pendingBlob = blob;
+    pendingDur = dur;
+    const card = $("previewCard");
+    const aud = $("previewAudio");
+    if (!card || !aud) return;
+    aud.src = URL.createObjectURL(blob);
+    card.style.display = "block";
+    card.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  function ocultarPreview() {
+    pendingBlob = null;
+    pendingDur = 0;
+    const card = $("previewCard");
+    const aud = $("previewAudio");
+    if (aud) { aud.pause(); aud.removeAttribute("src"); aud.load(); }
+    if (card) card.style.display = "none";
+  }
+
+  async function guardarPreview() {
+    if (!pendingBlob) return;
+    const blob = pendingBlob;
+    const dur = pendingDur;
+    ocultarPreview();
+    estadoGrabacion("Subiendo y guardando episodio...");
+    await subirAudio(blob, dur);
+  }
+
+  function descartarPreview() {
+    ocultarPreview();
+    estadoGrabacion("🗑 Grabación descartada. Puedes grabar de nuevo.");
+  }
+
+  // ======================================================
+  // LIMPIEZA DE SESIÓN
+  // ======================================================
+
   function limpiarSesion() {
-    try { if (loc[1].src && masterNode) loc[1].src.disconnect(masterNode); } catch (e) {}
-    try { if (loc[2].src && masterNode) loc[2].src.disconnect(masterNode); } catch (e) {}
+    try { if (loc[1].gain && masterNode) loc[1].gain.disconnect(masterNode); } catch (e) {}
+    try { if (loc[2].gain && masterNode) loc[2].gain.disconnect(masterNode); } catch (e) {}
     try { if (musicaConectada && musicGainNode && masterNode) musicGainNode.disconnect(masterNode); } catch (e) {}
     musicaConectada = false;
     if (timerInt) clearInterval(timerInt);

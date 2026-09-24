@@ -122,6 +122,17 @@
       <p id="estadoGrabacion" class="estado"></p>
     </section>
 
+    <!-- ============ REVISIÓN ANTES DE PUBLICAR ============ -->
+    <section class="card" id="previewCard" style="display:none;">
+      <h2>🎧 Revisar antes de publicar</h2>
+      <p class="small">Escucha tu grabación. Si te convence publícala; si no, descártala y vuelve a intentar.</p>
+      <audio id="previewAudio" controls style="width:100%; margin-top:10px;" controlslist="nodownload"></audio>
+      <div class="btn-row" style="margin-top:12px;">
+        <button id="btnGuardarPreview" class="btn btn-gold">✅ Guardar y publicar</button>
+        <button id="btnDescartarPreview" class="btn btn-del">🗑 Descartar</button>
+      </div>
+    </section>
+
     <!-- ============ MÚSICA DE FONDO ============ -->
     <section class="card">
       <div class="card-head">
