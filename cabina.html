@@ -70,6 +70,15 @@
           <select id="mic1" class="mic-select">
             <option value="">Micrófono predeterminado</option>
           </select>
+          <select id="efecto1" class="mic-select" title="Efecto de voz">
+            <option value="ninguno">Sin efecto</option>
+            <option value="demonio">😈 Voz gruesa (demonio)</option>
+            <option value="ardilla">🐿️ Voz aguda (ardilla)</option>
+            <option value="robot">🤖 Voz robot</option>
+            <option value="agua">🌊 Bajo el agua</option>
+            <option value="telefono">☎️ Voz de teléfono</option>
+          </select>
+          <button id="btnProbar1" type="button" class="btn btn-ghost btn-mini">🎧 Probar (usa audífonos)</button>
           <canvas id="eq1" class="eq-canvas" width="240" height="42"></canvas>
         </div>
 
@@ -84,10 +93,20 @@
           <select id="mic2" class="mic-select">
             <option value="">Micrófono predeterminado</option>
           </select>
+          <select id="efecto2" class="mic-select" title="Efecto de voz">
+            <option value="ninguno">Sin efecto</option>
+            <option value="demonio">😈 Voz gruesa (demonio)</option>
+            <option value="ardilla">🐿️ Voz aguda (ardilla)</option>
+            <option value="robot">🤖 Voz robot</option>
+            <option value="agua">🌊 Bajo el agua</option>
+            <option value="telefono">☎️ Voz de teléfono</option>
+          </select>
+          <button id="btnProbar2" type="button" class="btn btn-ghost btn-mini">🎧 Probar (usa audífonos)</button>
           <canvas id="eq2" class="eq-canvas" width="240" height="42"></canvas>
         </div>
 
       </div>
+      <p class="small">🎧 "Probar" te deja escuchar el efecto en vivo antes de grabar — usa audífonos, si usas bocinas puede pitar (retroalimentación).</p>
 
       <div class="form-row">
         <input id="titulo" type="text" placeholder="Título del episodio" maxlength="120" />

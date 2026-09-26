@@ -154,6 +154,11 @@
     if ($("loc2Activo").checked) { detenerLocutor(2); await asegurarLocutor(2); }
   });
 
+  on("efecto1", "change", () => actualizarCadenaSalida(1));
+  on("efecto2", "change", () => actualizarCadenaSalida(2));
+  on("btnProbar1", "click", async () => { if (!loc[1].stream) await asegurarLocutor(1); toggleProbarVoz(1); });
+  on("btnProbar2", "click", async () => { if (!loc[2].stream) await asegurarLocutor(2); toggleProbarVoz(2); });
+
   // Restaurar volumen de música guardado
   const volGuardado = localStorage.getItem(LS.vol);
   if (volGuardado && $("musicaVol")) $("musicaVol").value = volGuardado;
@@ -169,10 +174,10 @@
     return ctx;
   }
 
-  // Carga (una sola vez) el módulo de la puerta de ruido como AudioWorklet.
-  // Se define como texto y se convierte en Blob para no necesitar un
-  // archivo .js aparte.
-  function cargarWorkletRuido() {
+  // Carga (una sola vez) los módulos de audio personalizados: la puerta
+  // de ruido y el cambiador de tono, como AudioWorklet. Se definen como
+  // texto y se convierten en Blob para no necesitar archivos .js aparte.
+  function cargarWorkletsAudio() {
     if (workletListo) return workletListo;
     const codigo = `
       class NoiseGateProcessor extends AudioWorkletProcessor {
@@ -205,11 +210,173 @@
         }
       }
       registerProcessor("noise-gate-processor", NoiseGateProcessor);
+
+      // Cambiador de tono en tiempo real, técnica de granos superpuestos
+      // (dos "lectores" desfasados medio grano con ventana triangular,
+      // para evitar clics). Es una aproximación sencilla, no un algoritmo
+      // de estudio, pero funciona bien para efectos como voz de demonio
+      // o de ardilla.
+      class PitchShiftProcessor extends AudioWorkletProcessor {
+        constructor(options) {
+          super();
+          const opts = options.processorOptions || {};
+          this.pitchRatio = opts.pitchRatio || 1;
+          this.grainSize = 4096;
+          this.buffer = new Float32Array(this.grainSize * 4);
+          this.writeIndex = 0;
+          this.readIndexA = 0;
+          this.readIndexB = this.grainSize;
+          this.port.onmessage = (e) => {
+            if (e.data && typeof e.data.pitchRatio === "number") this.pitchRatio = e.data.pitchRatio;
+          };
+        }
+        ventana(pos, tam) {
+          const frac = (pos % tam) / tam;
+          return frac < 0.5 ? frac * 2 : (1 - frac) * 2;
+        }
+        process(inputs, outputs) {
+          const input = inputs[0];
+          const output = outputs[0];
+          if (!input || !input[0]) return true;
+          const inCh = input[0];
+          const outCh = output[0];
+          const buf = this.buffer;
+          const bufLen = buf.length;
+          for (let i = 0; i < inCh.length; i++) {
+            buf[this.writeIndex] = inCh[i];
+            this.writeIndex = (this.writeIndex + 1) % bufLen;
+            const iA = Math.floor(this.readIndexA) % bufLen;
+            const iB = Math.floor(this.readIndexB) % bufLen;
+            const wA = this.ventana(this.readIndexA, this.grainSize);
+            const wB = this.ventana(this.readIndexB, this.grainSize);
+            outCh[i] = buf[iA] * wA + buf[iB] * wB;
+            this.readIndexA = (this.readIndexA + this.pitchRatio) % bufLen;
+            this.readIndexB = (this.readIndexB + this.pitchRatio) % bufLen;
+          }
+          return true;
+        }
+      }
+      registerProcessor("pitch-shift-processor", PitchShiftProcessor);
     `;
     const blob = new Blob([codigo], { type: "application/javascript" });
     const url = URL.createObjectURL(blob);
     workletListo = ctx.audioWorklet.addModule(url);
     return workletListo;
+  }
+
+  // ======================================================
+  // EFECTOS DE VOZ (opcionales, "Sin efecto" por defecto)
+  // ======================================================
+
+  function crearEfectoPitch(ctxAudio, ratio) {
+    const nodo = new AudioWorkletNode(ctxAudio, "pitch-shift-processor", {
+      processorOptions: { pitchRatio: ratio }
+    });
+    return { entrada: nodo, salida: nodo, extra: [] };
+  }
+
+  function crearEfectoRobot(ctxAudio) {
+    const modulador = ctxAudio.createOscillator();
+    modulador.type = "sine";
+    modulador.frequency.value = 40; // Hz — timbre metálico típico
+    const anillo = ctxAudio.createGain();
+    anillo.gain.value = 0; // el oscilador controla esto, ver abajo
+    modulador.connect(anillo.gain);
+    modulador.start();
+    return { entrada: anillo, salida: anillo, extra: [modulador] };
+  }
+
+  function crearImpulsoReverb(ctxAudio, duracion, decaimiento) {
+    const sr = ctxAudio.sampleRate;
+    const length = Math.floor(sr * duracion);
+    const impulso = ctxAudio.createBuffer(2, length, sr);
+    for (let canal = 0; canal < 2; canal++) {
+      const datos = impulso.getChannelData(canal);
+      for (let i = 0; i < length; i++) {
+        datos[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decaimiento);
+      }
+    }
+    return impulso;
+  }
+
+  function crearEfectoAgua(ctxAudio) {
+    const lp = ctxAudio.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.value = 500;
+    lp.Q.value = 1;
+
+    const reverb = ctxAudio.createConvolver();
+    reverb.buffer = crearImpulsoReverb(ctxAudio, 2.5, 3);
+
+    const seca = ctxAudio.createGain(); seca.gain.value = 0.4;
+    const humeda = ctxAudio.createGain(); humeda.gain.value = 0.9;
+    const salida = ctxAudio.createGain();
+
+    lp.connect(seca); seca.connect(salida);
+    lp.connect(reverb); reverb.connect(humeda); humeda.connect(salida);
+
+    return { entrada: lp, salida, extra: [reverb, seca, humeda] };
+  }
+
+  function crearEfectoTelefono(ctxAudio) {
+    const bp = ctxAudio.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.frequency.value = 1500;
+    bp.Q.value = 1.2;
+    return { entrada: bp, salida: bp, extra: [] };
+  }
+
+  const EFECTOS = {
+    ninguno: null,
+    demonio: (c) => crearEfectoPitch(c, 0.7),   // voz grave
+    ardilla: (c) => crearEfectoPitch(c, 1.5),   // voz aguda
+    robot: (c) => crearEfectoRobot(c),
+    agua: (c) => crearEfectoAgua(c),
+    telefono: (c) => crearEfectoTelefono(c)
+  };
+
+  let grabando = false;
+  const monitoreando = { 1: false, 2: false };
+
+  // Reconstruye lo que va DESPUÉS del limitador de un locutor: el efecto
+  // elegido (si hay) y hacia dónde se conecta la salida (visualizador
+  // siempre; grabación si está grabando; audífonos si está en modo prueba).
+  function actualizarCadenaSalida(num) {
+    const L = loc[num];
+    if (!L.limitador || !ctx) return;
+
+    if (L.efectoNodos) {
+      L.efectoNodos.forEach(n => { try { n.disconnect(); } catch (e) {} });
+    }
+    try { L.limitador.disconnect(); } catch (e) {}
+
+    const sel = $(`efecto${num}`);
+    const tipo = sel ? sel.value : "ninguno";
+
+    let ultimo = L.limitador;
+    let nodosEfecto = [];
+
+    if (tipo !== "ninguno" && EFECTOS[tipo]) {
+      const construido = EFECTOS[tipo](ctx);
+      ultimo.connect(construido.entrada);
+      ultimo = construido.salida;
+      nodosEfecto = [construido.entrada, construido.salida, ...(construido.extra || [])]
+        .filter((v, i, a) => a.indexOf(v) === i);
+    }
+
+    L.efectoNodos = nodosEfecto;
+    L.salidaFinal = ultimo;
+
+    ultimo.connect(L.an);
+    if (grabando && masterNode) ultimo.connect(masterNode);
+    if (monitoreando[num]) ultimo.connect(ctx.destination);
+  }
+
+  function toggleProbarVoz(num) {
+    monitoreando[num] = !monitoreando[num];
+    const btn = $(`btnProbar${num}`);
+    if (btn) btn.textContent = monitoreando[num] ? "🔇 Detener prueba" : "🎧 Probar (usa audífonos)";
+    actualizarCadenaSalida(num);
   }
 
   // ======================================================
@@ -265,7 +432,7 @@
     if (loc[num].stream) return;
     try {
       asegurarCtx();
-      await cargarWorkletRuido();
+      await cargarWorkletsAudio();
 
       const stream = await pedirMic($(`mic${num}`).value);
       const src = ctx.createMediaStreamSource(stream);
@@ -317,9 +484,12 @@
       eqGraves.connect(eqAgudos);
       eqAgudos.connect(compresor);
       compresor.connect(limitador);
-      limitador.connect(an);
+      // El final de la cadena (limitador → analizador/grabación/audífonos)
+      // se conecta en actualizarCadenaSalida(), para poder insertar ahí
+      // el efecto de voz elegido sin tener que reabrir el micrófono.
 
-      loc[num] = { stream, src, gain, gate, eqGraves, eqAgudos, compresor, limitador, an };
+      loc[num] = { stream, src, gain, gate, eqGraves, eqAgudos, compresor, limitador, an, efectoNodos: [], salidaFinal: null };
+      actualizarCadenaSalida(num);
 
       const track = stream.getAudioTracks()[0];
       const settings = track ? track.getSettings() : {};
@@ -344,8 +514,12 @@
       if (L.compresor) L.compresor.disconnect();
       if (L.limitador) L.limitador.disconnect();
       if (L.an) L.an.disconnect();
+      if (L.efectoNodos) L.efectoNodos.forEach(n => { try { n.disconnect(); } catch (e) {} });
     } catch (e) {}
-    loc[num] = { stream: null, src: null, gain: null, gate: null, eqGraves: null, eqAgudos: null, compresor: null, limitador: null, an: null };
+    monitoreando[num] = false;
+    const btn = $(`btnProbar${num}`);
+    if (btn) btn.textContent = "🎧 Probar (usa audífonos)";
+    loc[num] = { stream: null, src: null, gain: null, gate: null, eqGraves: null, eqAgudos: null, compresor: null, limitador: null, an: null, efectoNodos: [], salidaFinal: null };
   }
 
   // ======================================================
@@ -841,9 +1015,10 @@
       masterNode.connect(anMaster);
       masterNode.connect(dest);
 
-      // Conectamos la salida YA PROCESADA (gate → EQ → compresor → limitador) de cada locutor
-      if (loc1 && loc[1].limitador) loc[1].limitador.connect(masterNode);
-      if (loc2 && loc[2].limitador) loc[2].limitador.connect(masterNode);
+      // Conectamos la salida YA PROCESADA (gate → EQ → compresor → limitador → efecto opcional)
+      grabando = true;
+      if (loc1) actualizarCadenaSalida(1);
+      if (loc2) actualizarCadenaSalida(2);
 
       musicaConectada = false;
       if ($("musicaIncluir").checked) {
@@ -950,8 +1125,9 @@
   // ======================================================
 
   function limpiarSesion() {
-    try { if (loc[1].limitador && masterNode) loc[1].limitador.disconnect(masterNode); } catch (e) {}
-    try { if (loc[2].limitador && masterNode) loc[2].limitador.disconnect(masterNode); } catch (e) {}
+    grabando = false;
+    if (loc[1].stream) actualizarCadenaSalida(1);
+    if (loc[2].stream) actualizarCadenaSalida(2);
     try { if (musicaConectada && musicGainNode && masterNode) musicGainNode.disconnect(masterNode); } catch (e) {}
     musicaConectada = false;
     if (timerInt) clearInterval(timerInt);
