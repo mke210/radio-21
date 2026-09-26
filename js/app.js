@@ -129,8 +129,10 @@
   on("musicaLoop", "change", () => { if (musicPreview) musicPreview.loop = $("musicaLoop").checked; });
   on("musicaVol", "input", () => {
     const v = parseFloat($("musicaVol").value);
-    if (musicGainNode) musicGainNode.gain.value = v;
     localStorage.setItem(LS.vol, String(v));
+    // El valor real del gain lo aplica aplicarDucking() en el siguiente
+    // cuadro (lee este mismo slider) — así solo hay un lugar escribiendo
+    // el AudioParam, sin pisarse entre sí.
   });
 
   on("subirMusica", "change", subirMusicaDB);
@@ -210,53 +212,6 @@
         }
       }
       registerProcessor("noise-gate-processor", NoiseGateProcessor);
-
-      // Cambiador de tono en tiempo real, técnica de granos superpuestos
-      // (dos "lectores" desfasados medio grano con ventana triangular,
-      // para evitar clics). Es una aproximación sencilla, no un algoritmo
-      // de estudio, pero funciona bien para efectos como voz de demonio
-      // o de ardilla.
-      class PitchShiftProcessor extends AudioWorkletProcessor {
-        constructor(options) {
-          super();
-          const opts = options.processorOptions || {};
-          this.pitchRatio = opts.pitchRatio || 1;
-          this.grainSize = 4096;
-          this.buffer = new Float32Array(this.grainSize * 4);
-          this.writeIndex = 0;
-          this.readIndexA = 0;
-          this.readIndexB = this.grainSize;
-          this.port.onmessage = (e) => {
-            if (e.data && typeof e.data.pitchRatio === "number") this.pitchRatio = e.data.pitchRatio;
-          };
-        }
-        ventana(pos, tam) {
-          const frac = (pos % tam) / tam;
-          return frac < 0.5 ? frac * 2 : (1 - frac) * 2;
-        }
-        process(inputs, outputs) {
-          const input = inputs[0];
-          const output = outputs[0];
-          if (!input || !input[0]) return true;
-          const inCh = input[0];
-          const outCh = output[0];
-          const buf = this.buffer;
-          const bufLen = buf.length;
-          for (let i = 0; i < inCh.length; i++) {
-            buf[this.writeIndex] = inCh[i];
-            this.writeIndex = (this.writeIndex + 1) % bufLen;
-            const iA = Math.floor(this.readIndexA) % bufLen;
-            const iB = Math.floor(this.readIndexB) % bufLen;
-            const wA = this.ventana(this.readIndexA, this.grainSize);
-            const wB = this.ventana(this.readIndexB, this.grainSize);
-            outCh[i] = buf[iA] * wA + buf[iB] * wB;
-            this.readIndexA = (this.readIndexA + this.pitchRatio) % bufLen;
-            this.readIndexB = (this.readIndexB + this.pitchRatio) % bufLen;
-          }
-          return true;
-        }
-      }
-      registerProcessor("pitch-shift-processor", PitchShiftProcessor);
     `;
     const blob = new Blob([codigo], { type: "application/javascript" });
     const url = URL.createObjectURL(blob);
@@ -265,74 +220,78 @@
   }
 
   // ======================================================
-  // EFECTOS DE VOZ (opcionales, "Sin efecto" por defecto)
+  // "SONIDO DE LOCUTOR" (opcional, "Sonido normal" por defecto)
   // ======================================================
+  // Equivalente construido con Web Audio nativo al combo que da el
+  // sonido profesional de radio: EQ de presencia (3-5 kHz) + saturación
+  // de cinta (calidez). Los plugins de pago mencionados (iZotope Nectar,
+  // Waves, VoxessoR, Slate FG-X) son software de escritorio — no pueden
+  // instalarse en una página web, pero esto persigue el mismo resultado.
 
-  function crearEfectoPitch(ctxAudio, ratio) {
-    const nodo = new AudioWorkletNode(ctxAudio, "pitch-shift-processor", {
-      processorOptions: { pitchRatio: ratio }
-    });
-    return { entrada: nodo, salida: nodo, extra: [] };
-  }
-
-  function crearEfectoRobot(ctxAudio) {
-    const modulador = ctxAudio.createOscillator();
-    modulador.type = "sine";
-    modulador.frequency.value = 40; // Hz — timbre metálico típico
-    const anillo = ctxAudio.createGain();
-    anillo.gain.value = 0; // el oscilador controla esto, ver abajo
-    modulador.connect(anillo.gain);
-    modulador.start();
-    return { entrada: anillo, salida: anillo, extra: [modulador] };
-  }
-
-  function crearImpulsoReverb(ctxAudio, duracion, decaimiento) {
-    const sr = ctxAudio.sampleRate;
-    const length = Math.floor(sr * duracion);
-    const impulso = ctxAudio.createBuffer(2, length, sr);
-    for (let canal = 0; canal < 2; canal++) {
-      const datos = impulso.getChannelData(canal);
-      for (let i = 0; i < length; i++) {
-        datos[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decaimiento);
-      }
+  // Curva de saturación tipo cinta (equivalente casero a FerricTDS):
+  // satura suavemente con tanh, dando calidez sin distorsión digital dura.
+  function crearCurvaSaturacion(cantidad) {
+    const n = 44100;
+    const curva = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      const x = (i * 2) / n - 1;
+      curva[i] = Math.tanh(cantidad * x) / Math.tanh(cantidad);
     }
-    return impulso;
+    return curva;
   }
 
-  function crearEfectoAgua(ctxAudio) {
-    const lp = ctxAudio.createBiquadFilter();
-    lp.type = "lowpass";
-    lp.frequency.value = 500;
-    lp.Q.value = 1;
-
-    const reverb = ctxAudio.createConvolver();
-    reverb.buffer = crearImpulsoReverb(ctxAudio, 2.5, 3);
-
-    const seca = ctxAudio.createGain(); seca.gain.value = 0.4;
-    const humeda = ctxAudio.createGain(); humeda.gain.value = 0.9;
+  function crearEfectoSaturacion(ctxAudio) {
+    const entrada = ctxAudio.createGain();
+    entrada.gain.value = 1.8; // empuja la señal hacia la curva
+    const shaper = ctxAudio.createWaveShaper();
+    shaper.curve = crearCurvaSaturacion(2.5);
+    shaper.oversample = "4x";
     const salida = ctxAudio.createGain();
-
-    lp.connect(seca); seca.connect(salida);
-    lp.connect(reverb); reverb.connect(humeda); humeda.connect(salida);
-
-    return { entrada: lp, salida, extra: [reverb, seca, humeda] };
+    salida.gain.value = 0.85; // compensa el volumen extra que mete la saturación
+    entrada.connect(shaper);
+    shaper.connect(salida);
+    return { entrada, salida, extra: [shaper] };
   }
 
-  function crearEfectoTelefono(ctxAudio) {
-    const bp = ctxAudio.createBiquadFilter();
-    bp.type = "bandpass";
-    bp.frequency.value = 1500;
-    bp.Q.value = 1.2;
-    return { entrada: bp, salida: bp, extra: [] };
+  // EQ gráfico simple tipo "presencia de locutor" (equivalente a Voxengo
+  // Marvel GEQ para este uso): realza 3.5 kHz para claridad y un poco de
+  // cuerpo en graves.
+  function crearEfectoEQLocutor(ctxAudio) {
+    const presencia = ctxAudio.createBiquadFilter();
+    presencia.type = "peaking";
+    presencia.frequency.value = 3500;
+    presencia.Q.value = 1;
+    presencia.gain.value = 4; // dB
+
+    const calidezGraves = ctxAudio.createBiquadFilter();
+    calidezGraves.type = "lowshelf";
+    calidezGraves.frequency.value = 150;
+    calidezGraves.gain.value = 2;
+
+    presencia.connect(calidezGraves);
+    return { entrada: presencia, salida: calidezGraves, extra: [] };
+  }
+
+  // Sonido de radio completo: EQ de presencia + saturación de cinta,
+  // en cadena — el combo "EQ + compresión + saturación" que da el
+  // timbre de locutor profesional (la compresión ya la aplica el
+  // compresor/limitador que corre siempre, ver asegurarLocutor).
+  function crearEfectoRadioProfesional(ctxAudio) {
+    const eq = crearEfectoEQLocutor(ctxAudio);
+    const sat = crearEfectoSaturacion(ctxAudio);
+    eq.salida.connect(sat.entrada);
+    return {
+      entrada: eq.entrada,
+      salida: sat.salida,
+      extra: [eq.entrada, eq.salida, sat.entrada, sat.salida, ...sat.extra]
+    };
   }
 
   const EFECTOS = {
     ninguno: null,
-    demonio: (c) => crearEfectoPitch(c, 0.7),   // voz grave
-    ardilla: (c) => crearEfectoPitch(c, 1.5),   // voz aguda
-    robot: (c) => crearEfectoRobot(c),
-    agua: (c) => crearEfectoAgua(c),
-    telefono: (c) => crearEfectoTelefono(c)
+    radio: (c) => crearEfectoRadioProfesional(c),  // EQ + saturación (recomendado)
+    saturacion: (c) => crearEfectoSaturacion(c),    // solo calidez
+    eq: (c) => crearEfectoEQLocutor(c)              // solo presencia
   };
 
   let grabando = false;
