@@ -22,9 +22,118 @@
   let loopActivo = false;
   let desbloqueoActivo = false;
 
-  cargar();
+  // ===== Estado de transmisión en vivo =====
+  let enVivo = false;
+  let jitsiApi = null;
+  let jitsiConectado = false;
 
-  // ===== Carga contenido + programación de la cabina =====
+  cargar();
+  revisarEnVivo();
+  setInterval(revisarEnVivo, 5000);
+  try {
+    db.channel("home-en-vivo")
+      .on("postgres_changes", { event: "*", schema: "public", table: "config", filter: "id=eq.en_vivo" }, revisarEnVivo)
+      .subscribe();
+  } catch (e) {
+    console.warn("Realtime no disponible, usando solo el sondeo cada 5s:", e);
+  }
+
+  // ======================================================
+  // EN VIVO — detección + audio oculto (nunca se muestra nada de Jitsi)
+  // ======================================================
+
+  async function revisarEnVivo() {
+    const { data, error } = await db.from("config").select("*").eq("id", "en_vivo").maybeSingle();
+    if (error) return;
+    const activa = !!(data && data.activa);
+    if (activa && !enVivo) entrarModoEnVivo();
+    else if (!activa && enVivo) salirModoEnVivo();
+  }
+
+  function entrarModoEnVivo() {
+    enVivo = true;
+    audio.pause();
+    setGif(false);
+    setVibracion(false);
+    btnPrev.disabled = true;
+    btnNext.disabled = true;
+    titulo.textContent = "🔴 EN VIVO AHORA";
+    meta.textContent = "Toca 🔊 para escuchar la transmisión";
+    btnPlay.disabled = false;
+    btnMute.disabled = false;
+    btnPlay.textContent = "▶";
+    btnMute.textContent = "🔇";
+  }
+
+  function salirModoEnVivo() {
+    enVivo = false;
+    desconectarJitsi();
+    titulo.textContent = "Cargando contenido…";
+    meta.textContent = "";
+    cargar(); // retoma el bucle de música/episodios donde estaba antes
+  }
+
+  // Crea la conexión de Jitsi COMPLETAMENTE oculta (1x1px, invisible) —
+  // solo para recibir el audio; nunca se ve nada de Jitsi en pantalla,
+  // y el audio-only del lado del oyente hace que ni siquiera se pida
+  // cámara/micrófono propios.
+  function conectarJitsi() {
+    if (jitsiConectado || typeof JitsiMeetExternalAPI === "undefined" || !window.JITSI_ROOM) return;
+    jitsiConectado = true;
+
+    const contenedor = document.createElement("div");
+    contenedor.id = "jitsiOculto";
+    contenedor.style.cssText = "position:fixed; left:-9999px; top:-9999px; width:1px; height:1px; overflow:hidden; opacity:0; pointer-events:none;";
+    document.body.appendChild(contenedor);
+
+    jitsiApi = new JitsiMeetExternalAPI("meet.jit.si", {
+      roomName: window.JITSI_ROOM,
+      parentNode: contenedor,
+      width: 1,
+      height: 1,
+      configOverwrite: {
+        startWithAudioMuted: true,
+        startWithVideoMuted: true,
+        startAudioOnly: true,
+        prejoinPageEnabled: false,
+        disableModeratorIndicator: true
+      },
+      interfaceConfigOverwrite: {
+        TOOLBAR_BUTTONS: [],
+        SHOW_JITSI_WATERMARK: false
+      },
+      userInfo: { displayName: "Oyente" }
+    });
+
+    try {
+      const iframe = jitsiApi.getIFrame();
+      if (iframe) iframe.allow = "autoplay";
+    } catch (e) {}
+
+    titulo.textContent = "🔴 EN VIVO AHORA";
+    meta.textContent = "Escuchando la transmisión...";
+    btnPlay.textContent = "⏸";
+    btnMute.textContent = "🔊";
+    aviso.classList.add("oculto");
+  }
+
+  function desconectarJitsi() {
+    if (jitsiApi) {
+      try { jitsiApi.dispose(); } catch (e) {}
+      jitsiApi = null;
+    }
+    const contenedor = document.getElementById("jitsiOculto");
+    if (contenedor) contenedor.remove();
+    jitsiConectado = false;
+    if (enVivo) {
+      titulo.textContent = "🔴 EN VIVO AHORA";
+      meta.textContent = "Toca 🔊 para escuchar la transmisión";
+      btnPlay.textContent = "▶";
+      btnMute.textContent = "🔇";
+    }
+  }
+
+  // ===== Carga contenido + programación de la cabina (bucle normal) =====
   async function cargar() {
     try {
       const [rAud, rMus, rCfg] = await Promise.all([
@@ -47,6 +156,8 @@
       playlist = (cfg && Array.isArray(cfg.sel) && cfg.sel.length)
         ? cfg.sel.map(resolver).filter(Boolean)
         : todas.slice();
+
+      if (enVivo) return; // no pises la UI de "en vivo" con la del bucle normal
 
       if (!playlist.length) {
         titulo.textContent = "Aún no hay contenido";
@@ -71,8 +182,10 @@
       cargarPista(indice, true);
     } catch (e) {
       console.error(e);
-      titulo.textContent = "Error al cargar";
-      meta.textContent = e.message;
+      if (!enVivo) {
+        titulo.textContent = "Error al cargar";
+        meta.textContent = e.message;
+      }
     }
   }
 
@@ -83,6 +196,7 @@
   }
 
   function cargarPista(n, reproducir) {
+    if (enVivo) return;
     indice = n;
     const item = playlist[indice];
     if (!item) return;
@@ -130,7 +244,7 @@
 
   // ===== Avanza en el orden programado (ya no al azar) =====
   function siguiente() {
-    if (!playlist.length) return;
+    if (enVivo || !playlist.length) return;
     if (loopActivo) {
       indice = (indice + 1) % playlist.length;
       cargarPista(indice, true);
@@ -143,7 +257,7 @@
   }
 
   function anterior() {
-    if (!playlist.length) return;
+    if (enVivo || !playlist.length) return;
     if (indice > 0) {
       indice--;
       cargarPista(indice, !audio.paused);
@@ -164,6 +278,11 @@
   btnPrev.addEventListener("click", anterior);
 
   btnPlay.addEventListener("click", () => {
+    if (enVivo) {
+      if (jitsiConectado) desconectarJitsi();
+      else conectarJitsi();
+      return;
+    }
     if (audio.paused) audio.play().then(() => { btnPlay.textContent = "⏸"; }).catch(() => {});
     else { audio.pause(); btnPlay.textContent = "▶"; }
   });
@@ -171,12 +290,17 @@
   btnNext.addEventListener("click", siguiente);
 
   btnMute.addEventListener("click", () => {
+    if (enVivo) {
+      if (jitsiConectado) desconectarJitsi();
+      else conectarJitsi();
+      return;
+    }
     audio.muted = !audio.muted;
     btnMute.textContent = audio.muted ? "🔇" : "🔊";
     setVibracion(audio.muted);
   });
 
-  audio.addEventListener("play", () => { btnPlay.textContent = "⏸"; setGif(true); });
-  audio.addEventListener("pause", () => { btnPlay.textContent = "▶"; });
+  audio.addEventListener("play", () => { if (!enVivo) { btnPlay.textContent = "⏸"; setGif(true); } });
+  audio.addEventListener("pause", () => { if (!enVivo) btnPlay.textContent = "▶"; });
   audio.addEventListener("ended", siguiente);
 })();
