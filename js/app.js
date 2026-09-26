@@ -78,11 +78,16 @@
 
   let ctx = null;
 
-  // ===== Locutores (stream + fuente + ganancia + analizador) =====
+  // ===== Locutores (stream + cadena de procesamiento + analizador) =====
   const loc = {
-    1: { stream: null, src: null, gain: null, an: null },
-    2: { stream: null, src: null, gain: null, an: null }
+    1: { stream: null, src: null, gain: null, gate: null, eqGraves: null, eqAgudos: null, compresor: null, limitador: null, an: null },
+    2: { stream: null, src: null, gain: null, gate: null, eqGraves: null, eqAgudos: null, compresor: null, limitador: null, an: null }
   };
+
+  // ===== Ajustes de la cadena de audio (edítalos aquí si hace falta afinar) =====
+  const GANANCIA_ENTRADA = 2.5;       // ganancia general de cada locutor
+  const UMBRAL_PUERTA_RUIDO = 0.02;   // ~ -34dB. Súbelo si deja pasar ruido de fondo; bájalo si corta la voz
+  let workletListo = null;
 
   // ===== Grabación =====
   let rec = null;
@@ -164,6 +169,49 @@
     return ctx;
   }
 
+  // Carga (una sola vez) el módulo de la puerta de ruido como AudioWorklet.
+  // Se define como texto y se convierte en Blob para no necesitar un
+  // archivo .js aparte.
+  function cargarWorkletRuido() {
+    if (workletListo) return workletListo;
+    const codigo = `
+      class NoiseGateProcessor extends AudioWorkletProcessor {
+        constructor(options) {
+          super();
+          const opts = options.processorOptions || {};
+          this.threshold = opts.threshold || 0.02;
+          this.attackMs = 10;
+          this.releaseMs = 150;
+          this.envelope = 0;
+          this.gateOpen = 0;
+        }
+        process(inputs, outputs) {
+          const input = inputs[0];
+          const output = outputs[0];
+          if (!input || !input[0]) return true;
+          const inCh = input[0];
+          const outCh = output[0];
+          const attackCoef = Math.exp(-1 / (sampleRate * (this.attackMs / 1000)));
+          const releaseCoef = Math.exp(-1 / (sampleRate * (this.releaseMs / 1000)));
+          for (let i = 0; i < inCh.length; i++) {
+            const sample = inCh[i];
+            this.envelope = Math.max(Math.abs(sample), this.envelope * 0.999);
+            const target = this.envelope > this.threshold ? 1 : 0;
+            const coef = target > this.gateOpen ? attackCoef : releaseCoef;
+            this.gateOpen = target + (this.gateOpen - target) * coef;
+            outCh[i] = sample * this.gateOpen;
+          }
+          return true;
+        }
+      }
+      registerProcessor("noise-gate-processor", NoiseGateProcessor);
+    `;
+    const blob = new Blob([codigo], { type: "application/javascript" });
+    const url = URL.createObjectURL(blob);
+    workletListo = ctx.audioWorklet.addModule(url);
+    return workletListo;
+  }
+
   // ======================================================
   // PERSISTENCIA DEL PLAYER
   // ======================================================
@@ -217,23 +265,61 @@
     if (loc[num].stream) return;
     try {
       asegurarCtx();
+      await cargarWorkletRuido();
+
       const stream = await pedirMic($(`mic${num}`).value);
       const src = ctx.createMediaStreamSource(stream);
 
-      // Amplificación de la voz (x2.5) para que no quede baja.
-      // El navegador ya NO aplica su propio autoGainControl (ver pedirMic),
-      // así toda la ganancia depende de este único valor, consistente
-      // entre los dos locutores.
+      // Ganancia de entrada — toda la amplificación vive aquí, ya que
+      // el navegador no aplica su propio autoGainControl (ver pedirMic).
       const gain = ctx.createGain();
-      gain.gain.value = 2.5;
+      gain.gain.value = GANANCIA_ENTRADA;
+
+      // Puerta de ruido: silencia el micrófono cuando nadie habla,
+      // para que no se cuele zumbido/ruido de fondo en los silencios.
+      const gate = new AudioWorkletNode(ctx, "noise-gate-processor", {
+        processorOptions: { threshold: UMBRAL_PUERTA_RUIDO }
+      });
+
+      // EQ ligero: un poco de cuerpo en graves y claridad en agudos.
+      const eqGraves = ctx.createBiquadFilter();
+      eqGraves.type = "lowshelf";
+      eqGraves.frequency.value = 120;
+      eqGraves.gain.value = 1;
+
+      const eqAgudos = ctx.createBiquadFilter();
+      eqAgudos.type = "highshelf";
+      eqAgudos.frequency.value = 7000;
+      eqAgudos.gain.value = 2;
+
+      // Compresor: uniforma el volumen (acerca los picos altos y bajos).
+      const compresor = ctx.createDynamicsCompressor();
+      compresor.threshold.value = -24;
+      compresor.knee.value = 30;
+      compresor.ratio.value = 4;
+      compresor.attack.value = 0.02;
+      compresor.release.value = 0.25;
+
+      // Limitador: tope duro contra saturación/clipping en gritos o picos.
+      const limitador = ctx.createDynamicsCompressor();
+      limitador.threshold.value = -3;
+      limitador.knee.value = 0;
+      limitador.ratio.value = 20;
+      limitador.attack.value = 0.003;
+      limitador.release.value = 0.1;
 
       const an = ctx.createAnalyser();
       an.fftSize = 512;
 
       src.connect(gain);
-      gain.connect(an);
+      gain.connect(gate);
+      gate.connect(eqGraves);
+      eqGraves.connect(eqAgudos);
+      eqAgudos.connect(compresor);
+      compresor.connect(limitador);
+      limitador.connect(an);
 
-      loc[num] = { stream, src, gain, an };
+      loc[num] = { stream, src, gain, gate, eqGraves, eqAgudos, compresor, limitador, an };
 
       const track = stream.getAudioTracks()[0];
       const settings = track ? track.getSettings() : {};
@@ -252,9 +338,14 @@
     try {
       if (L.src) L.src.disconnect();
       if (L.gain) L.gain.disconnect();
+      if (L.gate) L.gate.disconnect();
+      if (L.eqGraves) L.eqGraves.disconnect();
+      if (L.eqAgudos) L.eqAgudos.disconnect();
+      if (L.compresor) L.compresor.disconnect();
+      if (L.limitador) L.limitador.disconnect();
       if (L.an) L.an.disconnect();
     } catch (e) {}
-    loc[num] = { stream: null, src: null, gain: null, an: null };
+    loc[num] = { stream: null, src: null, gain: null, gate: null, eqGraves: null, eqAgudos: null, compresor: null, limitador: null, an: null };
   }
 
   // ======================================================
@@ -750,9 +841,9 @@
       masterNode.connect(anMaster);
       masterNode.connect(dest);
 
-      // Conectamos la SALIDA AMPLIFICADA de cada locutor
-      if (loc1 && loc[1].gain) loc[1].gain.connect(masterNode);
-      if (loc2 && loc[2].gain) loc[2].gain.connect(masterNode);
+      // Conectamos la salida YA PROCESADA (gate → EQ → compresor → limitador) de cada locutor
+      if (loc1 && loc[1].limitador) loc[1].limitador.connect(masterNode);
+      if (loc2 && loc[2].limitador) loc[2].limitador.connect(masterNode);
 
       musicaConectada = false;
       if ($("musicaIncluir").checked) {
@@ -760,6 +851,15 @@
         if (musicGainNode) {
           musicGainNode.connect(masterNode);
           musicaConectada = true;
+        }
+        // Bug corregido: antes la música solo sonaba si habías presionado
+        // ▶ Música a mano; si solo la cargabas y dabas Grabar directo,
+        // se conectaba al grafo pero nunca empezaba a reproducirse, así
+        // que la grabación quedaba sin música. Ahora se auto-reproduce.
+        if (musicPreview && musicPreview.paused) {
+          musicPreview.play().catch(() => {});
+          const btnM = $("btnMusica");
+          if (btnM) btnM.textContent = "⏸ Música";
         }
       }
 
@@ -850,8 +950,8 @@
   // ======================================================
 
   function limpiarSesion() {
-    try { if (loc[1].gain && masterNode) loc[1].gain.disconnect(masterNode); } catch (e) {}
-    try { if (loc[2].gain && masterNode) loc[2].gain.disconnect(masterNode); } catch (e) {}
+    try { if (loc[1].limitador && masterNode) loc[1].limitador.disconnect(masterNode); } catch (e) {}
+    try { if (loc[2].limitador && masterNode) loc[2].limitador.disconnect(masterNode); } catch (e) {}
     try { if (musicaConectada && musicGainNode && masterNode) musicGainNode.disconnect(masterNode); } catch (e) {}
     musicaConectada = false;
     if (timerInt) clearInterval(timerInt);
