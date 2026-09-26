@@ -87,6 +87,7 @@
   // ===== Ajustes de la cadena de audio (edítalos aquí si hace falta afinar) =====
   const GANANCIA_ENTRADA = 2.5;       // ganancia general de cada locutor
   const UMBRAL_PUERTA_RUIDO = 0.02;   // ~ -34dB. Súbelo si deja pasar ruido de fondo; bájalo si corta la voz
+  const PROFUNDIDAD_DUCKING = 0.08;   // cuánto volumen le queda a la música al hablar (0 = silencio total, 1 = no baja nada). 0.08 = casi inaudible.
   let workletListo = null;
 
   // ===== Grabación =====
@@ -503,8 +504,8 @@
     if (nivel > 0.06) ultimaVoz = Date.now();
     const conVoz = (Date.now() - ultimaVoz) < 800;
     const base = parseFloat($("musicaVol").value) || 0.5;
-    const objetivo = conVoz ? base * 0.5 : base;
-    musicGainNode.gain.setTargetAtTime(objetivo, ctx.currentTime, 0.2);
+    const objetivo = conVoz ? base * PROFUNDIDAD_DUCKING : base;
+    musicGainNode.gain.setTargetAtTime(objetivo, ctx.currentTime, 0.15);
   }
 
   function iniciarLoopSiempre() {
@@ -560,23 +561,11 @@
     const idx = playlist.findIndex(p => (p._tipo + ":" + p.id) === ultimo);
     indice = idx >= 0 ? idx : 0;
 
+    // Ya NO se reproduce solo al abrir la cabina — solo se deja listo
+    // (fuente cargada) para que el usuario presione ▶ cuando quiera.
     const r = $("reproductor");
     r.src = playlist[indice].url;
-
-    r.play()
-      .then(() => {
-        $("avisoSonido").classList.add("oculto");
-        estadoReproduccion("🎶 Sonando: " + playlist[indice].titulo);
-      })
-      .catch(() => {
-        r.muted = true;
-        r.play()
-          .then(() => {
-            $("avisoSonido").classList.remove("oculto");
-            estadoReproduccion("🎶 Sonando (silenciado): " + playlist[indice].titulo);
-          })
-          .catch(() => {});
-      });
+    estadoReproduccion("Listo: " + playlist[indice].titulo + " — presiona ▶ Reproducir selección para sonar.");
   }
 
   function activarSonido() {
@@ -1089,6 +1078,15 @@
     if (loc[2].stream) actualizarCadenaSalida(2);
     try { if (musicaConectada && musicGainNode && masterNode) musicGainNode.disconnect(masterNode); } catch (e) {}
     musicaConectada = false;
+
+    // La música de fondo se auto-reproducía al grabar; ahora se
+    // detiene sola al terminar la sesión (Detener y guardar).
+    if (musicPreview && !musicPreview.paused) {
+      musicPreview.pause();
+      const btnM = $("btnMusica");
+      if (btnM) btnM.textContent = "▶ Música";
+    }
+
     if (timerInt) clearInterval(timerInt);
     anMaster = null;
     masterNode = null;
