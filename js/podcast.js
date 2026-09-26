@@ -17,15 +17,12 @@
   const contador = document.getElementById("contadorEpisodios");
   const inputBuscar = document.getElementById("buscar");
   const filtroTemporada = document.getElementById("filtroTemporada");
+  const categoriasDiv = document.getElementById("categorias");
 
-  document.querySelectorAll(".cat-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("activo"));
-      btn.classList.add("activo");
-      categoriaActual = btn.dataset.cat;
-      renderEpisodios();
-    });
-  });
+  // Orden preferido para las categorías fijas; cualquier categoría
+  // escrita a mano (ej. "Terror") aparece después, en el orden en que
+  // se encuentre.
+  const CATEGORIAS_FIJAS = ["Noticias", "Entrevistas", "Cultura", "Deportes", "Ciencia", "General"];
 
   inputBuscar.addEventListener("input", e => {
     busquedaActual = e.target.value.toLowerCase();
@@ -62,6 +59,8 @@
       filtroTemporada.innerHTML += `<option value="${t}">${t}</option>`;
     });
 
+    actualizarBotonesCategoria();
+
     // Destacado
     const destacado = todosEpisodios.find(e => e.destacado);
     if (destacado) {
@@ -73,6 +72,41 @@
     }
 
     renderEpisodios();
+  }
+
+  // Genera los botones de categoría a partir de lo que realmente hay en
+  // los episodios — así una categoría escrita a mano en la cabina
+  // (ej. "Terror" para Día de Muertos) también aparece como filtro aquí,
+  // sin tener que tocar el HTML cada vez.
+  function actualizarBotonesCategoria() {
+    if (!categoriasDiv) return;
+
+    const presentes = [...new Set(todosEpisodios.map(e => e.categoria || "General"))];
+    const ordenadas = [
+      ...CATEGORIAS_FIJAS.filter(c => presentes.includes(c)),
+      ...presentes.filter(c => !CATEGORIAS_FIJAS.includes(c)).sort()
+    ];
+
+    // Si la categoría actualmente seleccionada ya no existe (por ejemplo,
+    // se borró el único episodio de esa categoría), regresa a "Todas".
+    if (categoriaActual !== "Todas" && !ordenadas.includes(categoriaActual)) {
+      categoriaActual = "Todas";
+    }
+
+    categoriasDiv.innerHTML = '<button class="cat-btn" data-cat="Todas">Todas</button>';
+    ordenadas.forEach(cat => {
+      categoriasDiv.innerHTML += `<button class="cat-btn" data-cat="${cat}">${cat}</button>`;
+    });
+
+    categoriasDiv.querySelectorAll(".cat-btn").forEach(btn => {
+      btn.classList.toggle("activo", btn.dataset.cat === categoriaActual);
+      btn.addEventListener("click", () => {
+        categoriasDiv.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("activo"));
+        btn.classList.add("activo");
+        categoriaActual = btn.dataset.cat;
+        renderEpisodios();
+      });
+    });
   }
 
   function renderEpisodios() {

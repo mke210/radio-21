@@ -145,6 +145,18 @@
   on("listaSeleccion", "change", () => { guardarSeleccionLocal(); guardarConfigRemota(); });
 
   on("editForm", "submit", guardarEdicion);
+  on("categoria", "change", () => {
+    const otra = $("categoriaOtra");
+    if (!otra) return;
+    otra.style.display = $("categoria").value === "__otra__" ? "block" : "none";
+    if ($("categoria").value === "__otra__") otra.focus();
+  });
+  on("editCategoria", "change", () => {
+    const otra = $("editCategoriaOtra");
+    if (!otra) return;
+    otra.style.display = $("editCategoria").value === "__otra__" ? "block" : "none";
+    if ($("editCategoria").value === "__otra__") otra.focus();
+  });
   on("btnCancelarEditar", "click", () => $("editModal").close());
   on("reproductor", "ended", alTerminarEpisodio);
 
@@ -486,22 +498,28 @@
   // DUCKING
   // ======================================================
 
-  function nivelVoz(an) {
-    if (!an) return 0;
-    const data = new Uint8Array(an.fftSize);
-    an.getByteTimeDomainData(data);
-    let sum = 0;
-    for (let i = 0; i < data.length; i++) {
-      const v = (data[i] - 128) / 128;
-      sum += v * v;
-    }
-    return Math.sqrt(sum / data.length);
+  // Mide solo la banda de voz humana (300-3400Hz) en vez de todo el
+  // volumen — así un ruido grave de fondo (motor de camión, tráfico)
+  // no dispara el ducking como si alguien estuviera hablando.
+  function nivelVozBanda(an) {
+    if (!an || !ctx) return 0;
+    const datos = new Uint8Array(an.frequencyBinCount);
+    an.getByteFrequencyData(datos);
+    const nyquist = ctx.sampleRate / 2;
+    const binHz = nyquist / datos.length;
+    const iMin = Math.max(0, Math.floor(300 / binHz));
+    const iMax = Math.min(datos.length - 1, Math.ceil(3400 / binHz));
+    let suma = 0, n = 0;
+    for (let i = iMin; i <= iMax; i++) { suma += datos[i]; n++; }
+    return n ? (suma / n) / 255 : 0;
   }
+
+  const UMBRAL_DUCKING = 0.15; // qué tan fuerte debe sonar la banda de voz para bajar la música. Súbelo si un ruido fuerte (camión, golpes) sigue bajando la música sin que nadie hable.
 
   function aplicarDucking() {
     if (!musicGainNode || !ctx) return;
-    const nivel = Math.max(nivelVoz(loc[1].an), nivelVoz(loc[2].an));
-    if (nivel > 0.06) ultimaVoz = Date.now();
+    const nivel = Math.max(nivelVozBanda(loc[1].an), nivelVozBanda(loc[2].an));
+    if (nivel > UMBRAL_DUCKING) ultimaVoz = Date.now();
     const conVoz = (Date.now() - ultimaVoz) < 800;
     const base = parseFloat($("musicaVol").value) || 0.5;
     const objetivo = conVoz ? base * PROFUNDIDAD_DUCKING : base;
@@ -1124,12 +1142,22 @@
   // GUARDAR EPISODIO (subida vía B2, no Supabase Storage)
   // ======================================================
 
+  function leerCategoria(idSelect, idOtra) {
+    const sel = $(idSelect);
+    if (!sel) return "General";
+    if (sel.value === "__otra__") {
+      const otra = $(idOtra);
+      return (otra && otra.value.trim()) || "General";
+    }
+    return sel.value || "General";
+  }
+
   async function subirAudio(blob, duracionSeg) {
     try {
       const titulo = $("titulo").value.trim();
       const alumno = $("alumno").value.trim() || "Anónimo";
       const descripcion = $("descripcion").value.trim();
-      const categoria = $("categoria").value || "General";
+      const categoria = leerCategoria("categoria", "categoriaOtra");
       const temporada = $("temporada").value.trim() || "Temporada 1 - 2026";
       const destacado = $("destacado").checked;
       const archivoImg = $("imagen").files[0];
@@ -1225,6 +1253,8 @@
     return b;
   }
 
+  const CATEGORIAS_FIJAS = ["General", "Noticias", "Entrevistas", "Cultura", "Deportes", "Ciencia"];
+
   function abrirEditar(id) {
     const item = audios.find(a => a.id === id);
     if (!item) return;
@@ -1232,7 +1262,17 @@
     $("editTitulo").value = item.titulo;
     $("editAlumno").value = item.alumno || "";
     $("editDescripcion").value = item.descripcion || "";
-    $("editCategoria").value = item.categoria || "General";
+
+    const cat = item.categoria || "General";
+    const otra = $("editCategoriaOtra");
+    if (CATEGORIAS_FIJAS.includes(cat)) {
+      $("editCategoria").value = cat;
+      if (otra) { otra.style.display = "none"; otra.value = ""; }
+    } else {
+      $("editCategoria").value = "__otra__";
+      if (otra) { otra.style.display = "block"; otra.value = cat; }
+    }
+
     $("editTemporada").value = item.temporada || "Temporada 1 - 2026";
     $("editModal").showModal();
   }
@@ -1243,7 +1283,7 @@
     const titulo = $("editTitulo").value.trim();
     const alumno = $("editAlumno").value.trim() || "Anónimo";
     const descripcion = $("editDescripcion").value.trim();
-    const categoria = $("editCategoria").value;
+    const categoria = leerCategoria("editCategoria", "editCategoriaOtra");
     const temporada = $("editTemporada").value.trim() || "Temporada 1 - 2026";
     const archivoImg = $("editImagen").files[0];
 

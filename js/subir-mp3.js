@@ -82,7 +82,7 @@
         titulo: titulo,
         alumno: $("alumno").value.trim() || "Anónimo",
         descripcion: $("descripcion").value.trim(),
-        categoria: $("categoria").value || "General",
+        categoria: leerCategoriaMP3(),
         temporada: $("temporada").value.trim() || "Temporada 1 - 2026",
         destacado: $("destacado").checked,
         archivo: f.name,
@@ -113,5 +113,17 @@
       a.addEventListener("loadedmetadata", () => resolve(Math.round(a.duration) || 0));
       a.addEventListener("error", () => resolve(0));
     });
+  }
+
+  // Comparte el mismo selector de categoría que app.js — si eligió
+  // "Otra...", lee lo escrito en el campo de texto junto a él.
+  function leerCategoriaMP3() {
+    const sel = $("categoria");
+    if (!sel) return "General";
+    if (sel.value === "__otra__") {
+      const otra = $("categoriaOtra");
+      return (otra && otra.value.trim()) || "General";
+    }
+    return sel.value || "General";
   }
 })();
