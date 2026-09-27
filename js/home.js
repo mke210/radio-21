@@ -102,6 +102,7 @@
       width: 300,
       height: 150,
       configOverwrite: {
+        disableInitialGUM: true,   // clave: nunca pide micrófono/cámara al oyente, solo recibe
         startWithAudioMuted: true,
         startWithVideoMuted: true,
         startAudioOnly: true,
