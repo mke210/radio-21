@@ -106,7 +106,10 @@
     iframe.id = "jitsiOculto";
     iframe.src = url;
     iframe.allow = "autoplay";
-    iframe.style.cssText = "position:fixed; bottom:0; right:0; width:2px; height:2px; border:0; opacity:0.01; pointer-events:none; z-index:-1;";
+    // PRUEBA DE DIAGNÓSTICO: lo hago visible (pero pequeño, sin cámara,
+    // solo mostrará un ícono/avatar) para confirmar si Jitsi estaba
+    // posponiendo la conexión por no verse "realmente en pantalla".
+    iframe.style.cssText = "position:fixed; bottom:12px; right:12px; width:260px; height:160px; border:2px solid #0d2c54; border-radius:8px; z-index:9999; background:#000;";
 
     iframe.addEventListener("load", () => {
       console.log("Podcast21 en vivo: el iframe de Jitsi cargó. Si no escuchas nada en unos segundos, revisa que no haya bloqueado el sonido tu navegador.");
