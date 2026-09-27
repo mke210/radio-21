@@ -78,74 +78,45 @@
   // y el audio-only del lado del oyente hace que ni siquiera se pida
   // cámara/micrófono propios.
   function conectarJitsi() {
-    if (jitsiConectado || typeof JitsiMeetExternalAPI === "undefined" || !window.JITSI_ROOM) {
-      console.warn("Podcast21 en vivo: no se pudo iniciar conexión.", {
-        jitsiConectado,
-        JitsiMeetExternalAPI_disponible: typeof JitsiMeetExternalAPI !== "undefined",
-        JITSI_ROOM: window.JITSI_ROOM
-      });
+    if (jitsiConectado || !window.JITSI_ROOM) {
+      console.warn("Podcast21 en vivo: no se pudo iniciar conexión.", { jitsiConectado, JITSI_ROOM: window.JITSI_ROOM });
       meta.textContent = "No se pudo conectar (revisa la consola del navegador).";
       return;
     }
     jitsiConectado = true;
 
-    // Tamaño real (no 1x1) puesto fuera de pantalla — algunos navegadores
-    // tratan un iframe de 1x1px de forma más agresiva para autoplay.
-    const contenedor = document.createElement("div");
-    contenedor.id = "jitsiOculto";
-    contenedor.style.cssText = "position:fixed; bottom:0; right:0; width:2px; height:2px; overflow:hidden; opacity:0.01; pointer-events:none; z-index:-1;";
-    document.body.appendChild(contenedor);
+    // Iframe normal apuntando directo a la sala (misma URL que ya
+    // funciona al abrirla como locutor), con la configuración pasada
+    // por la URL — igual que hacemos para tu propia ventana. Se evita
+    // JitsiMeetExternalAPI porque su inicialización se quedaba atorada
+    // en este contenedor oculto.
+    const params = [
+      "config.prejoinPageEnabled=false",
+      "config.disableInitialGUM=true",
+      "config.startWithAudioMuted=true",
+      "config.startWithVideoMuted=true",
+      "config.startAudioOnly=true",
+      "config.disableModeratorIndicator=true",
+      "interfaceConfig.TOOLBAR_BUTTONS=[]",
+      "interfaceConfig.SHOW_JITSI_WATERMARK=false"
+    ].join("&");
+    const url = `https://meet.jit.si/${encodeURIComponent(window.JITSI_ROOM)}#${params}`;
 
-    jitsiApi = new JitsiMeetExternalAPI("meet.jit.si", {
-      roomName: window.JITSI_ROOM,
-      parentNode: contenedor,
-      width: 300,
-      height: 150,
-      configOverwrite: {
-        disableInitialGUM: true,   // clave: nunca pide micrófono/cámara al oyente, solo recibe
-        startWithAudioMuted: true,
-        startWithVideoMuted: true,
-        startAudioOnly: true,
-        prejoinPageEnabled: false,
-        disableModeratorIndicator: true
-      },
-      interfaceConfigOverwrite: {
-        TOOLBAR_BUTTONS: [],
-        SHOW_JITSI_WATERMARK: false
-      },
-      userInfo: { displayName: "Oyente" }
+    const iframe = document.createElement("iframe");
+    iframe.id = "jitsiOculto";
+    iframe.src = url;
+    iframe.allow = "autoplay";
+    iframe.style.cssText = "position:fixed; bottom:0; right:0; width:2px; height:2px; border:0; opacity:0.01; pointer-events:none; z-index:-1;";
+
+    iframe.addEventListener("load", () => {
+      console.log("Podcast21 en vivo: el iframe de Jitsi cargó. Si no escuchas nada en unos segundos, revisa que no haya bloqueado el sonido tu navegador.");
     });
 
-    try {
-      const iframe = jitsiApi.getIFrame();
-      if (iframe) iframe.allow = "autoplay; camera; microphone; display-capture; encrypted-media; fullscreen";
-    } catch (e) {
-      console.warn("Podcast21 en vivo: no se pudo ajustar permisos del iframe.", e);
-    }
-
-    // Diagnóstico: esto debe aparecer en la consola si la conexión
-    // a la sala realmente se completa.
-    let conectoOk = false;
-    jitsiApi.addListener("videoConferenceJoined", () => {
-      conectoOk = true;
-      console.log("Podcast21 en vivo: conectado a la sala de Jitsi.");
-      meta.textContent = "🔊 Escuchando la transmisión en vivo.";
-    });
-    jitsiApi.addListener("participantJoined", (p) => {
-      console.log("Podcast21 en vivo: participante detectado:", p);
-    });
-    jitsiApi.addListener("errorOccurred", (e) => {
-      console.error("Podcast21 en vivo: error de Jitsi:", e);
-      meta.textContent = "Error al conectar (revisa la consola).";
-    });
-    setTimeout(() => {
-      if (!conectoOk) {
-        console.warn("Podcast21 en vivo: pasaron 8s y todavía no llega 'videoConferenceJoined'. Se quedó atorado en algún paso previo.");
-      }
-    }, 8000);
+    document.body.appendChild(iframe);
+    jitsiApi = iframe;
 
     titulo.textContent = "🔴 EN VIVO AHORA";
-    meta.textContent = "Conectando...";
+    meta.textContent = "🔊 Conectando a la transmisión...";
     btnPlay.textContent = "⏸";
     btnMute.textContent = "🔊";
     aviso.classList.add("oculto");
@@ -153,7 +124,7 @@
 
   function desconectarJitsi() {
     if (jitsiApi) {
-      try { jitsiApi.dispose(); } catch (e) {}
+      try { jitsiApi.remove(); } catch (e) {}
       jitsiApi = null;
     }
     const contenedor = document.getElementById("jitsiOculto");
