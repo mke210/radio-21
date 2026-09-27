@@ -85,14 +85,13 @@
     }
     jitsiConectado = true;
 
-    // Iframe normal apuntando directo a la sala (misma URL que ya
-    // funciona al abrirla como locutor), con la configuración pasada
-    // por la URL — igual que hacemos para tu propia ventana. Se evita
-    // JitsiMeetExternalAPI porque su inicialización se quedaba atorada
-    // en este contenedor oculto.
+    // PRUEBA: en vez de incrustarlo en un iframe (que se queda atorado,
+    // probablemente por restricciones del navegador a terceros dentro de
+    // un iframe), lo abrimos como pestaña propia — igual que ya funciona
+    // para el locutor. Solo audio (startAudioOnly), sin barra de
+    // herramientas, sin marca de agua.
     const params = [
       "config.prejoinPageEnabled=false",
-      "config.disableInitialGUM=true",
       "config.startWithAudioMuted=true",
       "config.startWithVideoMuted=true",
       "config.startAudioOnly=true",
@@ -102,24 +101,15 @@
     ].join("&");
     const url = `https://meet.jit.si/${encodeURIComponent(window.JITSI_ROOM)}#${params}`;
 
-    const iframe = document.createElement("iframe");
-    iframe.id = "jitsiOculto";
-    iframe.src = url;
-    iframe.allow = "autoplay";
-    // PRUEBA DE DIAGNÓSTICO: lo hago visible (pero pequeño, sin cámara,
-    // solo mostrará un ícono/avatar) para confirmar si Jitsi estaba
-    // posponiendo la conexión por no verse "realmente en pantalla".
-    iframe.style.cssText = "position:fixed; bottom:12px; right:12px; width:260px; height:160px; border:2px solid #0d2c54; border-radius:8px; z-index:9999; background:#000;";
-
-    iframe.addEventListener("load", () => {
-      console.log("Podcast21 en vivo: el iframe de Jitsi cargó. Si no escuchas nada en unos segundos, revisa que no haya bloqueado el sonido tu navegador.");
-    });
-
-    document.body.appendChild(iframe);
-    jitsiApi = iframe;
+    jitsiApi = window.open(url, "podcast21_en_vivo", "width=340,height=220");
+    if (!jitsiApi) {
+      meta.textContent = "Tu navegador bloqueó la ventana emergente. Permite pop-ups para este sitio e intenta de nuevo.";
+      jitsiConectado = false;
+      return;
+    }
 
     titulo.textContent = "🔴 EN VIVO AHORA";
-    meta.textContent = "🔊 Conectando a la transmisión...";
+    meta.textContent = "🔊 Escuchando en una ventana aparte (sin cámara, solo audio).";
     btnPlay.textContent = "⏸";
     btnMute.textContent = "🔊";
     aviso.classList.add("oculto");
@@ -127,11 +117,9 @@
 
   function desconectarJitsi() {
     if (jitsiApi) {
-      try { jitsiApi.remove(); } catch (e) {}
+      try { jitsiApi.close(); } catch (e) {}
       jitsiApi = null;
     }
-    const contenedor = document.getElementById("jitsiOculto");
-    if (contenedor) contenedor.remove();
     jitsiConectado = false;
     if (enVivo) {
       titulo.textContent = "🔴 EN VIVO AHORA";
