@@ -78,19 +78,29 @@
   // y el audio-only del lado del oyente hace que ni siquiera se pida
   // cámara/micrófono propios.
   function conectarJitsi() {
-    if (jitsiConectado || typeof JitsiMeetExternalAPI === "undefined" || !window.JITSI_ROOM) return;
+    if (jitsiConectado || typeof JitsiMeetExternalAPI === "undefined" || !window.JITSI_ROOM) {
+      console.warn("Podcast21 en vivo: no se pudo iniciar conexión.", {
+        jitsiConectado,
+        JitsiMeetExternalAPI_disponible: typeof JitsiMeetExternalAPI !== "undefined",
+        JITSI_ROOM: window.JITSI_ROOM
+      });
+      meta.textContent = "No se pudo conectar (revisa la consola del navegador).";
+      return;
+    }
     jitsiConectado = true;
 
+    // Tamaño real (no 1x1) puesto fuera de pantalla — algunos navegadores
+    // tratan un iframe de 1x1px de forma más agresiva para autoplay.
     const contenedor = document.createElement("div");
     contenedor.id = "jitsiOculto";
-    contenedor.style.cssText = "position:fixed; left:-9999px; top:-9999px; width:1px; height:1px; overflow:hidden; opacity:0; pointer-events:none;";
+    contenedor.style.cssText = "position:fixed; left:-9999px; top:0; width:300px; height:150px; overflow:hidden; pointer-events:none;";
     document.body.appendChild(contenedor);
 
     jitsiApi = new JitsiMeetExternalAPI("meet.jit.si", {
       roomName: window.JITSI_ROOM,
       parentNode: contenedor,
-      width: 1,
-      height: 1,
+      width: 300,
+      height: 150,
       configOverwrite: {
         startWithAudioMuted: true,
         startWithVideoMuted: true,
@@ -107,11 +117,27 @@
 
     try {
       const iframe = jitsiApi.getIFrame();
-      if (iframe) iframe.allow = "autoplay";
-    } catch (e) {}
+      if (iframe) iframe.allow = "autoplay; camera; microphone; display-capture; encrypted-media; fullscreen";
+    } catch (e) {
+      console.warn("Podcast21 en vivo: no se pudo ajustar permisos del iframe.", e);
+    }
+
+    // Diagnóstico: esto debe aparecer en la consola si la conexión
+    // a la sala realmente se completa.
+    jitsiApi.addListener("videoConferenceJoined", () => {
+      console.log("Podcast21 en vivo: conectado a la sala de Jitsi.");
+      meta.textContent = "🔊 Escuchando la transmisión en vivo.";
+    });
+    jitsiApi.addListener("participantJoined", (p) => {
+      console.log("Podcast21 en vivo: participante detectado:", p);
+    });
+    jitsiApi.addListener("errorOccurred", (e) => {
+      console.error("Podcast21 en vivo: error de Jitsi:", e);
+      meta.textContent = "Error al conectar (revisa la consola).";
+    });
 
     titulo.textContent = "🔴 EN VIVO AHORA";
-    meta.textContent = "Escuchando la transmisión...";
+    meta.textContent = "Conectando...";
     btnPlay.textContent = "⏸";
     btnMute.textContent = "🔊";
     aviso.classList.add("oculto");
