@@ -93,7 +93,7 @@
     // tratan un iframe de 1x1px de forma más agresiva para autoplay.
     const contenedor = document.createElement("div");
     contenedor.id = "jitsiOculto";
-    contenedor.style.cssText = "position:fixed; left:-9999px; top:0; width:300px; height:150px; overflow:hidden; pointer-events:none;";
+    contenedor.style.cssText = "position:fixed; bottom:0; right:0; width:2px; height:2px; overflow:hidden; opacity:0.01; pointer-events:none; z-index:-1;";
     document.body.appendChild(contenedor);
 
     jitsiApi = new JitsiMeetExternalAPI("meet.jit.si", {
@@ -125,7 +125,9 @@
 
     // Diagnóstico: esto debe aparecer en la consola si la conexión
     // a la sala realmente se completa.
+    let conectoOk = false;
     jitsiApi.addListener("videoConferenceJoined", () => {
+      conectoOk = true;
       console.log("Podcast21 en vivo: conectado a la sala de Jitsi.");
       meta.textContent = "🔊 Escuchando la transmisión en vivo.";
     });
@@ -136,6 +138,11 @@
       console.error("Podcast21 en vivo: error de Jitsi:", e);
       meta.textContent = "Error al conectar (revisa la consola).";
     });
+    setTimeout(() => {
+      if (!conectoOk) {
+        console.warn("Podcast21 en vivo: pasaron 8s y todavía no llega 'videoConferenceJoined'. Se quedó atorado en algún paso previo.");
+      }
+    }, 8000);
 
     titulo.textContent = "🔴 EN VIVO AHORA";
     meta.textContent = "Conectando...";
