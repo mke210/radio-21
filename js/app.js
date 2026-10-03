@@ -1062,13 +1062,10 @@
     bloque.style.display = "block";
     bloque.scrollIntoView({ behavior: "smooth", block: "center" });
 
-    // Activa la opción de grabación local — solo disponible después de
-    // terminar una grabación normal con "Detener y guardar".
-    const btnLocal = $("btnGrabarLocal");
-    const estLocal = $("estadoGrabacionLocal");
-    if (btnLocal && btnLocal.disabled) {
-      btnLocal.disabled = false;
-      if (estLocal) estLocal.textContent = "Ya puedes grabar y guardar una toma en tu computadora si quieres.";
+    // Carga esta misma toma en las herramientas de recortar/mejorar/
+    // guardar en la computadora (grabar-local.js).
+    if (typeof window.P21_cargarTomaLocal === "function") {
+      window.P21_cargarTomaLocal(blob);
     }
   }
 
@@ -1079,6 +1076,10 @@
     const aud = $("previewAudio");
     if (aud) { aud.pause(); aud.removeAttribute("src"); aud.load(); }
     if (bloque) bloque.style.display = "none";
+
+    if (typeof window.P21_descartarTomaLocal === "function") {
+      window.P21_descartarTomaLocal();
+    }
   }
 
   async function guardarPreview() {

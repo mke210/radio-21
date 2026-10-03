@@ -139,9 +139,9 @@
       <p id="estadoGrabacion" class="estado"></p>
     </section>
 
-    <!-- ============ REVISIÓN ANTES DE PUBLICAR + GRABACIÓN LOCAL ============ -->
+    <!-- ============ REVISIÓN ANTES DE PUBLICAR ============ -->
     <section class="card" id="previewCard">
-      <h2>🎧 Revisar / grabación local</h2>
+      <h2>🎧 Revisar antes de publicar</h2>
 
       <div id="previewPrincipal" style="display:none;">
         <p class="small">Escucha tu grabación. Si te convence publícala; si no, descártala y vuelve a intentar.</p>
@@ -150,17 +150,10 @@
           <button id="btnGuardarPreview" class="btn btn-gold">✅ Guardar y publicar</button>
           <button id="btnDescartarPreview" class="btn btn-del">🗑 Descartar</button>
         </div>
+
         <hr style="margin:16px 0; opacity:.3;" />
-      </div>
 
-      <h3 style="margin-top:0;">🎙️ Grabación local (para guardar en tu computadora)</h3>
-      <div class="btn-row">
-        <button id="btnGrabarLocal" class="btn btn-ghost" disabled>🎙️ Grabar y guardar en mi compu</button>
-        <button id="btnDetenerLocal" class="btn btn-ghost" disabled>⏹ Detener grabación</button>
-      </div>
-      <p id="estadoGrabacionLocal" class="estado small">Termina una grabación normal ("Detener y guardar") para activar esta opción.</p>
-
-      <div id="herramientasLocal" style="display:none; margin-top:10px;">
+        <h3 style="margin-top:0;">💾 O guárdala en tu computadora</h3>
         <audio id="previewAudioLocal" controls style="width:100%;" controlslist="nodownload"></audio>
 
         <div class="btn-row" style="margin-top:10px; flex-wrap:wrap;">
@@ -178,8 +171,8 @@
         <div class="btn-row" style="margin-top:10px;">
           <button id="btnMejorarAudio" class="btn btn-ghost">🧹 Mejorar audio (quitar ruido de fondo)</button>
           <button id="btnGuardarLocal" class="btn btn-gold">💾 Guardar en mi compu</button>
-          <button id="btnDescartarLocal" class="btn btn-del">🗑 Descartar</button>
         </div>
+        <p id="estadoGrabacionLocal" class="estado small"></p>
       </div>
     </section>
 

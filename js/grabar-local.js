@@ -3,28 +3,18 @@
 
   const $ = (id) => document.getElementById(id);
 
-  const btnGrabarLocal = $("btnGrabarLocal");
-  const btnDetenerLocal = $("btnDetenerLocal");
   const estadoLocal = $("estadoGrabacionLocal");
-  const herramientas = $("herramientasLocal");
   const previewAudioLocal = $("previewAudioLocal");
   const inputInicio = $("recorteInicio");
   const inputFin = $("recorteFin");
 
-  if (!btnGrabarLocal) return;
+  if (!previewAudioLocal) return;
 
-  let recLocal = null;
-  let chunksLocal = [];
-  let streamLocal = null;
-
-  // bufferActual = el estado actual del audio local (se reemplaza al
-  // recortar o al mejorar audio; nada de esto pasa solo, cada paso
-  // necesita su propio clic).
+  // bufferActual = el estado actual de ESTA MISMA toma que grabaste con
+  // "Grabar" (se reemplaza al recortar o al mejorar audio; nada pasa
+  // solo, cada paso necesita su propio clic).
   let bufferActual = null;
   let urlActual = null;
-
-  btnGrabarLocal.addEventListener("click", iniciar);
-  if (btnDetenerLocal) btnDetenerLocal.addEventListener("click", detener);
 
   $("btnMarcarInicio")?.addEventListener("click", () => {
     inputInicio.value = (previewAudioLocal.currentTime || 0).toFixed(1);
@@ -35,46 +25,12 @@
   $("btnRecortar")?.addEventListener("click", recortar);
   $("btnMejorarAudio")?.addEventListener("click", mejorarAudio);
   $("btnGuardarLocal")?.addEventListener("click", guardarEnComputadora);
-  $("btnDescartarLocal")?.addEventListener("click", descartar);
 
-  // ======================================================
-  // GRABAR (captura simple y neutra, sin el EQ/compresor de la cabina)
-  // ======================================================
-
-  async function iniciar() {
+  // Llamado desde app.js justo cuando "Detener y guardar" termina de
+  // grabar — carga esa MISMA grabación aquí, para recortar/mejorar/guardar.
+  window.P21_cargarTomaLocal = async function (blob) {
+    estado("⏳ Preparando...");
     try {
-      estado("🎙️ Pidiendo acceso al micrófono...");
-      streamLocal = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
-      });
-
-      chunksLocal = [];
-      recLocal = new MediaRecorder(streamLocal);
-      recLocal.ondataavailable = (e) => { if (e.data.size > 0) chunksLocal.push(e.data); };
-      recLocal.onstop = alDetener;
-      recLocal.start();
-
-      btnGrabarLocal.disabled = true;
-      btnDetenerLocal.disabled = false;
-      herramientas.style.display = "none";
-      estado("🔴 Grabando — un consejo: deja ~1 segundo de silencio al inicio, así 'mejorar audio' puede medir mejor el ruido de fondo.");
-    } catch (e) {
-      console.error(e);
-      estado("❌ No se pudo acceder al micrófono: " + e.message, true);
-    }
-  }
-
-  function detener() {
-    if (recLocal && recLocal.state !== "inactive") recLocal.stop();
-    if (streamLocal) streamLocal.getTracks().forEach((t) => t.stop());
-    btnGrabarLocal.disabled = false;
-    btnDetenerLocal.disabled = true;
-  }
-
-  async function alDetener() {
-    estado("⏳ Cargando grabación...");
-    try {
-      const blob = new Blob(chunksLocal, { type: recLocal.mimeType || "audio/webm" });
       const arrayBuffer = await blob.arrayBuffer();
       const ctxTemp = new (window.AudioContext || window.webkitAudioContext)();
       bufferActual = await ctxTemp.decodeAudioData(arrayBuffer);
@@ -83,29 +39,29 @@
       inputFin.value = bufferActual.duration.toFixed(1);
 
       actualizarPreview();
-      herramientas.style.display = "block";
-      estado("✅ Lista para revisar. Nada se guarda todavía — usa los botones de abajo.");
+      estado("Lista para recortar, mejorar o guardar en tu computadora.");
     } catch (e) {
       console.error(e);
-      estado("❌ Error al cargar la grabación: " + e.message, true);
+      estado("❌ Error al preparar la grabación: " + e.message, true);
     }
-  }
+  };
+
+  // Llamado desde app.js cuando se publica o se descarta la toma
+  // principal — limpia el estado de estas herramientas también.
+  window.P21_descartarTomaLocal = function () {
+    bufferActual = null;
+    if (urlActual) { URL.revokeObjectURL(urlActual); urlActual = null; }
+    previewAudioLocal.pause();
+    previewAudioLocal.removeAttribute("src");
+    previewAudioLocal.load();
+    estado("");
+  };
 
   function actualizarPreview() {
     const wav = audioBufferAWav(bufferActual);
     if (urlActual) URL.revokeObjectURL(urlActual);
     urlActual = URL.createObjectURL(wav);
     previewAudioLocal.src = urlActual;
-  }
-
-  function descartar() {
-    bufferActual = null;
-    if (urlActual) { URL.revokeObjectURL(urlActual); urlActual = null; }
-    previewAudioLocal.pause();
-    previewAudioLocal.removeAttribute("src");
-    previewAudioLocal.load();
-    herramientas.style.display = "none";
-    estado("🗑 Grabación local descartada.");
   }
 
   // ======================================================
@@ -154,26 +110,23 @@
 
   const TAMANO_FRAME = 2048;
   const SEGUNDOS_PERFIL = 1;
-  const FACTOR_RESTA = 1.3;  // qué tan agresivo. Súbelo si queda mucho ruido; bájalo si se oye "robótico"/con huecos.
-  const PISO_MINIMO = 0.15;  // nunca deja la señal en menos del 15% del original (evita el "ruido musical" típico de este método)
+  const FACTOR_RESTA = 1.1;  // qué tan agresivo. Súbelo si queda mucho ruido; bájalo si se oye "robótico"/con huecos.
+  const PISO_MINIMO = 0.25;  // nunca deja la señal en menos del 25% del original (evita el "ruido musical" y la pérdida de volumen)
 
   function mejorarAudio() {
     if (!bufferActual) return;
     estado("⏳ Quitando ruido de fondo (puede tardar unos segundos)...");
-    // setTimeout para que el navegador alcance a pintar el mensaje antes
-    // de ponerse a calcular (esto congela la pestaña un momento).
     setTimeout(() => {
       try {
         const original = bufferActual;
         let limpio = reducirRuido(original);
         // Restar ruido en todo el espectro también le quita volumen a la
-        // voz, no solo al ruido — por eso el resultado sonaba muy bajo.
-        // Aquí se sube el volumen del resultado para igualar el pico del
-        // audio original.
-        limpio = normalizarA(limpio, original);
+        // voz, no solo al ruido. Aquí se iguala el VOLUMEN PERCIBIDO
+        // (no solo el pico) del resultado con el del audio original.
+        limpio = igualarVolumen(limpio, original);
         bufferActual = limpio;
         actualizarPreview();
-        estado("🧹 Listo — ruido de fondo reducido y volumen normalizado. Si quedó muy agresivo o con huecos, dímelo y ajustamos el filtro.");
+        estado("🧹 Listo — ruido reducido y volumen igualado al original. Si quedó muy agresivo o con huecos, dímelo y ajustamos el filtro.");
       } catch (e) {
         console.error(e);
         estado("❌ Error al mejorar el audio: " + e.message, true);
@@ -181,14 +134,20 @@
     }, 50);
   }
 
-  // Sube (o baja) el volumen de "buffer" para que su pico más alto se
-  // parezca al de "referencia" — corrige la pérdida de volumen que deja
-  // la resta espectral.
-  function normalizarA(buffer, referencia) {
-    const picoOriginal = picoAbsoluto(referencia);
+  // Sube (o baja) el volumen de "buffer" para que suene tan fuerte como
+  // "referencia" en promedio (RMS, más parecido a cómo el oído percibe
+  // el volumen que solo mirar el pico más alto), sin dejar que se sature.
+  function igualarVolumen(buffer, referencia) {
+    const rmsOriginal = rmsDe(referencia);
+    const rmsNuevo = rmsDe(buffer);
+    if (rmsNuevo < 1e-6 || rmsOriginal < 1e-6) return buffer;
+
+    let factor = rmsOriginal / rmsNuevo;
+
     const picoNuevo = picoAbsoluto(buffer);
-    if (picoNuevo < 1e-6 || picoOriginal < 1e-6) return buffer;
-    const factor = Math.min(picoOriginal / picoNuevo, 6); // tope: no amplificar más de 6x
+    const factorMaxSinSaturar = picoNuevo > 1e-6 ? 0.98 / picoNuevo : factor;
+    factor = Math.min(factor, factorMaxSinSaturar, 10);
+
     for (let c = 0; c < buffer.numberOfChannels; c++) {
       const datos = buffer.getChannelData(c);
       for (let i = 0; i < datos.length; i++) {
@@ -196,6 +155,15 @@
       }
     }
     return buffer;
+  }
+
+  function rmsDe(buffer) {
+    let suma = 0, n = 0;
+    for (let c = 0; c < buffer.numberOfChannels; c++) {
+      const datos = buffer.getChannelData(c);
+      for (let i = 0; i < datos.length; i++) { suma += datos[i] * datos[i]; n++; }
+    }
+    return n ? Math.sqrt(suma / n) : 0;
   }
 
   function picoAbsoluto(buffer) {
