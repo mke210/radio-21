@@ -411,6 +411,36 @@
     </form>
   </dialog>
 
+  <dialog id="editAudioModal">
+    <h3>🎛️ Editar audio — <span id="editAudioTitulo"></span></h3>
+    <p id="estadoEditarAudio" class="estado small"></p>
+    <audio id="previewAudioEpisodio" controls style="width:100%;" controlslist="nodownload"></audio>
+
+    <div class="recorte-editor">
+      <div class="recorte-duracion-total">Duración: <span id="recorteDuracionTotalEp">0:00.000</span></div>
+      <div class="recorte-barra-wrap">
+        <div class="recorte-barra" id="recorteBarraEp">
+          <div class="recorte-seleccion" id="recorteSeleccionEp"></div>
+          <div class="recorte-manija" id="manijaInicioEp" title="Inicio del recorte"></div>
+          <div class="recorte-manija" id="manijaFinEp" title="Fin del recorte"></div>
+        </div>
+      </div>
+      <div class="recorte-tiempos">
+        <span id="recorteTiempoInicioEp">0:00.000</span>
+        <span id="recorteTiempoFinEp">-0:00.000</span>
+      </div>
+    </div>
+
+    <div class="btn-row" style="margin-top:10px;">
+      <button id="btnRecortarEp" class="btn btn-ghost">✂️ Recortar audio</button>
+      <button id="btnMejorarAudioEp" class="btn btn-ghost">🧹 Mejorar audio (quitar ruido)</button>
+    </div>
+    <div class="btn-row" style="margin-top:10px;">
+      <button id="btnCancelarEditarAudio" type="button" class="btn btn-ghost">Cancelar</button>
+      <button id="btnActualizarEpisodio" class="btn btn-gold">💾 Actualizar episodio</button>
+    </div>
+  </dialog>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js"></script>
   <script src="js/app.js"></script>

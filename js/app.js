@@ -60,6 +60,12 @@
     }).catch(() => {});
   }
 
+  // Expuestos para que grabar-local.js pueda subir/borrar archivos y
+  // refrescar la tabla, sin duplicar esta lógica.
+  window.P21_subirArchivoB2 = subirArchivoB2;
+  window.P21_borrarArchivoB2 = borrarArchivoB2;
+  window.P21_refrescarTabla = () => cargarTodo();
+
   // ===== Claves de configuración persistente =====
   const LS = {
     loop: "p21_loop",
@@ -1304,6 +1310,9 @@
       acc.className = "acciones";
       acc.appendChild(btnMini("Escuchar", "btn-blue", () => reproducirUno(item.id)));
       acc.appendChild(btnMini("Editar", "btn-edit", () => abrirEditar(item.id)));
+      if (typeof window.P21_abrirEditorEpisodio === "function") {
+        acc.appendChild(btnMini("🎛️ Editar audio", "btn-edit", () => window.P21_abrirEditorEpisodio(item)));
+      }
       acc.appendChild(btnMini(publicado ? "Ocultar" : "Publicar", publicado ? "btn-hide" : "btn-pub", () => togglePublicar(item.id)));
       acc.appendChild(btnMini("Borrar", "btn-del", () => borrarAudio(item.id)));
       tdA.appendChild(acc);

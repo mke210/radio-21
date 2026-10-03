@@ -3,155 +3,15 @@
 
   const $ = (id) => document.getElementById(id);
 
-  const estadoLocal = $("estadoGrabacionLocal");
-  const previewAudioLocal = $("previewAudioLocal");
-  const barra = $("recorteBarra");
-  const manijaInicio = $("manijaInicio");
-  const manijaFin = $("manijaFin");
-  const elSeleccion = $("recorteSeleccion");
-  const elTiempoInicio = $("recorteTiempoInicio");
-  const elTiempoFin = $("recorteTiempoFin");
-  const elDuracionTotal = $("recorteDuracionTotal");
-
-  if (!previewAudioLocal) return;
-
-  // bufferActual = el estado actual de ESTA MISMA toma que grabaste con
-  // "Grabar" (se reemplaza al recortar o al mejorar audio; nada pasa
-  // solo, cada paso necesita su propio clic).
-  let bufferActual = null;
-  let urlActual = null;
-
-  // Posición de las manijas como fracción (0 a 1) de la duración total.
-  let fracInicio = 0;
-  let fracFin = 1;
-  let arrastrando = null; // "inicio" | "fin" | null
-
-  $("btnRecortar")?.addEventListener("click", recortar);
-  $("btnMejorarAudio")?.addEventListener("click", mejorarAudio);
-  $("btnGuardarLocal")?.addEventListener("click", guardarEnComputadora);
-
-  if (manijaInicio) manijaInicio.addEventListener("pointerdown", (e) => iniciarArrastre(e, "inicio"));
-  if (manijaFin) manijaFin.addEventListener("pointerdown", (e) => iniciarArrastre(e, "fin"));
-
-  function iniciarArrastre(e, tipo) {
-    e.preventDefault();
-    arrastrando = tipo;
-    document.addEventListener("pointermove", moverArrastre);
-    document.addEventListener("pointerup", soltarArrastre);
-  }
-
-  function moverArrastre(e) {
-    if (!arrastrando || !barra) return;
-    const rect = barra.getBoundingClientRect();
-    let frac = rect.width > 0 ? (e.clientX - rect.left) / rect.width : 0;
-    frac = Math.max(0, Math.min(1, frac));
-    if (arrastrando === "inicio") {
-      fracInicio = Math.min(frac, fracFin - 0.005);
-    } else {
-      fracFin = Math.max(frac, fracInicio + 0.005);
-    }
-    actualizarBarra();
-  }
-
-  function soltarArrastre() {
-    arrastrando = null;
-    document.removeEventListener("pointermove", moverArrastre);
-    document.removeEventListener("pointerup", soltarArrastre);
-  }
-
-  function actualizarBarra() {
-    if (!manijaInicio || !manijaFin || !elSeleccion) return;
-    const pInicio = (fracInicio * 100).toFixed(3) + "%";
-    const pFin = (fracFin * 100).toFixed(3) + "%";
-    manijaInicio.style.left = pInicio;
-    manijaFin.style.left = pFin;
-    elSeleccion.style.left = pInicio;
-    elSeleccion.style.width = ((fracFin - fracInicio) * 100).toFixed(3) + "%";
-
-    const dur = bufferActual ? bufferActual.duration : 0;
-    if (elTiempoInicio) elTiempoInicio.textContent = formatearTiempo(fracInicio * dur);
-    if (elTiempoFin) elTiempoFin.textContent = "-" + formatearTiempo((1 - fracFin) * dur);
-  }
+  // ======================================================
+  // UTILIDADES COMPARTIDAS (puras, sin estado de UI)
+  // ======================================================
 
   function formatearTiempo(seg) {
     seg = Math.max(0, seg);
     const m = Math.floor(seg / 60);
     const s = seg - m * 60;
     return `${m}:${s.toFixed(3).padStart(6, "0")}`;
-  }
-
-  // Llamado desde app.js justo cuando "Detener y guardar" termina de
-  // grabar — carga esa MISMA grabación aquí, para recortar/mejorar/guardar.
-  window.P21_cargarTomaLocal = async function (blob) {
-    estado("⏳ Preparando...");
-    try {
-      const arrayBuffer = await blob.arrayBuffer();
-      const ctxTemp = new (window.AudioContext || window.webkitAudioContext)();
-      bufferActual = await ctxTemp.decodeAudioData(arrayBuffer);
-
-      fracInicio = 0;
-      fracFin = 1;
-      if (elDuracionTotal) elDuracionTotal.textContent = formatearTiempo(bufferActual.duration);
-      actualizarBarra();
-      actualizarPreview();
-      estado("Lista para recortar, mejorar o guardar en tu computadora.");
-    } catch (e) {
-      console.error(e);
-      estado("❌ Error al preparar la grabación: " + e.message, true);
-    }
-  };
-
-  // Llamado desde app.js cuando se publica o se descarta la toma
-  // principal — limpia el estado de estas herramientas también.
-  window.P21_descartarTomaLocal = function () {
-    bufferActual = null;
-    if (urlActual) { URL.revokeObjectURL(urlActual); urlActual = null; }
-    previewAudioLocal.pause();
-    previewAudioLocal.removeAttribute("src");
-    previewAudioLocal.load();
-    fracInicio = 0;
-    fracFin = 1;
-    actualizarBarra();
-    estado("");
-  };
-
-  function actualizarPreview() {
-    const wav = audioBufferAWav(bufferActual);
-    if (urlActual) URL.revokeObjectURL(urlActual);
-    urlActual = URL.createObjectURL(wav);
-    previewAudioLocal.src = urlActual;
-  }
-
-  // ======================================================
-  // RECORTAR (manual — solo al presionar el botón). Las fracciones de
-  // las manijas se convierten a segundos aquí mismo, y se recortan
-  // (clamp) a la duración real en vez de rechazar el recorte por un
-  // redondeo de una fracción de segundo.
-  // ======================================================
-
-  function recortar() {
-    if (!bufferActual) return;
-    const dur = bufferActual.duration;
-    const inicio = Math.max(0, Math.min(fracInicio * dur, dur));
-    const fin = Math.max(0, Math.min(fracFin * dur, dur));
-
-    if (fin - inicio < 0.05) {
-      estado("❌ Selecciona al menos un poco de audio (arrastra las manijas amarillas).", true);
-      return;
-    }
-
-    try {
-      bufferActual = recortarBuffer(bufferActual, inicio, fin);
-      fracInicio = 0;
-      fracFin = 1;
-      if (elDuracionTotal) elDuracionTotal.textContent = formatearTiempo(bufferActual.duration);
-      actualizarBarra();
-      actualizarPreview();
-      estado("✂️ Audio recortado. Puedes seguir editando o guardarlo ya.");
-    } catch (e) {
-      console.error(e);
-      estado("❌ Error al recortar: " + e.message, true);
-    }
   }
 
   function recortarBuffer(buffer, inicioSeg, finSeg) {
@@ -167,80 +27,11 @@
     return nuevo;
   }
 
-  // ======================================================
-  // MEJORAR AUDIO — quitar ruido de fondo (manual, resta espectral,
-  // mismo principio que el "Noise Reduction" de Audacity)
-  // ======================================================
-
+  // --- Reducción de ruido: resta espectral (estilo "Noise Reduction" de Audacity) ---
   const TAMANO_FRAME = 2048;
   const SEGUNDOS_PERFIL = 1;
   const FACTOR_RESTA = 1.1;  // qué tan agresivo. Súbelo si queda mucho ruido; bájalo si se oye "robótico"/con huecos.
-  const PISO_MINIMO = 0.25;  // nunca deja la señal en menos del 25% del original (evita el "ruido musical" y la pérdida de volumen)
-
-  function mejorarAudio() {
-    if (!bufferActual) return;
-    estado("⏳ Quitando ruido de fondo (puede tardar unos segundos)...");
-    setTimeout(() => {
-      try {
-        const original = bufferActual;
-        let limpio = reducirRuido(original);
-        // Restar ruido en todo el espectro también le quita volumen a la
-        // voz, no solo al ruido. Aquí se iguala el VOLUMEN PERCIBIDO
-        // (no solo el pico) del resultado con el del audio original.
-        limpio = igualarVolumen(limpio, original);
-        bufferActual = limpio;
-        actualizarPreview();
-        estado("🧹 Listo — ruido reducido y volumen igualado al original. Si quedó muy agresivo o con huecos, dímelo y ajustamos el filtro.");
-      } catch (e) {
-        console.error(e);
-        estado("❌ Error al mejorar el audio: " + e.message, true);
-      }
-    }, 50);
-  }
-
-  // Sube (o baja) el volumen de "buffer" para que suene tan fuerte como
-  // "referencia" en promedio (RMS, más parecido a cómo el oído percibe
-  // el volumen que solo mirar el pico más alto), sin dejar que se sature.
-  function igualarVolumen(buffer, referencia) {
-    const rmsOriginal = rmsDe(referencia);
-    const rmsNuevo = rmsDe(buffer);
-    if (rmsNuevo < 1e-6 || rmsOriginal < 1e-6) return buffer;
-
-    let factor = rmsOriginal / rmsNuevo;
-
-    const picoNuevo = picoAbsoluto(buffer);
-    const factorMaxSinSaturar = picoNuevo > 1e-6 ? 0.98 / picoNuevo : factor;
-    factor = Math.min(factor, factorMaxSinSaturar, 10);
-
-    for (let c = 0; c < buffer.numberOfChannels; c++) {
-      const datos = buffer.getChannelData(c);
-      for (let i = 0; i < datos.length; i++) {
-        datos[i] = Math.max(-1, Math.min(1, datos[i] * factor));
-      }
-    }
-    return buffer;
-  }
-
-  function rmsDe(buffer) {
-    let suma = 0, n = 0;
-    for (let c = 0; c < buffer.numberOfChannels; c++) {
-      const datos = buffer.getChannelData(c);
-      for (let i = 0; i < datos.length; i++) { suma += datos[i] * datos[i]; n++; }
-    }
-    return n ? Math.sqrt(suma / n) : 0;
-  }
-
-  function picoAbsoluto(buffer) {
-    let pico = 0;
-    for (let c = 0; c < buffer.numberOfChannels; c++) {
-      const datos = buffer.getChannelData(c);
-      for (let i = 0; i < datos.length; i++) {
-        const v = Math.abs(datos[i]);
-        if (v > pico) pico = v;
-      }
-    }
-    return pico;
-  }
+  const PISO_MINIMO = 0.25;  // nunca deja la señal en menos del 25% del original
 
   function reducirRuido(audioBuffer) {
     const sr = audioBuffer.sampleRate;
@@ -353,52 +144,43 @@
     }
   }
 
-  // ======================================================
-  // GUARDAR EN LA COMPUTADORA (manual — solo al presionar el botón)
-  // ======================================================
-
-  async function guardarEnComputadora() {
-    if (!bufferActual) return;
-    estado("⏳ Guardando...");
-    try {
-      const wav = audioBufferAWav(bufferActual);
-      await guardarArchivo(wav, `grabacion-${Date.now()}.wav`);
-      estado("✅ Guardado en tu computadora.");
-    } catch (e) {
-      console.error(e);
-      estado("❌ " + e.message, true);
-    }
-  }
-
-  async function guardarArchivo(blob, nombreSugerido) {
-    if (window.showSaveFilePicker) {
-      try {
-        const handle = await window.showSaveFilePicker({
-          suggestedName: nombreSugerido,
-          types: [{ description: "Audio WAV", accept: { "audio/wav": [".wav"] } }]
-        });
-        const writable = await handle.createWritable();
-        await writable.write(blob);
-        await writable.close();
-        return;
-      } catch (e) {
-        if (e.name === "AbortError") throw new Error("Cancelado.");
-        console.warn("No se pudo usar el selector de carpeta, se descarga normal:", e);
+  function igualarVolumen(buffer, referencia) {
+    const rmsOriginal = rmsDe(referencia);
+    const rmsNuevo = rmsDe(buffer);
+    if (rmsNuevo < 1e-6 || rmsOriginal < 1e-6) return buffer;
+    let factor = rmsOriginal / rmsNuevo;
+    const picoNuevo = picoAbsoluto(buffer);
+    const factorMaxSinSaturar = picoNuevo > 1e-6 ? 0.98 / picoNuevo : factor;
+    factor = Math.min(factor, factorMaxSinSaturar, 10);
+    for (let c = 0; c < buffer.numberOfChannels; c++) {
+      const datos = buffer.getChannelData(c);
+      for (let i = 0; i < datos.length; i++) {
+        datos[i] = Math.max(-1, Math.min(1, datos[i] * factor));
       }
     }
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = nombreSugerido;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    return buffer;
   }
 
-  // ======================================================
-  // CODIFICAR A WAV (PCM 16-bit)
-  // ======================================================
+  function rmsDe(buffer) {
+    let suma = 0, n = 0;
+    for (let c = 0; c < buffer.numberOfChannels; c++) {
+      const datos = buffer.getChannelData(c);
+      for (let i = 0; i < datos.length; i++) { suma += datos[i] * datos[i]; n++; }
+    }
+    return n ? Math.sqrt(suma / n) : 0;
+  }
+
+  function picoAbsoluto(buffer) {
+    let pico = 0;
+    for (let c = 0; c < buffer.numberOfChannels; c++) {
+      const datos = buffer.getChannelData(c);
+      for (let i = 0; i < datos.length; i++) {
+        const v = Math.abs(datos[i]);
+        if (v > pico) pico = v;
+      }
+    }
+    return pico;
+  }
 
   function audioBufferAWav(buffer) {
     const numCanales = buffer.numberOfChannels;
@@ -443,9 +225,309 @@
     for (let i = 0; i < str.length; i++) vista.setUint8(offset + i, str.charCodeAt(i));
   }
 
-  function estado(t, err) {
-    if (!estadoLocal) return;
-    estadoLocal.textContent = t;
-    estadoLocal.classList.toggle("error", !!err);
+  async function guardarArchivoLocal(blob, nombreSugerido) {
+    if (window.showSaveFilePicker) {
+      try {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: nombreSugerido,
+          types: [{ description: "Audio WAV", accept: { "audio/wav": [".wav"] } }]
+        });
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        return;
+      } catch (e) {
+        if (e.name === "AbortError") throw new Error("Cancelado.");
+        console.warn("No se pudo usar el selector de carpeta, se descarga normal:", e);
+      }
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = nombreSugerido;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  // ======================================================
+  // FÁBRICA: un editor de recorte reutilizable (barra con manijas +
+  // mejorar audio), para no duplicar la lógica entre la grabación nueva
+  // y la edición de episodios ya publicados.
+  // ======================================================
+
+  function crearEditorRecorte(elIds) {
+    const barra = $(elIds.barra);
+    const manijaInicio = $(elIds.manijaInicio);
+    const manijaFin = $(elIds.manijaFin);
+    const elSeleccion = $(elIds.seleccion);
+    const elTiempoInicio = $(elIds.tiempoInicio);
+    const elTiempoFin = $(elIds.tiempoFin);
+    const elDuracionTotal = $(elIds.duracionTotal);
+    const audioEl = $(elIds.audio);
+    const estadoEl = $(elIds.estado);
+
+    if (!audioEl || !barra) return null;
+
+    let bufferActual = null;
+    let urlActual = null;
+    let fracInicio = 0;
+    let fracFin = 1;
+    let arrastrando = null;
+
+    if (manijaInicio) manijaInicio.addEventListener("pointerdown", (e) => iniciarArrastre(e, "inicio"));
+    if (manijaFin) manijaFin.addEventListener("pointerdown", (e) => iniciarArrastre(e, "fin"));
+
+    function iniciarArrastre(e, tipo) {
+      e.preventDefault();
+      arrastrando = tipo;
+      document.addEventListener("pointermove", moverArrastre);
+      document.addEventListener("pointerup", soltarArrastre);
+    }
+
+    function moverArrastre(e) {
+      if (!arrastrando) return;
+      const rect = barra.getBoundingClientRect();
+      let frac = rect.width > 0 ? (e.clientX - rect.left) / rect.width : 0;
+      frac = Math.max(0, Math.min(1, frac));
+      if (arrastrando === "inicio") fracInicio = Math.min(frac, fracFin - 0.005);
+      else fracFin = Math.max(frac, fracInicio + 0.005);
+      actualizarBarra();
+    }
+
+    function soltarArrastre() {
+      arrastrando = null;
+      document.removeEventListener("pointermove", moverArrastre);
+      document.removeEventListener("pointerup", soltarArrastre);
+    }
+
+    function actualizarBarra() {
+      if (!manijaInicio || !manijaFin || !elSeleccion) return;
+      const pInicio = (fracInicio * 100).toFixed(3) + "%";
+      const pFin = (fracFin * 100).toFixed(3) + "%";
+      manijaInicio.style.left = pInicio;
+      manijaFin.style.left = pFin;
+      elSeleccion.style.left = pInicio;
+      elSeleccion.style.width = ((fracFin - fracInicio) * 100).toFixed(3) + "%";
+
+      const dur = bufferActual ? bufferActual.duration : 0;
+      if (elTiempoInicio) elTiempoInicio.textContent = formatearTiempo(fracInicio * dur);
+      if (elTiempoFin) elTiempoFin.textContent = "-" + formatearTiempo((1 - fracFin) * dur);
+    }
+
+    function actualizarPreview() {
+      const wav = audioBufferAWav(bufferActual);
+      if (urlActual) URL.revokeObjectURL(urlActual);
+      urlActual = URL.createObjectURL(wav);
+      audioEl.src = urlActual;
+    }
+
+    function estado(t, err) {
+      if (!estadoEl) return;
+      estadoEl.textContent = t;
+      estadoEl.classList.toggle("error", !!err);
+    }
+
+    function cargarBuffer(buffer) {
+      bufferActual = buffer;
+      fracInicio = 0;
+      fracFin = 1;
+      if (elDuracionTotal) elDuracionTotal.textContent = formatearTiempo(buffer.duration);
+      actualizarBarra();
+      actualizarPreview();
+    }
+
+    function recortar() {
+      if (!bufferActual) return;
+      const dur = bufferActual.duration;
+      const inicio = Math.max(0, Math.min(fracInicio * dur, dur));
+      const fin = Math.max(0, Math.min(fracFin * dur, dur));
+      if (fin - inicio < 0.05) {
+        estado("❌ Selecciona al menos un poco de audio (arrastra las manijas amarillas).", true);
+        return;
+      }
+      try {
+        bufferActual = recortarBuffer(bufferActual, inicio, fin);
+        fracInicio = 0;
+        fracFin = 1;
+        if (elDuracionTotal) elDuracionTotal.textContent = formatearTiempo(bufferActual.duration);
+        actualizarBarra();
+        actualizarPreview();
+        estado("✂️ Audio recortado. Puedes seguir editando o guardarlo ya.");
+      } catch (e) {
+        console.error(e);
+        estado("❌ Error al recortar: " + e.message, true);
+      }
+    }
+
+    function mejorar() {
+      if (!bufferActual) return;
+      estado("⏳ Quitando ruido de fondo (puede tardar unos segundos)...");
+      setTimeout(() => {
+        try {
+          const original = bufferActual;
+          let limpio = reducirRuido(original);
+          limpio = igualarVolumen(limpio, original);
+          bufferActual = limpio;
+          actualizarPreview();
+          estado("🧹 Listo — ruido reducido y volumen igualado al original.");
+        } catch (e) {
+          console.error(e);
+          estado("❌ Error al mejorar el audio: " + e.message, true);
+        }
+      }, 50);
+    }
+
+    function reset() {
+      bufferActual = null;
+      if (urlActual) { URL.revokeObjectURL(urlActual); urlActual = null; }
+      audioEl.pause();
+      audioEl.removeAttribute("src");
+      audioEl.load();
+      fracInicio = 0; fracFin = 1;
+      actualizarBarra();
+      estado("");
+    }
+
+    return { cargarBuffer, obtenerBuffer: () => bufferActual, recortar, mejorar, reset, estado };
+  }
+
+  // ======================================================
+  // EDITOR 1: grabación nueva (justo después de "Detener y guardar")
+  // ======================================================
+
+  const editorLocal = crearEditorRecorte({
+    barra: "recorteBarra", manijaInicio: "manijaInicio", manijaFin: "manijaFin",
+    seleccion: "recorteSeleccion", tiempoInicio: "recorteTiempoInicio", tiempoFin: "recorteTiempoFin",
+    duracionTotal: "recorteDuracionTotal", audio: "previewAudioLocal", estado: "estadoGrabacionLocal"
+  });
+
+  if (editorLocal) {
+    $("btnRecortar")?.addEventListener("click", editorLocal.recortar);
+    $("btnMejorarAudio")?.addEventListener("click", editorLocal.mejorar);
+    $("btnGuardarLocal")?.addEventListener("click", async () => {
+      const buffer = editorLocal.obtenerBuffer();
+      if (!buffer) return;
+      editorLocal.estado("⏳ Guardando...");
+      try {
+        await guardarArchivoLocal(audioBufferAWav(buffer), `grabacion-${Date.now()}.wav`);
+        editorLocal.estado("✅ Guardado en tu computadora.");
+      } catch (e) {
+        console.error(e);
+        editorLocal.estado("❌ " + e.message, true);
+      }
+    });
+
+    // Llamado desde app.js justo cuando "Detener y guardar" termina de
+    // grabar — carga esa MISMA grabación aquí.
+    window.P21_cargarTomaLocal = async function (blob) {
+      editorLocal.estado("⏳ Preparando...");
+      try {
+        const arrayBuffer = await blob.arrayBuffer();
+        const ctxTemp = new (window.AudioContext || window.webkitAudioContext)();
+        const buffer = await ctxTemp.decodeAudioData(arrayBuffer);
+        editorLocal.cargarBuffer(buffer);
+        editorLocal.estado("Lista para recortar, mejorar o guardar en tu computadora.");
+      } catch (e) {
+        console.error(e);
+        editorLocal.estado("❌ Error al preparar la grabación: " + e.message, true);
+      }
+    };
+
+    window.P21_descartarTomaLocal = function () {
+      editorLocal.reset();
+    };
+  }
+
+  // ======================================================
+  // EDITOR 2: episodios ya publicados (desde "Administrar episodios")
+  // ======================================================
+
+  const editorEpisodio = crearEditorRecorte({
+    barra: "recorteBarraEp", manijaInicio: "manijaInicioEp", manijaFin: "manijaFinEp",
+    seleccion: "recorteSeleccionEp", tiempoInicio: "recorteTiempoInicioEp", tiempoFin: "recorteTiempoFinEp",
+    duracionTotal: "recorteDuracionTotalEp", audio: "previewAudioEpisodio", estado: "estadoEditarAudio"
+  });
+
+  let episodioActual = null; // { id, titulo, url, archivo }
+
+  if (editorEpisodio) {
+    $("btnRecortarEp")?.addEventListener("click", editorEpisodio.recortar);
+    $("btnMejorarAudioEp")?.addEventListener("click", editorEpisodio.mejorar);
+    $("btnCancelarEditarAudio")?.addEventListener("click", () => {
+      editorEpisodio.reset();
+      episodioActual = null;
+      $("editAudioModal")?.close();
+    });
+    $("btnActualizarEpisodio")?.addEventListener("click", actualizarEpisodio);
+
+    window.P21_abrirEditorEpisodio = async function (item) {
+      episodioActual = item;
+      const modal = $("editAudioModal");
+      const tituloEl = $("editAudioTitulo");
+      if (tituloEl) tituloEl.textContent = item.titulo || "";
+      editorEpisodio.estado("⏳ Descargando el audio del episodio...");
+      if (modal && modal.showModal) modal.showModal();
+
+      try {
+        const resp = await fetch(item.url);
+        if (!resp.ok) throw new Error("No se pudo descargar el audio (" + resp.status + ")");
+        const arrayBuffer = await resp.arrayBuffer();
+        const ctxTemp = new (window.AudioContext || window.webkitAudioContext)();
+        const buffer = await ctxTemp.decodeAudioData(arrayBuffer);
+        editorEpisodio.cargarBuffer(buffer);
+        editorEpisodio.estado("Listo — puedes recortar o mejorar el audio, y luego actualizar el episodio.");
+      } catch (e) {
+        console.error(e);
+        editorEpisodio.estado("❌ Error al cargar el audio: " + e.message, true);
+      }
+    };
+  }
+
+  async function actualizarEpisodio() {
+    if (!episodioActual || !editorEpisodio) return;
+    const buffer = editorEpisodio.obtenerBuffer();
+    if (!buffer) return;
+
+    if (typeof window.P21_subirArchivoB2 !== "function" || !window.P21_DB) {
+      editorEpisodio.estado("❌ Falta configuración (B2 o Supabase) para actualizar.", true);
+      return;
+    }
+
+    editorEpisodio.estado("⏳ Subiendo audio actualizado...");
+    try {
+      const wav = audioBufferAWav(buffer);
+      const nombreArchivo = `editado-${Date.now()}.wav`;
+      const nuevaUrl = await window.P21_subirArchivoB2(wav, nombreArchivo, "audios");
+
+      const urlVieja = episodioActual.url;
+
+      const { error } = await window.P21_DB.from("audios").update({
+        url: nuevaUrl,
+        archivo: nombreArchivo,
+        duracion: Math.round(buffer.duration)
+      }).eq("id", episodioActual.id);
+
+      if (error) throw new Error(error.message);
+
+      // Borra el archivo anterior en B2 (si era de B2; si era de
+      // Supabase Storage de antes de la migración, se deja como está).
+      if (typeof window.P21_borrarArchivoB2 === "function") {
+        window.P21_borrarArchivoB2(urlVieja).catch(() => {});
+      }
+
+      editorEpisodio.estado("✅ Episodio actualizado.");
+      if (typeof window.P21_refrescarTabla === "function") window.P21_refrescarTabla();
+
+      setTimeout(() => {
+        $("editAudioModal")?.close();
+        editorEpisodio.reset();
+        episodioActual = null;
+      }, 900);
+    } catch (e) {
+      console.error(e);
+      editorEpisodio.estado("❌ Error al actualizar: " + e.message, true);
+    }
   }
 })();
