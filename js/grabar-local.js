@@ -154,8 +154,8 @@
 
   const TAMANO_FRAME = 2048;
   const SEGUNDOS_PERFIL = 1;
-  const FACTOR_RESTA = 1.8;  // qué tan agresivo. Súbelo si queda mucho ruido; bájalo si se oye "robótico"/con huecos.
-  const PISO_MINIMO = 0.08;  // nunca deja la señal en menos del 8% del original (evita el "ruido musical" típico de este método)
+  const FACTOR_RESTA = 1.3;  // qué tan agresivo. Súbelo si queda mucho ruido; bájalo si se oye "robótico"/con huecos.
+  const PISO_MINIMO = 0.15;  // nunca deja la señal en menos del 15% del original (evita el "ruido musical" típico de este método)
 
   function mejorarAudio() {
     if (!bufferActual) return;
@@ -164,14 +164,50 @@
     // de ponerse a calcular (esto congela la pestaña un momento).
     setTimeout(() => {
       try {
-        bufferActual = reducirRuido(bufferActual);
+        const original = bufferActual;
+        let limpio = reducirRuido(original);
+        // Restar ruido en todo el espectro también le quita volumen a la
+        // voz, no solo al ruido — por eso el resultado sonaba muy bajo.
+        // Aquí se sube el volumen del resultado para igualar el pico del
+        // audio original.
+        limpio = normalizarA(limpio, original);
+        bufferActual = limpio;
         actualizarPreview();
-        estado("🧹 Listo — ruido de fondo reducido. Escúchalo: si quedó muy agresivo o con huecos, dímelo y ajustamos el filtro.");
+        estado("🧹 Listo — ruido de fondo reducido y volumen normalizado. Si quedó muy agresivo o con huecos, dímelo y ajustamos el filtro.");
       } catch (e) {
         console.error(e);
         estado("❌ Error al mejorar el audio: " + e.message, true);
       }
     }, 50);
+  }
+
+  // Sube (o baja) el volumen de "buffer" para que su pico más alto se
+  // parezca al de "referencia" — corrige la pérdida de volumen que deja
+  // la resta espectral.
+  function normalizarA(buffer, referencia) {
+    const picoOriginal = picoAbsoluto(referencia);
+    const picoNuevo = picoAbsoluto(buffer);
+    if (picoNuevo < 1e-6 || picoOriginal < 1e-6) return buffer;
+    const factor = Math.min(picoOriginal / picoNuevo, 6); // tope: no amplificar más de 6x
+    for (let c = 0; c < buffer.numberOfChannels; c++) {
+      const datos = buffer.getChannelData(c);
+      for (let i = 0; i < datos.length; i++) {
+        datos[i] = Math.max(-1, Math.min(1, datos[i] * factor));
+      }
+    }
+    return buffer;
+  }
+
+  function picoAbsoluto(buffer) {
+    let pico = 0;
+    for (let c = 0; c < buffer.numberOfChannels; c++) {
+      const datos = buffer.getChannelData(c);
+      for (let i = 0; i < datos.length; i++) {
+        const v = Math.abs(datos[i]);
+        if (v > pico) pico = v;
+      }
+    }
+    return pico;
   }
 
   function reducirRuido(audioBuffer) {

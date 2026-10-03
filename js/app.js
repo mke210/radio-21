@@ -142,8 +142,6 @@
   on("btnStop", "click", detenerReproduccion);
   on("btnActivarSonido", "click", activarSonido);
   on("btnActualizar", "click", () => cargarTodo());
-  on("btnSalirAlAire", "click", iniciarTransmisionEnVivo);
-  on("btnTerminarTransmision", "click", terminarTransmisionEnVivo);
   on("listaSeleccion", "change", () => { guardarSeleccionLocal(); guardarConfigRemota(); });
 
   on("editForm", "submit", guardarEdicion);
@@ -586,77 +584,6 @@
     const r = $("reproductor");
     r.src = playlist[indice].url;
     estadoReproduccion("Listo: " + playlist[indice].titulo + " — presiona ▶ Reproducir selección para sonar.");
-  }
-
-  // ======================================================
-  // TRANSMISIÓN EN VIVO (Jitsi Meet, solo audio)
-  // ======================================================
-  // "Salir al aire" reutiliza tu grabación local de siempre (misma
-  // limpieza de audio: puerta de ruido, EQ, compresor, limitador) — así
-  // lo que se transmite en vivo también queda grabado, y al terminar
-  // aparece la misma tarjeta de revisión para publicarlo con categoría,
-  // portada, etc., exactamente como cualquier otro episodio.
-  // Jitsi solo se usa para que la gente lo escuche en el momento; nunca
-  // se activa video ni cámara, para ningún participante.
-
-  async function iniciarTransmisionEnVivo() {
-    if (!window.JITSI_ROOM) {
-      estadoEnVivoUI("Falta configurar JITSI_ROOM en js/config.js.", true);
-      return;
-    }
-
-    await iniciarGrabacion();
-    if (!rec || rec.state === "inactive") return; // iniciarGrabacion falló (sin mic, sin título, etc.)
-
-    // #config.startAudioOnly fuerza también tu propia ventana a solo-audio.
-    // De cualquier forma: no actives tu cámara manualmente ahí dentro.
-    window.open(
-      `https://meet.jit.si/${encodeURIComponent(window.JITSI_ROOM)}#config.startAudioOnly=true`,
-      "_blank",
-      "noopener"
-    );
-
-    if (db) {
-      const { error } = await db.from("config").upsert({
-        id: "en_vivo",
-        activa: true,
-        iniciada_en: new Date().toISOString()
-      });
-      if (error) {
-        estadoEnVivoUI("Grabando y transmitiendo, pero no se pudo avisar a los oyentes: " + error.message, true);
-      }
-    }
-
-    const btnE = $("btnSalirAlAire");
-    const btnT = $("btnTerminarTransmision");
-    if (btnE) btnE.disabled = true;
-    if (btnT) btnT.disabled = false;
-    estadoEnVivoUI("🔴 EN VIVO — hablando y grabando a la vez. No actives tu cámara en la ventana de Jitsi. Presiona \"Terminar transmisión\" cuando acabes.");
-  }
-
-  async function terminarTransmisionEnVivo() {
-    if (rec && rec.state !== "inactive") rec.stop(); // dispara el mismo flujo que "Detener y guardar"
-
-    if (db) {
-      const { error } = await db.from("config").upsert({ id: "en_vivo", activa: false });
-      if (error) {
-        estadoEnVivoUI("Transmisión detenida, pero hubo un error avisando a los oyentes: " + error.message, true);
-      } else {
-        estadoEnVivoUI("Transmisión finalizada. Revisa la grabación abajo para publicarla. Ya puedes cerrar la ventana de Jitsi.");
-      }
-    }
-
-    const btnE = $("btnSalirAlAire");
-    const btnT = $("btnTerminarTransmision");
-    if (btnE) btnE.disabled = false;
-    if (btnT) btnT.disabled = true;
-  }
-
-  function estadoEnVivoUI(t, err) {
-    const el = $("estadoEnVivo");
-    if (!el) return;
-    el.textContent = t;
-    el.classList.toggle("error", !!err);
   }
 
   function activarSonido() {
@@ -1134,6 +1061,15 @@
     aud.src = URL.createObjectURL(blob);
     bloque.style.display = "block";
     bloque.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    // Activa la opción de grabación local — solo disponible después de
+    // terminar una grabación normal con "Detener y guardar".
+    const btnLocal = $("btnGrabarLocal");
+    const estLocal = $("estadoGrabacionLocal");
+    if (btnLocal && btnLocal.disabled) {
+      btnLocal.disabled = false;
+      if (estLocal) estLocal.textContent = "Ya puedes grabar y guardar una toma en tu computadora si quieres.";
+    }
   }
 
   function ocultarPreview() {
