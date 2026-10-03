@@ -5,8 +5,13 @@
 
   const estadoLocal = $("estadoGrabacionLocal");
   const previewAudioLocal = $("previewAudioLocal");
-  const inputInicio = $("recorteInicio");
-  const inputFin = $("recorteFin");
+  const barra = $("recorteBarra");
+  const manijaInicio = $("manijaInicio");
+  const manijaFin = $("manijaFin");
+  const elSeleccion = $("recorteSeleccion");
+  const elTiempoInicio = $("recorteTiempoInicio");
+  const elTiempoFin = $("recorteTiempoFin");
+  const elDuracionTotal = $("recorteDuracionTotal");
 
   if (!previewAudioLocal) return;
 
@@ -16,15 +21,64 @@
   let bufferActual = null;
   let urlActual = null;
 
-  $("btnMarcarInicio")?.addEventListener("click", () => {
-    inputInicio.value = (previewAudioLocal.currentTime || 0).toFixed(1);
-  });
-  $("btnMarcarFin")?.addEventListener("click", () => {
-    inputFin.value = (previewAudioLocal.currentTime || 0).toFixed(1);
-  });
+  // Posición de las manijas como fracción (0 a 1) de la duración total.
+  let fracInicio = 0;
+  let fracFin = 1;
+  let arrastrando = null; // "inicio" | "fin" | null
+
   $("btnRecortar")?.addEventListener("click", recortar);
   $("btnMejorarAudio")?.addEventListener("click", mejorarAudio);
   $("btnGuardarLocal")?.addEventListener("click", guardarEnComputadora);
+
+  if (manijaInicio) manijaInicio.addEventListener("pointerdown", (e) => iniciarArrastre(e, "inicio"));
+  if (manijaFin) manijaFin.addEventListener("pointerdown", (e) => iniciarArrastre(e, "fin"));
+
+  function iniciarArrastre(e, tipo) {
+    e.preventDefault();
+    arrastrando = tipo;
+    document.addEventListener("pointermove", moverArrastre);
+    document.addEventListener("pointerup", soltarArrastre);
+  }
+
+  function moverArrastre(e) {
+    if (!arrastrando || !barra) return;
+    const rect = barra.getBoundingClientRect();
+    let frac = rect.width > 0 ? (e.clientX - rect.left) / rect.width : 0;
+    frac = Math.max(0, Math.min(1, frac));
+    if (arrastrando === "inicio") {
+      fracInicio = Math.min(frac, fracFin - 0.005);
+    } else {
+      fracFin = Math.max(frac, fracInicio + 0.005);
+    }
+    actualizarBarra();
+  }
+
+  function soltarArrastre() {
+    arrastrando = null;
+    document.removeEventListener("pointermove", moverArrastre);
+    document.removeEventListener("pointerup", soltarArrastre);
+  }
+
+  function actualizarBarra() {
+    if (!manijaInicio || !manijaFin || !elSeleccion) return;
+    const pInicio = (fracInicio * 100).toFixed(3) + "%";
+    const pFin = (fracFin * 100).toFixed(3) + "%";
+    manijaInicio.style.left = pInicio;
+    manijaFin.style.left = pFin;
+    elSeleccion.style.left = pInicio;
+    elSeleccion.style.width = ((fracFin - fracInicio) * 100).toFixed(3) + "%";
+
+    const dur = bufferActual ? bufferActual.duration : 0;
+    if (elTiempoInicio) elTiempoInicio.textContent = formatearTiempo(fracInicio * dur);
+    if (elTiempoFin) elTiempoFin.textContent = "-" + formatearTiempo((1 - fracFin) * dur);
+  }
+
+  function formatearTiempo(seg) {
+    seg = Math.max(0, seg);
+    const m = Math.floor(seg / 60);
+    const s = seg - m * 60;
+    return `${m}:${s.toFixed(3).padStart(6, "0")}`;
+  }
 
   // Llamado desde app.js justo cuando "Detener y guardar" termina de
   // grabar — carga esa MISMA grabación aquí, para recortar/mejorar/guardar.
@@ -35,9 +89,10 @@
       const ctxTemp = new (window.AudioContext || window.webkitAudioContext)();
       bufferActual = await ctxTemp.decodeAudioData(arrayBuffer);
 
-      inputInicio.value = "0";
-      inputFin.value = bufferActual.duration.toFixed(1);
-
+      fracInicio = 0;
+      fracFin = 1;
+      if (elDuracionTotal) elDuracionTotal.textContent = formatearTiempo(bufferActual.duration);
+      actualizarBarra();
       actualizarPreview();
       estado("Lista para recortar, mejorar o guardar en tu computadora.");
     } catch (e) {
@@ -54,6 +109,9 @@
     previewAudioLocal.pause();
     previewAudioLocal.removeAttribute("src");
     previewAudioLocal.load();
+    fracInicio = 0;
+    fracFin = 1;
+    actualizarBarra();
     estado("");
   };
 
@@ -65,23 +123,29 @@
   }
 
   // ======================================================
-  // RECORTAR (manual — solo al presionar el botón)
+  // RECORTAR (manual — solo al presionar el botón). Las fracciones de
+  // las manijas se convierten a segundos aquí mismo, y se recortan
+  // (clamp) a la duración real en vez de rechazar el recorte por un
+  // redondeo de una fracción de segundo.
   // ======================================================
 
   function recortar() {
     if (!bufferActual) return;
-    const inicio = parseFloat(inputInicio.value) || 0;
-    const fin = parseFloat(inputFin.value) || bufferActual.duration;
+    const dur = bufferActual.duration;
+    const inicio = Math.max(0, Math.min(fracInicio * dur, dur));
+    const fin = Math.max(0, Math.min(fracFin * dur, dur));
 
-    if (inicio < 0 || fin <= inicio || fin > bufferActual.duration + 0.01) {
-      estado("❌ El rango de recorte no es válido.", true);
+    if (fin - inicio < 0.05) {
+      estado("❌ Selecciona al menos un poco de audio (arrastra las manijas amarillas).", true);
       return;
     }
 
     try {
       bufferActual = recortarBuffer(bufferActual, inicio, fin);
-      inputInicio.value = "0";
-      inputFin.value = bufferActual.duration.toFixed(1);
+      fracInicio = 0;
+      fracFin = 1;
+      if (elDuracionTotal) elDuracionTotal.textContent = formatearTiempo(bufferActual.duration);
+      actualizarBarra();
       actualizarPreview();
       estado("✂️ Audio recortado. Puedes seguir editando o guardarlo ya.");
     } catch (e) {

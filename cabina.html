@@ -70,6 +70,54 @@
     @media (max-width: 640px) {
       .locutor-box-mezclador { flex-wrap: wrap; }
     }
+
+    /* Editor visual de recorte (manijas arrastrables) */
+    .recorte-editor { margin-top: 12px; }
+    .recorte-duracion-total {
+      font-size: 11px;
+      color: #9aa6b2;
+      text-align: right;
+      margin-bottom: 2px;
+      font-variant-numeric: tabular-nums;
+    }
+    .recorte-barra-wrap { padding: 14px 4px; }
+    .recorte-barra {
+      position: relative;
+      height: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 5px;
+    }
+    .recorte-seleccion {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(201, 162, 39, 0.35);
+      border-radius: 4px;
+      pointer-events: none;
+    }
+    .recorte-manija {
+      position: absolute;
+      top: -7px;
+      left: 0;
+      width: 8px;
+      height: 24px;
+      background: #c9a227;
+      border-radius: 3px;
+      cursor: ew-resize;
+      transform: translateX(-50%);
+      touch-action: none;
+      box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.25);
+    }
+    #manijaFin { left: 100%; }
+    .recorte-tiempos {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #cdd6e0;
+      font-variant-numeric: tabular-nums;
+    }
   </style>
 </head>
 <body>
@@ -234,16 +282,22 @@
         <h3 style="margin-top:0;">💾 O guárdala en tu computadora</h3>
         <audio id="previewAudioLocal" controls style="width:100%;" controlslist="nodownload"></audio>
 
-        <div class="btn-row" style="margin-top:10px; flex-wrap:wrap;">
-          <label class="small">Inicio:
-            <input type="number" id="recorteInicio" min="0" step="0.1" value="0" style="width:70px" />s
-            <button type="button" id="btnMarcarInicio" class="btn btn-mini btn-ghost">Usar posición actual</button>
-          </label>
-          <label class="small">Fin:
-            <input type="number" id="recorteFin" min="0" step="0.1" style="width:70px" />s
-            <button type="button" id="btnMarcarFin" class="btn btn-mini btn-ghost">Usar posición actual</button>
-          </label>
-          <button id="btnRecortar" class="btn btn-ghost">✂️ Recortar audio</button>
+        <div class="recorte-editor">
+          <div class="recorte-duracion-total">Duración: <span id="recorteDuracionTotal">0:00.000</span></div>
+          <div class="recorte-barra-wrap">
+            <div class="recorte-barra" id="recorteBarra">
+              <div class="recorte-seleccion" id="recorteSeleccion"></div>
+              <div class="recorte-manija" id="manijaInicio" title="Inicio del recorte"></div>
+              <div class="recorte-manija" id="manijaFin" title="Fin del recorte"></div>
+            </div>
+          </div>
+          <div class="recorte-tiempos">
+            <span id="recorteTiempoInicio">0:00.000</span>
+            <span id="recorteTiempoFin">-0:00.000</span>
+          </div>
+          <div class="btn-row" style="margin-top:8px;">
+            <button id="btnRecortar" class="btn btn-ghost">✂️ Recortar audio</button>
+          </div>
         </div>
 
         <div class="btn-row" style="margin-top:10px;">
