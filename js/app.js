@@ -1128,21 +1128,21 @@
   function mostrarPreview(blob, dur) {
     pendingBlob = blob;
     pendingDur = dur;
-    const card = $("previewCard");
+    const bloque = $("previewPrincipal");
     const aud = $("previewAudio");
-    if (!card || !aud) return;
+    if (!bloque || !aud) return;
     aud.src = URL.createObjectURL(blob);
-    card.style.display = "block";
-    card.scrollIntoView({ behavior: "smooth", block: "center" });
+    bloque.style.display = "block";
+    bloque.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
   function ocultarPreview() {
     pendingBlob = null;
     pendingDur = 0;
-    const card = $("previewCard");
+    const bloque = $("previewPrincipal");
     const aud = $("previewAudio");
     if (aud) { aud.pause(); aud.removeAttribute("src"); aud.load(); }
-    if (card) card.style.display = "none";
+    if (bloque) bloque.style.display = "none";
   }
 
   async function guardarPreview() {

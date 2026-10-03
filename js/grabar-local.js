@@ -6,6 +6,10 @@
   const btnGrabarLocal = $("btnGrabarLocal");
   const btnDetenerLocal = $("btnDetenerLocal");
   const estadoLocal = $("estadoGrabacionLocal");
+  const herramientas = $("herramientasLocal");
+  const previewAudioLocal = $("previewAudioLocal");
+  const inputInicio = $("recorteInicio");
+  const inputFin = $("recorteFin");
 
   if (!btnGrabarLocal) return;
 
@@ -13,17 +17,33 @@
   let chunksLocal = [];
   let streamLocal = null;
 
+  // bufferActual = el estado actual del audio local (se reemplaza al
+  // recortar o al mejorar audio; nada de esto pasa solo, cada paso
+  // necesita su propio clic).
+  let bufferActual = null;
+  let urlActual = null;
+
   btnGrabarLocal.addEventListener("click", iniciar);
   if (btnDetenerLocal) btnDetenerLocal.addEventListener("click", detener);
+
+  $("btnMarcarInicio")?.addEventListener("click", () => {
+    inputInicio.value = (previewAudioLocal.currentTime || 0).toFixed(1);
+  });
+  $("btnMarcarFin")?.addEventListener("click", () => {
+    inputFin.value = (previewAudioLocal.currentTime || 0).toFixed(1);
+  });
+  $("btnRecortar")?.addEventListener("click", recortar);
+  $("btnMejorarAudio")?.addEventListener("click", mejorarAudio);
+  $("btnGuardarLocal")?.addEventListener("click", guardarEnComputadora);
+  $("btnDescartarLocal")?.addEventListener("click", descartar);
+
+  // ======================================================
+  // GRABAR (captura simple y neutra, sin el EQ/compresor de la cabina)
+  // ======================================================
 
   async function iniciar() {
     try {
       estado("🎙️ Pidiendo acceso al micrófono...");
-
-      // Captura simple y neutra (sin el EQ/compresor/efectos de la
-      // cabina) — la idea es que quede lo más "cruda" posible y que la
-      // reducción de ruido de abajo haga el trabajo, para que después
-      // la puedas editar tú mismo en Audacity si quieres.
       streamLocal = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
       });
@@ -31,12 +51,13 @@
       chunksLocal = [];
       recLocal = new MediaRecorder(streamLocal);
       recLocal.ondataavailable = (e) => { if (e.data.size > 0) chunksLocal.push(e.data); };
-      recLocal.onstop = procesarYGuardar;
+      recLocal.onstop = alDetener;
       recLocal.start();
 
       btnGrabarLocal.disabled = true;
-      if (btnDetenerLocal) btnDetenerLocal.disabled = false;
-      estado("🔴 Grabando — deja 1 segundo de silencio antes de hablar, así se mide el ruido de fondo para limpiarlo después.");
+      btnDetenerLocal.disabled = false;
+      herramientas.style.display = "none";
+      estado("🔴 Grabando — un consejo: deja ~1 segundo de silencio al inicio, así 'mejorar audio' puede medir mejor el ruido de fondo.");
     } catch (e) {
       console.error(e);
       estado("❌ No se pudo acceder al micrófono: " + e.message, true);
@@ -47,78 +68,119 @@
     if (recLocal && recLocal.state !== "inactive") recLocal.stop();
     if (streamLocal) streamLocal.getTracks().forEach((t) => t.stop());
     btnGrabarLocal.disabled = false;
-    if (btnDetenerLocal) btnDetenerLocal.disabled = true;
+    btnDetenerLocal.disabled = true;
   }
 
-  async function procesarYGuardar() {
-    estado("⏳ Procesando (quitando ruido de fondo, puede tardar unos segundos)...");
+  async function alDetener() {
+    estado("⏳ Cargando grabación...");
     try {
       const blob = new Blob(chunksLocal, { type: recLocal.mimeType || "audio/webm" });
       const arrayBuffer = await blob.arrayBuffer();
-
       const ctxTemp = new (window.AudioContext || window.webkitAudioContext)();
-      const audioBuffer = await ctxTemp.decodeAudioData(arrayBuffer);
+      bufferActual = await ctxTemp.decodeAudioData(arrayBuffer);
 
-      const limpio = reducirRuido(audioBuffer);
-      const wavBlob = audioBufferAWav(limpio);
+      inputInicio.value = "0";
+      inputFin.value = bufferActual.duration.toFixed(1);
 
-      await guardarArchivo(wavBlob, `grabacion-${Date.now()}.wav`);
-      estado("✅ Listo — guardado y limpiado de ruido de fondo.");
+      actualizarPreview();
+      herramientas.style.display = "block";
+      estado("✅ Lista para revisar. Nada se guarda todavía — usa los botones de abajo.");
     } catch (e) {
       console.error(e);
-      estado("❌ Error al procesar: " + e.message, true);
+      estado("❌ Error al cargar la grabación: " + e.message, true);
     }
   }
 
-  // ======================================================
-  // GUARDAR ARCHIVO (deja elegir carpeta si el navegador lo permite;
-  // si no, descarga normal a la carpeta de Descargas)
-  // ======================================================
-  async function guardarArchivo(blob, nombreSugerido) {
-    if (window.showSaveFilePicker) {
-      try {
-        const handle = await window.showSaveFilePicker({
-          suggestedName: nombreSugerido,
-          types: [{ description: "Audio WAV", accept: { "audio/wav": [".wav"] } }]
-        });
-        const writable = await handle.createWritable();
-        await writable.write(blob);
-        await writable.close();
-        return;
-      } catch (e) {
-        if (e.name === "AbortError") throw new Error("Cancelado.");
-        console.warn("No se pudo usar el selector de carpeta, se descarga normal:", e);
-      }
-    }
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = nombreSugerido;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  function actualizarPreview() {
+    const wav = audioBufferAWav(bufferActual);
+    if (urlActual) URL.revokeObjectURL(urlActual);
+    urlActual = URL.createObjectURL(wav);
+    previewAudioLocal.src = urlActual;
+  }
+
+  function descartar() {
+    bufferActual = null;
+    if (urlActual) { URL.revokeObjectURL(urlActual); urlActual = null; }
+    previewAudioLocal.pause();
+    previewAudioLocal.removeAttribute("src");
+    previewAudioLocal.load();
+    herramientas.style.display = "none";
+    estado("🗑 Grabación local descartada.");
   }
 
   // ======================================================
-  // REDUCCIÓN DE RUIDO — resta espectral (mismo principio que el
-  // "Noise Reduction" de Audacity): mide el ruido en el primer
-  // segundo, y lo resta del resto de la grabación.
+  // RECORTAR (manual — solo al presionar el botón)
   // ======================================================
+
+  function recortar() {
+    if (!bufferActual) return;
+    const inicio = parseFloat(inputInicio.value) || 0;
+    const fin = parseFloat(inputFin.value) || bufferActual.duration;
+
+    if (inicio < 0 || fin <= inicio || fin > bufferActual.duration + 0.01) {
+      estado("❌ El rango de recorte no es válido.", true);
+      return;
+    }
+
+    try {
+      bufferActual = recortarBuffer(bufferActual, inicio, fin);
+      inputInicio.value = "0";
+      inputFin.value = bufferActual.duration.toFixed(1);
+      actualizarPreview();
+      estado("✂️ Audio recortado. Puedes seguir editando o guardarlo ya.");
+    } catch (e) {
+      console.error(e);
+      estado("❌ Error al recortar: " + e.message, true);
+    }
+  }
+
+  function recortarBuffer(buffer, inicioSeg, finSeg) {
+    const sr = buffer.sampleRate;
+    const inicioMuestra = Math.max(0, Math.floor(inicioSeg * sr));
+    const finMuestra = Math.min(buffer.length, Math.floor(finSeg * sr));
+    const numCanales = buffer.numberOfChannels;
+    const ctxTemp = new (window.AudioContext || window.webkitAudioContext)();
+    const nuevo = ctxTemp.createBuffer(numCanales, finMuestra - inicioMuestra, sr);
+    for (let c = 0; c < numCanales; c++) {
+      nuevo.copyToChannel(buffer.getChannelData(c).slice(inicioMuestra, finMuestra), c);
+    }
+    return nuevo;
+  }
+
+  // ======================================================
+  // MEJORAR AUDIO — quitar ruido de fondo (manual, resta espectral,
+  // mismo principio que el "Noise Reduction" de Audacity)
+  // ======================================================
+
   const TAMANO_FRAME = 2048;
   const SEGUNDOS_PERFIL = 1;
   const FACTOR_RESTA = 1.8;  // qué tan agresivo. Súbelo si queda mucho ruido; bájalo si se oye "robótico"/con huecos.
   const PISO_MINIMO = 0.08;  // nunca deja la señal en menos del 8% del original (evita el "ruido musical" típico de este método)
 
+  function mejorarAudio() {
+    if (!bufferActual) return;
+    estado("⏳ Quitando ruido de fondo (puede tardar unos segundos)...");
+    // setTimeout para que el navegador alcance a pintar el mensaje antes
+    // de ponerse a calcular (esto congela la pestaña un momento).
+    setTimeout(() => {
+      try {
+        bufferActual = reducirRuido(bufferActual);
+        actualizarPreview();
+        estado("🧹 Listo — ruido de fondo reducido. Escúchalo: si quedó muy agresivo o con huecos, dímelo y ajustamos el filtro.");
+      } catch (e) {
+        console.error(e);
+        estado("❌ Error al mejorar el audio: " + e.message, true);
+      }
+    }, 50);
+  }
+
   function reducirRuido(audioBuffer) {
     const sr = audioBuffer.sampleRate;
     const numCanales = audioBuffer.numberOfChannels;
-
     const canalesSalida = [];
     for (let c = 0; c < numCanales; c++) {
       canalesSalida.push(procesarCanal(audioBuffer.getChannelData(c), sr));
     }
-
     const ctxTemp = new (window.AudioContext || window.webkitAudioContext)();
     const bufferFinal = ctxTemp.createBuffer(numCanales, canalesSalida[0].length, sr);
     for (let c = 0; c < numCanales; c++) bufferFinal.copyToChannel(canalesSalida[c], c);
@@ -130,7 +192,6 @@
     const hop = N / 2;
     const ventana = ventanaHann(N);
 
-    // --- Perfil de ruido: promedio de magnitud en el primer segundo ---
     const nMuestrasPerfil = Math.min(canal.length, Math.floor(SEGUNDOS_PERFIL * sr));
     const perfil = new Float64Array(N);
     let nFramesPerfil = 0;
@@ -143,7 +204,6 @@
       for (let k = 0; k < N; k++) perfil[k] /= nFramesPerfil;
     }
 
-    // --- Resta espectral con overlap-add ---
     const salida = new Float64Array(canal.length);
     const sumaVentanas = new Float64Array(canal.length);
 
@@ -172,7 +232,6 @@
     for (let i = 0; i < salida.length; i++) {
       if (sumaVentanas[i] > 1e-6) salida[i] /= sumaVentanas[i];
     }
-
     return Float32Array.from(salida);
   }
 
@@ -192,7 +251,6 @@
     return w;
   }
 
-  // FFT/IFFT radix-2 in-place (Cooley-Tukey). n debe ser potencia de 2.
   function fftRadix2(re, im, invertir) {
     const n = re.length;
     for (let i = 1, j = 0; i < n; i++) {
@@ -228,8 +286,52 @@
   }
 
   // ======================================================
-  // CODIFICAR A WAV (PCM 16-bit) — sin depender de librerías externas
+  // GUARDAR EN LA COMPUTADORA (manual — solo al presionar el botón)
   // ======================================================
+
+  async function guardarEnComputadora() {
+    if (!bufferActual) return;
+    estado("⏳ Guardando...");
+    try {
+      const wav = audioBufferAWav(bufferActual);
+      await guardarArchivo(wav, `grabacion-${Date.now()}.wav`);
+      estado("✅ Guardado en tu computadora.");
+    } catch (e) {
+      console.error(e);
+      estado("❌ " + e.message, true);
+    }
+  }
+
+  async function guardarArchivo(blob, nombreSugerido) {
+    if (window.showSaveFilePicker) {
+      try {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: nombreSugerido,
+          types: [{ description: "Audio WAV", accept: { "audio/wav": [".wav"] } }]
+        });
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        return;
+      } catch (e) {
+        if (e.name === "AbortError") throw new Error("Cancelado.");
+        console.warn("No se pudo usar el selector de carpeta, se descarga normal:", e);
+      }
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = nombreSugerido;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  // ======================================================
+  // CODIFICAR A WAV (PCM 16-bit)
+  // ======================================================
+
   function audioBufferAWav(buffer) {
     const numCanales = buffer.numberOfChannels;
     const sr = buffer.sampleRate;
@@ -266,7 +368,6 @@
         offset += 2;
       }
     }
-
     return new Blob([arr], { type: "audio/wav" });
   }
 

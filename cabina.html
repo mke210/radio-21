@@ -132,24 +132,54 @@
         <button id="btnPausa" class="btn btn-gold" disabled>⏸ Pausa</button>
         <button id="btnDetener" class="btn" disabled>⏹ Detener y guardar</button>
         <button id="btnSubirEpisodio" class="btn btn-gold">📤 Subir MP3 como episodio</button>
-        <button id="btnGrabarLocal" class="btn btn-ghost">🎙️ Grabar y guardar en mi compu</button>
-        <button id="btnDetenerLocal" class="btn btn-ghost" disabled>⏹ Detener grabación local</button>
         <span id="timer" class="timer">00:00</span>
       </div>
-      <p id="estadoGrabacionLocal" class="estado small"></p>
 
       <canvas id="eqMaster" class="eq-master" width="600" height="60"></canvas>
       <p id="estadoGrabacion" class="estado"></p>
     </section>
 
-    <!-- ============ REVISIÓN ANTES DE PUBLICAR ============ -->
-    <section class="card" id="previewCard" style="display:none;">
-      <h2>🎧 Revisar antes de publicar</h2>
-      <p class="small">Escucha tu grabación. Si te convence publícala; si no, descártala y vuelve a intentar.</p>
-      <audio id="previewAudio" controls style="width:100%; margin-top:10px;" controlslist="nodownload"></audio>
-      <div class="btn-row" style="margin-top:12px;">
-        <button id="btnGuardarPreview" class="btn btn-gold">✅ Guardar y publicar</button>
-        <button id="btnDescartarPreview" class="btn btn-del">🗑 Descartar</button>
+    <!-- ============ REVISIÓN ANTES DE PUBLICAR + GRABACIÓN LOCAL ============ -->
+    <section class="card" id="previewCard">
+      <h2>🎧 Revisar / grabación local</h2>
+
+      <div id="previewPrincipal" style="display:none;">
+        <p class="small">Escucha tu grabación. Si te convence publícala; si no, descártala y vuelve a intentar.</p>
+        <audio id="previewAudio" controls style="width:100%; margin-top:10px;" controlslist="nodownload"></audio>
+        <div class="btn-row" style="margin-top:12px;">
+          <button id="btnGuardarPreview" class="btn btn-gold">✅ Guardar y publicar</button>
+          <button id="btnDescartarPreview" class="btn btn-del">🗑 Descartar</button>
+        </div>
+        <hr style="margin:16px 0; opacity:.3;" />
+      </div>
+
+      <h3 style="margin-top:0;">🎙️ Grabación local (para guardar en tu computadora)</h3>
+      <div class="btn-row">
+        <button id="btnGrabarLocal" class="btn btn-ghost">🎙️ Grabar y guardar en mi compu</button>
+        <button id="btnDetenerLocal" class="btn btn-ghost" disabled>⏹ Detener grabación</button>
+      </div>
+      <p id="estadoGrabacionLocal" class="estado small"></p>
+
+      <div id="herramientasLocal" style="display:none; margin-top:10px;">
+        <audio id="previewAudioLocal" controls style="width:100%;" controlslist="nodownload"></audio>
+
+        <div class="btn-row" style="margin-top:10px; flex-wrap:wrap;">
+          <label class="small">Inicio:
+            <input type="number" id="recorteInicio" min="0" step="0.1" value="0" style="width:70px" />s
+            <button type="button" id="btnMarcarInicio" class="btn btn-mini btn-ghost">Usar posición actual</button>
+          </label>
+          <label class="small">Fin:
+            <input type="number" id="recorteFin" min="0" step="0.1" style="width:70px" />s
+            <button type="button" id="btnMarcarFin" class="btn btn-mini btn-ghost">Usar posición actual</button>
+          </label>
+          <button id="btnRecortar" class="btn btn-ghost">✂️ Recortar audio</button>
+        </div>
+
+        <div class="btn-row" style="margin-top:10px;">
+          <button id="btnMejorarAudio" class="btn btn-ghost">🧹 Mejorar audio (quitar ruido de fondo)</button>
+          <button id="btnGuardarLocal" class="btn btn-gold">💾 Guardar en mi compu</button>
+          <button id="btnDescartarLocal" class="btn btn-del">🗑 Descartar</button>
+        </div>
       </div>
     </section>
 
