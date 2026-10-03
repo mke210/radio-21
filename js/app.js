@@ -85,7 +85,7 @@
   };
 
   // ===== Ajustes de la cadena de audio (edítalos aquí si hace falta afinar) =====
-  const GANANCIA_ENTRADA = 2.5;       // ganancia general de cada locutor
+  const gananciaDB = { 1: 8, 2: 8 };  // ganancia de cada locutor en dB — la controla el fader del mezclador
   const UMBRAL_PUERTA_RUIDO = 0.02;   // ~ -34dB. Súbelo si deja pasar ruido de fondo; bájalo si corta la voz
   const PROFUNDIDAD_DUCKING = 0.08;   // cuánto volumen le queda a la música al hablar (0 = silencio total, 1 = no baja nada). 0.08 = casi inaudible.
   let workletListo = null;
@@ -173,6 +173,25 @@
   on("efecto2", "change", () => actualizarCadenaSalida(2));
   on("btnProbar1", "click", async () => { if (!loc[1].stream) await asegurarLocutor(1); toggleProbarVoz(1); });
   on("btnProbar2", "click", async () => { if (!loc[2].stream) await asegurarLocutor(2); toggleProbarVoz(2); });
+
+  on("fader1", "input", () => onFaderCambio(1));
+  on("fader2", "input", () => onFaderCambio(2));
+  onFaderCambio(1);
+  onFaderCambio(2);
+
+  // Fader del mezclador: cambia la ganancia (en vivo, si el locutor ya
+  // está conectado) y actualiza la etiqueta de dB.
+  function onFaderCambio(num) {
+    const fader = $(`fader${num}`);
+    const label = $(`dbLabel${num}`);
+    if (!fader) return;
+    const db = parseFloat(fader.value);
+    gananciaDB[num] = db;
+    if (label) label.textContent = (db >= 0 ? "+" : "") + db.toFixed(1) + " dB";
+    if (loc[num] && loc[num].gain) {
+      loc[num].gain.gain.value = Math.pow(10, db / 20);
+    }
+  }
 
   // Restaurar volumen de música guardado
   const volGuardado = localStorage.getItem(LS.vol);
@@ -411,8 +430,9 @@
 
       // Ganancia de entrada — toda la amplificación vive aquí, ya que
       // el navegador no aplica su propio autoGainControl (ver pedirMic).
+      // El valor en dB lo controla el fader del mezclador (gananciaDB).
       const gain = ctx.createGain();
-      gain.gain.value = GANANCIA_ENTRADA;
+      gain.gain.value = Math.pow(10, gananciaDB[num] / 20);
 
       // Puerta de ruido: silencia el micrófono cuando nadie habla,
       // para que no se cuele zumbido/ruido de fondo en los silencios.
@@ -529,8 +549,8 @@
   function iniciarLoopSiempre() {
     const paso = () => {
       requestAnimationFrame(paso);
-      dibujarBarras(loc[1].an, $("eq1"));
-      dibujarBarras(loc[2].an, $("eq2"));
+      dibujarMedidorVertical(loc[1].an, $("eq1"));
+      dibujarMedidorVertical(loc[2].an, $("eq2"));
       dibujarRetro(musicAnalyser, $("eqMusica"));
       aplicarDucking();
       if (anMaster && rec && rec.state === "recording" && !pausado) {
@@ -940,6 +960,43 @@
       const h = Math.max(2, v * H);
       c2.fillStyle = v > 0.7 ? "#e05252" : "#e3b64f";
       c2.fillRect(i * bw + 1, H - h, bw - 2, h);
+    }
+  }
+
+  // Medidor vertical tipo OBS (rango -60dB a 0dB, de abajo hacia arriba,
+  // verde/amarillo/rojo por zona). Mide la señal YA PROCESADA (después
+  // de puerta de ruido/EQ/compresor/limitador), así que también sirve
+  // para confirmar visualmente que esos filtros están activos.
+  function dibujarMedidorVertical(an, canvas) {
+    if (!an || !canvas) return;
+    const data = new Uint8Array(an.fftSize);
+    an.getByteTimeDomainData(data);
+    let suma = 0;
+    for (let i = 0; i < data.length; i++) {
+      const v = (data[i] - 128) / 128;
+      suma += v * v;
+    }
+    const rms = Math.sqrt(suma / data.length);
+    const db = rms > 0 ? 20 * Math.log10(rms) : -60;
+    const dbClamp = Math.max(-60, Math.min(0, db));
+    const frac = (dbClamp + 60) / 60;
+
+    const c2 = canvas.getContext("2d");
+    const W = canvas.width, H = canvas.height;
+    c2.clearRect(0, 0, W, H);
+    c2.fillStyle = "rgba(255,255,255,0.06)";
+    c2.fillRect(0, 0, W, H);
+
+    const alturaLlena = frac * H;
+    const paso = 3;
+    for (let y = H; y > H - alturaLlena; y -= paso) {
+      const dbEnY = -60 + ((H - y) / H) * 60;
+      let color;
+      if (dbEnY > -9) color = "#e05252";
+      else if (dbEnY > -20) color = "#e3b64f";
+      else color = "#39d353";
+      c2.fillStyle = color;
+      c2.fillRect(0, y - paso + 1, W, paso - 1);
     }
   }
 

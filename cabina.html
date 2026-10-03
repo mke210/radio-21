@@ -11,6 +11,66 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <link rel="apple-touch-icon" href="img/escudo.png" />
   <link rel="icon" type="image/png" href="img/escudo.png" />
+  <style>
+    /* Canal de mezclador tipo OBS, por locutor */
+    .locutor-box-mezclador {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .locutor-controles {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .canal-mezclador {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .canal-regla {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 160px;
+      font-size: 9px;
+      line-height: 1;
+      color: #9aa6b2;
+      text-align: right;
+      padding-right: 2px;
+    }
+    .canal-medidor {
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.06);
+      height: 160px;
+    }
+    .canal-fader {
+      writing-mode: vertical-lr;
+      direction: rtl;
+      -webkit-appearance: slider-vertical;
+      appearance: slider-vertical;
+      width: 20px;
+      height: 160px;
+      accent-color: #c9a227;
+      cursor: ns-resize;
+    }
+    .canal-db {
+      font-size: 10px;
+      color: #cdd6e0;
+      writing-mode: vertical-lr;
+      text-orientation: mixed;
+      height: 160px;
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+    }
+    @media (max-width: 640px) {
+      .locutor-box-mezclador { flex-wrap: wrap; }
+    }
+  </style>
 </head>
 <body>
 
@@ -59,46 +119,64 @@
 
       <div class="locutores-grid">
 
-        <div class="locutor-box">
-          <div class="locutor-head">
-            <label class="switch">
-              <input type="checkbox" id="loc1Activo" checked />
-              <span class="slider"></span>
-            </label>
-            <strong>Locutor 1</strong>
+        <div class="locutor-box locutor-box-mezclador">
+          <div class="locutor-controles">
+            <div class="locutor-head">
+              <label class="switch">
+                <input type="checkbox" id="loc1Activo" checked />
+                <span class="slider"></span>
+              </label>
+              <strong>Locutor 1</strong>
+            </div>
+            <select id="mic1" class="mic-select">
+              <option value="">Micrófono predeterminado</option>
+            </select>
+            <select id="efecto1" class="mic-select" title="Efecto de voz">
+              <option value="ninguno">Sonido normal</option>
+              <option value="radio">🎙️ Sonido de radio (EQ + calidez)</option>
+              <option value="saturacion">🔥 Solo saturación (calidez)</option>
+              <option value="eq">🎚️ Solo EQ de presencia</option>
+            </select>
+            <button id="btnProbar1" type="button" class="btn btn-ghost btn-mini">🎧 Probar (usa audífonos)</button>
           </div>
-          <select id="mic1" class="mic-select">
-            <option value="">Micrófono predeterminado</option>
-          </select>
-          <select id="efecto1" class="mic-select" title="Efecto de voz">
-            <option value="ninguno">Sonido normal</option>
-            <option value="radio">🎙️ Sonido de radio (EQ + calidez)</option>
-            <option value="saturacion">🔥 Solo saturación (calidez)</option>
-            <option value="eq">🎚️ Solo EQ de presencia</option>
-          </select>
-          <button id="btnProbar1" type="button" class="btn btn-ghost btn-mini">🎧 Probar (usa audífonos)</button>
-          <canvas id="eq1" class="eq-canvas" width="240" height="42"></canvas>
+          <div class="canal-mezclador">
+            <div class="canal-regla">
+              <span>0</span><span>-6</span><span>-12</span><span>-18</span><span>-24</span><span>-30</span><span>-36</span><span>-42</span><span>-48</span><span>-54</span><span>-60</span>
+            </div>
+            <canvas id="eq1" class="canal-medidor" width="20" height="160"></canvas>
+            <input type="range" id="fader1" class="canal-fader" min="-60" max="12" step="0.5" value="8" title="Ganancia del micrófono" />
+            <span id="dbLabel1" class="canal-db">+8.0 dB</span>
+          </div>
         </div>
 
-        <div class="locutor-box">
-          <div class="locutor-head">
-            <label class="switch">
-              <input type="checkbox" id="loc2Activo" />
-              <span class="slider"></span>
-            </label>
-            <strong>Locutor 2</strong>
+        <div class="locutor-box locutor-box-mezclador">
+          <div class="locutor-controles">
+            <div class="locutor-head">
+              <label class="switch">
+                <input type="checkbox" id="loc2Activo" />
+                <span class="slider"></span>
+              </label>
+              <strong>Locutor 2</strong>
+            </div>
+            <select id="mic2" class="mic-select">
+              <option value="">Micrófono predeterminado</option>
+            </select>
+            <select id="efecto2" class="mic-select" title="Efecto de voz">
+              <option value="ninguno">Sonido normal</option>
+              <option value="radio">🎙️ Sonido de radio (EQ + calidez)</option>
+              <option value="saturacion">🔥 Solo saturación (calidez)</option>
+              <option value="eq">🎚️ Solo EQ de presencia</option>
+            </select>
+            <button id="btnProbar2" type="button" class="btn btn-ghost btn-mini">🎧 Probar (usa audífonos)</button>
           </div>
-          <select id="mic2" class="mic-select">
-            <option value="">Micrófono predeterminado</option>
-          </select>
-          <select id="efecto2" class="mic-select" title="Efecto de voz">
-            <option value="ninguno">Sonido normal</option>
-            <option value="radio">🎙️ Sonido de radio (EQ + calidez)</option>
-            <option value="saturacion">🔥 Solo saturación (calidez)</option>
-            <option value="eq">🎚️ Solo EQ de presencia</option>
-          </select>
-          <button id="btnProbar2" type="button" class="btn btn-ghost btn-mini">🎧 Probar (usa audífonos)</button>
-          <canvas id="eq2" class="eq-canvas" width="240" height="42"></canvas>
+          <div class="canal-mezclador">
+            <div class="canal-regla">
+              <span>0</span><span>-6</span><span>-12</span><span>-18</span><span>-24</span><span>-30</span><span>-36</span><span>-42</span><span>-48</span><span>-54</span><span>-60</span>
+            </div>
+            <canvas id="eq2" class="canal-medidor" width="20" height="160"></canvas>
+            <input type="range" id="fader2" class="canal-fader" min="-60" max="12" step="0.5" value="8" title="Ganancia del micrófono" />
+            <span id="dbLabel2" class="canal-db">+8.0 dB</span>
+          </div>
         </div>
 
       </div>
