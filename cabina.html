@@ -132,8 +132,11 @@
         <button id="btnPausa" class="btn btn-gold" disabled>⏸ Pausa</button>
         <button id="btnDetener" class="btn" disabled>⏹ Detener y guardar</button>
         <button id="btnSubirEpisodio" class="btn btn-gold">📤 Subir MP3 como episodio</button>
+        <button id="btnGrabarLocal" class="btn btn-ghost">🎙️ Grabar y guardar en mi compu</button>
+        <button id="btnDetenerLocal" class="btn btn-ghost" disabled>⏹ Detener grabación local</button>
         <span id="timer" class="timer">00:00</span>
       </div>
+      <p id="estadoGrabacionLocal" class="estado small"></p>
 
       <canvas id="eqMaster" class="eq-master" width="600" height="60"></canvas>
       <p id="estadoGrabacion" class="estado"></p>
@@ -268,6 +271,7 @@
   <script src="js/config.js"></script>
   <script src="js/app.js"></script>
   <script src="js/subir-mp3.js"></script>
+  <script src="js/grabar-local.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/pwa.js"></script>
 
