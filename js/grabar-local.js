@@ -225,6 +225,50 @@
     for (let i = 0; i < str.length; i++) vista.setUint8(offset + i, str.charCodeAt(i));
   }
 
+  // --- Codificar a MP3 (comprimido) para subir — WAV pesa demasiado
+  // (varios MB por minuto) y se topaba con el límite de 60 MB del
+  // Worker, además de tardar mucho en subir por lo pesado del archivo.
+  function audioBufferAMp3(buffer, kbps) {
+    kbps = kbps || 96;
+    const lame = window.lamejs;
+    if (!lame || !lame.Mp3Encoder) {
+      throw new Error("El codificador de MP3 no cargó (revisa tu conexión a internet y recarga la página).");
+    }
+
+    const canales = buffer.numberOfChannels >= 2 ? 2 : 1;
+    const sr = buffer.sampleRate;
+    const encoder = new lame.Mp3Encoder(canales, sr, kbps);
+
+    const izq = flotanteAInt16(buffer.getChannelData(0));
+    const der = canales === 2 ? flotanteAInt16(buffer.getChannelData(1)) : null;
+
+    const bloque = 1152; // tamaño de bloque recomendado por LAME
+    const partes = [];
+    for (let i = 0; i < izq.length; i += bloque) {
+      const trozoIzq = izq.subarray(i, i + bloque);
+      let mp3buf;
+      if (canales === 2) {
+        mp3buf = encoder.encodeBuffer(trozoIzq, der.subarray(i, i + bloque));
+      } else {
+        mp3buf = encoder.encodeBuffer(trozoIzq);
+      }
+      if (mp3buf.length > 0) partes.push(new Uint8Array(mp3buf));
+    }
+    const final = encoder.flush();
+    if (final.length > 0) partes.push(new Uint8Array(final));
+
+    return new Blob(partes, { type: "audio/mp3" });
+  }
+
+  function flotanteAInt16(datos) {
+    const salida = new Int16Array(datos.length);
+    for (let i = 0; i < datos.length; i++) {
+      let m = Math.max(-1, Math.min(1, datos[i]));
+      salida[i] = m < 0 ? m * 0x8000 : m * 0x7fff;
+    }
+    return salida;
+  }
+
   async function guardarArchivoLocal(blob, nombreSugerido) {
     if (window.showSaveFilePicker) {
       try {
@@ -495,11 +539,12 @@
       return;
     }
 
-    editorEpisodio.estado("⏳ Subiendo audio actualizado...");
+    editorEpisodio.estado("⏳ Comprimiendo a MP3...");
     try {
-      const wav = audioBufferAWav(buffer);
-      const nombreArchivo = `editado-${Date.now()}.wav`;
-      const nuevaUrl = await window.P21_subirArchivoB2(wav, nombreArchivo, "audios");
+      const mp3 = audioBufferAMp3(buffer, 96);
+      const nombreArchivo = `editado-${Date.now()}.mp3`;
+      editorEpisodio.estado(`⏳ Subiendo (${(mp3.size / 1024 / 1024).toFixed(1)} MB)...`);
+      const nuevaUrl = await window.P21_subirArchivoB2(mp3, nombreArchivo, "audios");
 
       const urlVieja = episodioActual.url;
 
