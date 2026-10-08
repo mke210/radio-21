@@ -692,6 +692,7 @@
     }
 
     await db.from("musica").delete().eq("id", id);
+    if (id === pistaActivaId) quitarMusicaLocal();
     await cargarMusicaDB();
     renderSeleccion();
     restaurarChecks();
@@ -703,6 +704,7 @@
   // ======================================================
 
   function renderSeleccion() {
+    renderBibliotecaMusica();
     const cont = $("listaSeleccion");
     if (!cont) return;
     cont.innerHTML = "";
@@ -880,14 +882,25 @@
   // MÚSICA LOCAL
   // ======================================================
 
+  let pistaActivaId = null;
+
   function cargarMusicaLocal() {
     const f = $("musicaFile").files[0];
     if (!f) return;
+    activarPista(URL.createObjectURL(f), f.name, null);
+  }
 
+  // Carga una pista (archivo local o de la biblioteca) como música de fondo
+  function activarPista(src, nombre, id) {
     if (musicPreview) musicPreview.pause();
-    musicPreview = new Audio(URL.createObjectURL(f));
+    musicPreview = new Audio();
+    musicPreview.crossOrigin = "anonymous"; // necesario para mezclarla en la grabación
+    musicPreview.preload = "auto";
+    musicPreview.src = src;
     musicPreview.volume = 1;
     musicPreview.loop = $("musicaLoop").checked;
+    musicPreview.onerror = () => estadoReproduccion("⚠️ No se pudo cargar la pista.", true);
+    pistaActivaId = id;
 
     if (musicSrcNode) {
       try { musicSrcNode.disconnect(); musicGainNode.disconnect(); musicAnalyser.disconnect(); } catch (e) {}
@@ -895,10 +908,35 @@
     }
     if (ctx) construirGraficoMusica();
 
-    $("musicaNombre").textContent = "🎵 " + f.name;
+    $("musicaNombre").textContent = "🎵 En uso: " + nombre;
     $("btnMusica").disabled = false;
     $("btnMusica").textContent = "▶ Música";
     $("btnQuitarMusica").disabled = false;
+    renderBibliotecaMusica();
+  }
+
+  function renderBibliotecaMusica() {
+    const cont = $("bibliotecaMusica");
+    if (!cont) return;
+    cont.innerHTML = "";
+    if (!musicas.length) {
+      cont.appendChild(pSmall("Aún no hay música guardada. Usa «📤 Guardar MP3 en la biblioteca»."));
+      return;
+    }
+    musicas.forEach(m => {
+      const activa = m.id === pistaActivaId;
+      const fila = document.createElement("div");
+      fila.className = "biblio-item" + (activa ? " activa" : "");
+      const nom = document.createElement("span");
+      nom.className = "biblio-nombre";
+      nom.textContent = "🎵 " + m.titulo;
+      fila.appendChild(nom);
+      fila.appendChild(btnMini(activa ? "✔ En uso" : "Usar", activa ? "btn-gold" : "btn-blue",
+        () => activarPista(m.url || "", m.titulo, m.id)));
+      fila.appendChild(btnMini("🗑", "btn-del", () => borrarMusicaDB(m.id)));
+      fila.lastChild.title = "Eliminar de la biblioteca";
+      cont.appendChild(fila);
+    });
   }
 
   function construirGraficoMusica() {
@@ -934,6 +972,8 @@
       musicSrcNode = musicGainNode = musicAnalyser = null;
     }
     $("musicaFile").value = "";
+    pistaActivaId = null;
+    renderBibliotecaMusica();
     $("musicaNombre").textContent = "Sin pista cargada";
     $("btnMusica").disabled = true;
     $("btnMusica").textContent = "▶ Música";
@@ -1307,38 +1347,124 @@
     renderTabla();
   }
 
+  const filtroEp = { q: "", estado: "todos", temporada: "todas" };
+  const gruposAbiertos = new Set();
+  let primeraVezEp = true;
+
   function renderTabla() {
-    const tbody = $("tablaAudios");
-    if (!tbody) return;
-    tbody.innerHTML = "";
-    if (!audios.length) {
-      tbody.innerHTML = "<tr><td colspan='5'>No hay episodios.</td></tr>";
+    const cont = $("listaEpisodios");
+    if (!cont) return;
+
+    // llenar selector de temporadas
+    const selT = $("epTemporada");
+    const temporadas = [...new Set(audios.map(a => a.temporada || "Temporada 1 - 2026"))];
+    if (selT) {
+      const actual = filtroEp.temporada;
+      selT.innerHTML = "";
+      selT.appendChild(new Option("Todas las temporadas", "todas"));
+      temporadas.forEach(t => selT.appendChild(new Option(t, t)));
+      selT.value = temporadas.includes(actual) ? actual : "todas";
+      filtroEp.temporada = selT.value;
+    }
+
+    const q = filtroEp.q.trim().toLowerCase();
+    const lista = audios.filter(it => {
+      const pub = it.publicado !== false;
+      if (filtroEp.estado === "publicado" && !pub) return false;
+      if (filtroEp.estado === "oculto" && pub) return false;
+      const temp = it.temporada || "Temporada 1 - 2026";
+      if (filtroEp.temporada !== "todas" && temp !== filtroEp.temporada) return false;
+      if (q) {
+        const texto = `${it.titulo} ${it.alumno || ""} ${it.categoria || ""}`.toLowerCase();
+        if (!texto.includes(q)) return false;
+      }
+      return true;
+    });
+
+    if ($("epConteo")) $("epConteo").textContent = `${lista.length} de ${audios.length} episodios`;
+    cont.innerHTML = "";
+    if (!lista.length) {
+      cont.appendChild(pSmall(audios.length ? "Ningún episodio coincide con el filtro." : "No hay episodios."));
       return;
     }
-    audios.forEach(item => {
-      const publicado = item.publicado !== false;
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${item.titulo}</td>
-        <td>${item.alumno || "Anónimo"}</td>
-        <td><span class="temporada-badge">🗓️ ${item.temporada || "Temporada 1 - 2026"}</span></td>
-        <td><span class="badge ${publicado ? "badge-on" : "badge-off"}">${publicado ? "Publicado" : "Oculto"}</span></td>
-      `;
-      const tdA = document.createElement("td");
-      const acc = document.createElement("div");
-      acc.className = "acciones";
-      acc.appendChild(btnMini("Escuchar", "btn-blue", () => reproducirUno(item.id)));
-      acc.appendChild(btnMini("Editar", "btn-edit", () => abrirEditar(item.id)));
-      if (typeof window.P21_abrirEditorEpisodio === "function") {
-        acc.appendChild(btnMini("🎛️ Editar audio", "btn-edit", () => window.P21_abrirEditorEpisodio(item)));
-      }
-      acc.appendChild(btnMini(publicado ? "Ocultar" : "Publicar", publicado ? "btn-hide" : "btn-pub", () => togglePublicar(item.id)));
-      acc.appendChild(btnMini("Borrar", "btn-del", () => borrarAudio(item.id)));
-      tdA.appendChild(acc);
-      tr.appendChild(tdA);
-      tbody.appendChild(tr);
+
+    // agrupar por temporada (en orden de aparición: lo más nuevo primero)
+    const grupos = new Map();
+    lista.forEach(it => {
+      const t = it.temporada || "Temporada 1 - 2026";
+      if (!grupos.has(t)) grupos.set(t, []);
+      grupos.get(t).push(it);
+    });
+    if (primeraVezEp && grupos.size) { gruposAbiertos.add([...grupos.keys()][0]); primeraVezEp = false; }
+
+    grupos.forEach((items, temp) => {
+      const det = document.createElement("details");
+      det.className = "ep-grupo";
+      det.open = !!q || grupos.size === 1 || gruposAbiertos.has(temp);
+      det.addEventListener("toggle", () => {
+        if (det.open) gruposAbiertos.add(temp); else gruposAbiertos.delete(temp);
+      });
+      const sum = document.createElement("summary");
+      sum.textContent = `🗓️ ${temp} · ${items.length}`;
+      det.appendChild(sum);
+      items.forEach(item => det.appendChild(filaEpisodio(item)));
+      cont.appendChild(det);
     });
   }
+
+  function filaEpisodio(item) {
+    const publicado = item.publicado !== false;
+    const fila = document.createElement("div");
+    fila.className = "ep-fila" + (publicado ? "" : " oculto");
+
+    const info = document.createElement("div");
+    info.className = "ep-info";
+    const t = document.createElement("div");
+    t.className = "ep-titulo";
+    t.textContent = item.titulo;
+    const meta = document.createElement("div");
+    meta.className = "ep-meta";
+    const fecha = item.creado_en ? new Date(item.creado_en).toLocaleDateString("es-MX") : "";
+    meta.textContent = [`👤 ${item.alumno || "Anónimo"}`, `🏷️ ${item.categoria || "General"}`, fecha && `📅 ${fecha}`]
+      .filter(Boolean).join("  ·  ");
+    info.appendChild(t);
+    info.appendChild(meta);
+    fila.appendChild(info);
+
+    const badge = document.createElement("span");
+    badge.className = "badge " + (publicado ? "badge-on" : "badge-off");
+    badge.textContent = publicado ? "Publicado" : "Oculto";
+    fila.appendChild(badge);
+
+    const acc = document.createElement("div");
+    acc.className = "ep-acciones";
+    acc.appendChild(btnMini("▶ Escuchar", "btn-blue", () => reproducirUno(item.id)));
+    acc.appendChild(btnMini("✏️ Datos", "btn-edit", () => abrirEditar(item.id)));
+    if (typeof window.P21_abrirEditorEpisodio === "function") {
+      acc.appendChild(btnMini("🎛️ Audio", "btn-edit", () => window.P21_abrirEditorEpisodio(item)));
+    }
+    const mas = document.createElement("details");
+    mas.className = "ep-mas";
+    const ms = document.createElement("summary");
+    ms.textContent = "⋯";
+    ms.title = "Más acciones";
+    const menu = document.createElement("div");
+    menu.className = "ep-menu";
+    menu.appendChild(btnMini(publicado ? "🙈 Ocultar" : "👁 Publicar", publicado ? "btn-hide" : "btn-pub", () => togglePublicar(item.id)));
+    menu.appendChild(btnMini("🗑 Borrar", "btn-del", () => borrarAudio(item.id)));
+    mas.appendChild(ms);
+    mas.appendChild(menu);
+    acc.appendChild(mas);
+    fila.appendChild(acc);
+    return fila;
+  }
+
+  on("epBuscar", "input", () => { filtroEp.q = $("epBuscar").value; renderTabla(); });
+  on("epEstado", "change", () => { filtroEp.estado = $("epEstado").value; renderTabla(); });
+  on("epTemporada", "change", () => { filtroEp.temporada = $("epTemporada").value; renderTabla(); });
+  document.addEventListener("click", ev => {
+    document.querySelectorAll("details.ep-mas[open]").forEach(d => { if (!d.contains(ev.target)) d.open = false; });
+  });
 
   function btnMini(texto, clase, onclick) {
     const b = document.createElement("button");

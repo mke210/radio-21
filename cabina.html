@@ -118,6 +118,34 @@
       color: #cdd6e0;
       font-variant-numeric: tabular-nums;
     }
+
+    /* ----- Biblioteca de música ----- */
+    .biblio-head { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin-top:14px; }
+    .biblio-lista { display:flex; flex-direction:column; gap:6px; max-height:240px; overflow-y:auto; margin-top:6px; }
+    .biblio-item { display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:10px;
+      background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.10); }
+    .biblio-item.activa { border-color:#f2c14e; background:rgba(242,193,78,0.12); }
+    .biblio-nombre { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    /* ----- Administrar episodios ----- */
+    .ep-filtros { display:flex; flex-wrap:wrap; gap:8px; }
+    .ep-filtros input { flex:2 1 220px; }
+    .ep-filtros select { flex:1 1 150px; }
+    .ep-lista { display:flex; flex-direction:column; gap:10px; }
+    .ep-grupo > summary { cursor:pointer; font-weight:700; padding:8px 10px; border-radius:10px;
+      background:rgba(255,255,255,0.07); list-style:none; }
+    .ep-grupo > summary::-webkit-details-marker { display:none; }
+    .ep-fila { display:grid; grid-template-columns:1fr auto; gap:6px 10px; align-items:center;
+      padding:10px 4px; border-bottom:1px solid rgba(255,255,255,0.08); }
+    .ep-fila.oculto { opacity:0.65; }
+    .ep-info { min-width:0; }
+    .ep-titulo { font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .ep-meta { font-size:12px; opacity:0.75; margin-top:2px; }
+    .ep-acciones { grid-column:1 / -1; display:flex; flex-wrap:wrap; gap:6px; align-items:center; position:relative; }
+    .ep-mas > summary { list-style:none; cursor:pointer; padding:2px 12px; border-radius:8px; font-size:18px;
+      background:rgba(255,255,255,0.10); user-select:none; }
+    .ep-mas > summary::-webkit-details-marker { display:none; }
+    .ep-menu { position:absolute; right:0; z-index:5; display:flex; flex-direction:column; gap:6px; padding:8px;
+      border-radius:10px; background:#1b2430; border:1px solid rgba(255,255,255,0.15); box-shadow:0 6px 18px rgba(0,0,0,.4); }
   </style>
 </head>
 <body>
@@ -329,6 +357,13 @@
         <label class="check-label"><input id="musicaIncluir" type="checkbox" checked /> Incluir en la grabación</label>
         <label class="check-label"><input id="musicaLoop" type="checkbox" /> Loop de música</label>
       </div>
+
+      <div class="biblio-head">
+        <strong>📚 Mi biblioteca de música</strong>
+        <label class="imagen-label">📤 Guardar MP3 en la biblioteca<input id="subirMusica" type="file" accept="audio/*" multiple /></label>
+      </div>
+      <p class="small">Las pistas guardadas quedan disponibles siempre. Pulsa «Usar» para cargarla como música de fondo y luego ▶ Música.</p>
+      <div id="bibliotecaMusica" class="biblio-lista"></div>
     </section>
 
     <!-- ============ PLAYER DE CABINA ============ -->
@@ -336,7 +371,6 @@
       <h2>🎧 Player de cabina</h2>
 
       <div class="btn-row">
-        <label class="imagen-label">📤 Subir MP3 a la biblioteca<input id="subirMusica" type="file" accept="audio/*" multiple /></label>
         <button id="btnPlaySel" class="btn btn-blue">▶ Reproducir selección</button>
         <button id="btnLoopToggle" class="btn btn-ghost">🔁 Loop: OFF</button>
         <button id="btnStop" class="btn btn-ghost">⏹</button>
@@ -362,20 +396,17 @@
         <h2>Administrar episodios</h2>
         <button id="btnActualizar" class="btn btn-ghost">Actualizar</button>
       </div>
-      <div class="tabla-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Título</th>
-              <th>Alumno</th>
-              <th>Temporada</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="tablaAudios"></tbody>
-        </table>
+      <div class="ep-filtros">
+        <input id="epBuscar" type="search" placeholder="🔎 Buscar por título, alumno o categoría" />
+        <select id="epEstado">
+          <option value="todos">Todos los estados</option>
+          <option value="publicado">Publicados</option>
+          <option value="oculto">Ocultos</option>
+        </select>
+        <select id="epTemporada"><option value="todas">Todas las temporadas</option></select>
       </div>
+      <p id="epConteo" class="small"></p>
+      <div id="listaEpisodios" class="ep-lista"></div>
     </section>
 
   </main>
