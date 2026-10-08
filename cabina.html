@@ -323,7 +323,8 @@
       <canvas id="eqMusica" class="eq-retro" width="600" height="70"></canvas>
 
       <span id="musicaNombre" class="small">Sin pista cargada</span>
-      <p class="small">🎚️ Al hablar un locutor, la música baja al 50% y se recupera sola.</p>
+      <label class="check-label"><input id="musicaDucking" type="checkbox" checked /> 🎚️ Bajar música automáticamente al hablar</label>
+      <p class="small" id="musicaDuckingInfo">🎚️ Automático: al hablar un locutor la música baja casi al mínimo y se recupera sola.</p>
       <div class="btn-row">
         <label class="check-label"><input id="musicaIncluir" type="checkbox" checked /> Incluir en la grabación</label>
         <label class="check-label"><input id="musicaLoop" type="checkbox" /> Loop de música</label>

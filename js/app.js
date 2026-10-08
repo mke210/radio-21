@@ -71,7 +71,8 @@
     loop: "p21_loop",
     sel: "p21_sel",
     last: "p21_last",
-    vol: "p21_musicvol"
+    vol: "p21_musicvol",
+    duck: "p21_musicduck"
   };
 
   // ===== Estado general =====
@@ -142,6 +143,18 @@
     // el AudioParam, sin pisarse entre sí.
   });
 
+  on("musicaDucking", "change", () => {
+    localStorage.setItem(LS.duck, $("musicaDucking").checked ? "1" : "0");
+    actualizarTextoDucking();
+  });
+  function actualizarTextoDucking() {
+    const t = $("musicaDuckingInfo");
+    if (!t || !$("musicaDucking")) return;
+    t.textContent = $("musicaDucking").checked
+      ? "🎚️ Automático: al hablar un locutor la música baja casi al mínimo y se recupera sola."
+      : "🔒 Música fija: el volumen no cambia al hablar. Ajusta el control de volumen de la música (bájalo) y sube las voces con los faders de los locutores.";
+  }
+
   on("subirMusica", "change", subirMusicaDB);
   on("btnPlaySel", "click", reproducirSeleccion);
   on("btnLoopToggle", "click", toggleLoop);
@@ -202,6 +215,11 @@
   // Restaurar volumen de música guardado
   const volGuardado = localStorage.getItem(LS.vol);
   if (volGuardado && $("musicaVol")) $("musicaVol").value = volGuardado;
+
+  if ($("musicaDucking")) {
+    $("musicaDucking").checked = localStorage.getItem(LS.duck) !== "0";
+    actualizarTextoDucking();
+  }
 
   cargarMics();
   if (navigator.mediaDevices) navigator.mediaDevices.addEventListener("devicechange", cargarMics);
@@ -548,7 +566,8 @@
     if (nivel > UMBRAL_DUCKING) ultimaVoz = Date.now();
     const conVoz = (Date.now() - ultimaVoz) < 800;
     const base = parseFloat($("musicaVol").value) || 0.5;
-    const objetivo = conVoz ? base * PROFUNDIDAD_DUCKING : base;
+    const duckingOn = !$("musicaDucking") || $("musicaDucking").checked;
+    const objetivo = (duckingOn && conVoz) ? base * PROFUNDIDAD_DUCKING : base;
     musicGainNode.gain.setTargetAtTime(objetivo, ctx.currentTime, 0.15);
   }
 
