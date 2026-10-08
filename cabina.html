@@ -130,7 +130,7 @@
     .ep-filtros { display:flex; flex-wrap:wrap; gap:8px; }
     .ep-filtros input { flex:2 1 220px; }
     .ep-filtros select { flex:1 1 150px; }
-    .ep-lista { display:flex; flex-direction:column; gap:10px; }
+    .ep-lista { display:flex; flex-direction:column; gap:10px; max-height:500px; overflow-y:auto; padding-right:6px; }
     .ep-grupo > summary { cursor:pointer; font-weight:700; padding:8px 10px; border-radius:10px;
       background:rgba(255,255,255,0.07); list-style:none; }
     .ep-grupo > summary::-webkit-details-marker { display:none; }
@@ -144,8 +144,10 @@
     .ep-mas > summary { list-style:none; cursor:pointer; padding:2px 12px; border-radius:8px; font-size:18px;
       background:rgba(255,255,255,0.10); user-select:none; }
     .ep-mas > summary::-webkit-details-marker { display:none; }
-    .ep-menu { position:absolute; right:0; z-index:5; display:flex; flex-direction:column; gap:6px; padding:8px;
-      border-radius:10px; background:#1b2430; border:1px solid rgba(255,255,255,0.15); box-shadow:0 6px 18px rgba(0,0,0,.4); }
+    .ep-menu { display:flex; gap:6px; margin-top:6px; }
+    .ep-mas { display:flex; align-items:center; gap:6px; }
+    .ep-mas[open] { flex-wrap:wrap; }
+    .biblio-player { font-size:12px; white-space:nowrap; cursor:pointer; }
   </style>
 </head>
 <body>
@@ -362,7 +364,7 @@
         <strong>📚 Mi biblioteca de música</strong>
         <label class="imagen-label">📤 Guardar MP3 en la biblioteca<input id="subirMusica" type="file" accept="audio/*" multiple /></label>
       </div>
-      <p class="small">Las pistas guardadas quedan disponibles siempre. Pulsa «Usar» para cargarla como música de fondo y luego ▶ Música.</p>
+      <p class="small">Al guardar un MP3 queda cargado automáticamente como música de fondo: solo pulsa ▶ Música. «Usar» cambia de pista; «Player» la incluye en el Player de cabina.</p>
       <div id="bibliotecaMusica" class="biblio-lista"></div>
     </section>
 
@@ -385,7 +387,7 @@
       <audio id="reproductor" controls controlslist="nodownload"></audio>
 
       <p class="small" style="margin-top:10px;">
-        Marca lo que quieras sonar (música y/o episodios). Si no marcas nada, suena todo.
+        Marca lo que quieras sonar (episodios aquí; música con la casilla «Player» de tu biblioteca). Si no marcas nada, suena todo.
       </p>
       <div id="listaSeleccion" class="lista-seleccion"></div>
     </section>

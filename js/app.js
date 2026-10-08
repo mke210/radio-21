@@ -162,6 +162,7 @@
   on("btnActivarSonido", "click", activarSonido);
   on("btnActualizar", "click", () => cargarTodo());
   on("listaSeleccion", "change", () => { guardarSeleccionLocal(); guardarConfigRemota(); });
+  on("bibliotecaMusica", "change", () => { guardarSeleccionLocal(); guardarConfigRemota(); });
 
   on("editForm", "submit", guardarEdicion);
   on("categoria", "change", () => {
@@ -406,13 +407,13 @@
   }
 
   function guardarSeleccionLocal() {
-    const marcados = [...document.querySelectorAll("#listaSeleccion input:checked")].map(c => c.value);
+    const marcados = [...document.querySelectorAll("#listaSeleccion input:checked, #bibliotecaMusica input:checked")].map(c => c.value);
     localStorage.setItem(LS.sel, JSON.stringify(marcados));
   }
 
   async function guardarConfigRemota() {
     if (!db) return;
-    const sel = [...document.querySelectorAll("#listaSeleccion input:checked")].map(c => c.value);
+    const sel = [...document.querySelectorAll("#listaSeleccion input:checked, #bibliotecaMusica input:checked")].map(c => c.value);
     const actual = playlist[indice];
     try {
       await db.from("config").upsert({
@@ -429,7 +430,7 @@
 
   function restaurarChecks() {
     const guardada = leerSeleccionGuardada();
-    document.querySelectorAll("#listaSeleccion input").forEach(inp => {
+    document.querySelectorAll("#listaSeleccion input, #bibliotecaMusica input[type=checkbox]").forEach(inp => {
       inp.checked = guardada.includes(inp.value);
     });
   }
@@ -653,6 +654,7 @@
     if (!files.length || !db) return;
 
     estadoReproduccion("📤 Subiendo música a la biblioteca...");
+    let primeraNueva = null;
 
     for (const f of files) {
       const base = f.name.replace(/\.[^.]+$/, "");
@@ -666,11 +668,12 @@
         continue;
       }
 
-      await db.from("musica").insert({
+      const { data: fila } = await db.from("musica").insert({
         titulo: base,
         archivo: nombre,
         url: urlMusica
-      });
+      }).select().single();
+      if (fila && !primeraNueva) primeraNueva = fila;
     }
 
     $("subirMusica").value = "";
@@ -678,6 +681,8 @@
     await cargarMusicaDB();
     renderSeleccion();
     restaurarChecks();
+    // La primera pista subida queda lista como música de fondo
+    if (primeraNueva) activarPista(primeraNueva.url, primeraNueva.titulo, primeraNueva.id);
   }
 
   async function borrarMusicaDB(id) {
@@ -708,25 +713,6 @@
     const cont = $("listaSeleccion");
     if (!cont) return;
     cont.innerHTML = "";
-
-    const g1 = document.createElement("div");
-    g1.className = "grupo-titulo";
-    g1.textContent = "🎵 Música";
-    cont.appendChild(g1);
-
-    if (!musicas.length) cont.appendChild(pSmall("Sin música subida. Usa 📤 Subir MP3."));
-    musicas.forEach(m => {
-      const fila = document.createElement("div");
-      fila.className = "sel-item";
-      fila.innerHTML = `<label class="sel-label"><input type="checkbox" value="m:${m.id}" /> <span>🎵 ${m.titulo}</span></label>`;
-      const b = document.createElement("button");
-      b.className = "btn btn-mini btn-del";
-      b.textContent = "🗑";
-      b.title = "Eliminar de la biblioteca";
-      b.onclick = () => borrarMusicaDB(m.id);
-      fila.appendChild(b);
-      cont.appendChild(fila);
-    });
 
     const g2 = document.createElement("div");
     g2.className = "grupo-titulo";
@@ -771,7 +757,7 @@
   }
 
   function reproducirSeleccion() {
-    const marcados = [...document.querySelectorAll("#listaSeleccion input:checked")].map(c => c.value);
+    const marcados = [...document.querySelectorAll("#listaSeleccion input:checked, #bibliotecaMusica input:checked")].map(c => c.value);
     localStorage.setItem(LS.sel, JSON.stringify(marcados));
 
     playlist = marcados.length
@@ -931,6 +917,16 @@
       nom.className = "biblio-nombre";
       nom.textContent = "🎵 " + m.titulo;
       fila.appendChild(nom);
+      const lbl = document.createElement("label");
+      lbl.className = "biblio-player";
+      lbl.title = "Incluir esta pista en el Player de cabina";
+      const chk = document.createElement("input");
+      chk.type = "checkbox";
+      chk.value = "m:" + m.id;
+      chk.checked = leerSeleccionGuardada().includes(chk.value);
+      lbl.appendChild(chk);
+      lbl.appendChild(document.createTextNode(" Player"));
+      fila.appendChild(lbl);
       fila.appendChild(btnMini(activa ? "✔ En uso" : "Usar", activa ? "btn-gold" : "btn-blue",
         () => activarPista(m.url || "", m.titulo, m.id)));
       fila.appendChild(btnMini("🗑", "btn-del", () => borrarMusicaDB(m.id)));
